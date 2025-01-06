@@ -1,6 +1,4 @@
-// pages/register.tsx
 import { useState } from 'react';
-import { register } from './api/register/register';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
@@ -10,10 +8,23 @@ const RegisterPage = () => {
 
   const handleRegister = async () => {
     try {
-      await register(email, password, name);
-      // Si succès, redirection ou autre action
+      const response = await fetch('/api/register/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Inscription réussie:', data);
+        // Rediriger ou faire quelque chose après l'inscription réussie
+      } else {
+        console.error('Erreur d\'inscription:', data);
+        setError(data.message);
+      }
     } catch (error) {
-      // Si une erreur se produit, on la capture et on l'affiche
       if (error instanceof Error) {
         setError(error.message);
       }
@@ -23,26 +34,36 @@ const RegisterPage = () => {
   return (
     <div>
       <h1>Inscription</h1>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Mot de passe"
-      />
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Nom"
-      />
-      <button onClick={handleRegister}>S'inscrire</button>
-      {error && <p>{error}</p>}
+      <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+        <div>
+          <label>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Mot de passe</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Nom</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button type="submit">S'inscrire</button>
+      </form>
     </div>
   );
 };

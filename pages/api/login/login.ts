@@ -1,23 +1,32 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+import { supabase } from '@/lib/supabaseClient';
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'POST') {
       const { email, password } = req.body;
-      console.log('Reçu:', { email, password }); // Log des valeurs reçues
+      console.log('Reçu côté serveur pour connexion:', { email, password });
 
-      // Vérifie si les données de connexion sont fournies
+      // Vérifiez si les données de connexion sont fournies
       if (!email || !password) {
-        return res.status(400).json({ message: 'Email et mot de passe sont requis' });
+        console.error('Email ou mot de passe manquant pour la connexion');
+        return res.status(400).json({ message: 'Email et mot de passe sont requis pour la connexion' });
       }
 
-      // Vérifie si les données de connexion sont correctes
-      if (email === 'admin@example.com' && password === 'password123') {
-        res.status(200).json({ message: 'Connexion réussie' });
-      } else {
-        res.status(401).json({ message: 'Informations de connexion incorrectes' });
+      // Authentifiez l'utilisateur avec Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Informations de connexion incorrectes:', error.message);
+        return res.status(401).json({ message: 'Informations de connexion incorrectes' });
       }
+
+      console.log('Connexion réussie:', data.user);
+      res.status(200).json({ message: 'Connexion réussie', user: data.user });
     } else {
+      console.error('Méthode non autorisée');
       res.status(405).json({ message: 'Méthode non autorisée' });
     }
   } catch (error) {
@@ -29,4 +38,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: 'Erreur interne du serveur' });
     }
   }
-}
+};
+
+export default handler;

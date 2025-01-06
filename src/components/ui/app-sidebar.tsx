@@ -15,8 +15,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="flex items-center space-x-2">
-        {/* Logo à côté de "Ap3" */}
-        <img src="/favicon.ico" alt="Logo" className="h-8 w-8" />
+        <img src="/favicon.ico" alt="Logo" className="h-8 w-8" style={{ height: "20px", width: "20px" }} />
         <h2 className="text-xl font-bold">Ap3</h2>
       </SidebarHeader>
 
@@ -28,40 +27,30 @@ export function AppSidebar() {
           >
             Accueil
           </Link>
-          {/* Affichage uniquement si l'utilisateur est connecté */}
-          {user && (
-            <>
-              <Link
-                href="/medicaments"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/medicaments")}`}
-              >
-                Afficher stock Médicaments
-              </Link>
-              <Link
-                href="/materiel"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/materiel")}`}
-              >
-                Afficher stock Matériel
-              </Link>
-            </>
-          )}
-          {/* Affichage des liens pour les utilisateurs connectés */}
-          {user && (
-            <>
-              <Link
-                href="/fournisseur"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/fournisseur")}`}
-              >
-                Afficher les Fournisseurs
-              </Link>
-              <Link
-                href="/commande"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/commande")}`}
-              >
-                Liste de Commandes
-              </Link>
-            </>
-          )}
+          <Link
+            href="/medicaments"
+            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/medicaments")}`}
+          >
+            Afficher stock Médicaments
+          </Link>
+          <Link
+            href="/materiel"
+            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/materiel")}`}
+          >
+            Afficher stock Matériel
+          </Link>
+          <Link
+            href="/fournisseur"
+            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/fournisseur")}`}
+          >
+            Afficher les Fournisseurs
+          </Link>
+          <Link
+            href="/commande"
+            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/commande")}`}
+          >
+            Liste de Commandes
+          </Link>
         </SidebarGroup>
 
         <SidebarGroup>
@@ -99,16 +88,15 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {user && (
-        <div className="p-4 mt-auto">
-          <p className="text-sm font-semibold">Bienvenue, {user.firstName} {user.lastName}</p>
-        </div>
-      )}
-
-      <SidebarFooter>
+      <SidebarFooter className="flex flex-col items-start p-4">
+        {user && (
+          <div className="w-full mb-4">
+            <p className="text-sm font-semibold">Bienvenue, {user.firstName} {user.lastName}</p>
+          </div>
+        )}
         <p className="text-sm text-gray-600">© 2025 Ap3 Alain RABIE BTS SIO 2023-2025</p>
       </SidebarFooter>
     </Sidebar>
   );
 }
-export default AppSidebar;  // Assurez-vous d'exporter le composant
+export default AppSidebar; // Assurez-vous d'exporter le composant

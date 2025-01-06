@@ -9,7 +9,6 @@ export default function Page() {
       <div className="flex h-screen bg-gray-50">
         <AppSidebar />
         <main className="flex-1 p-8 overflow-auto bg-white shadow-lg rounded-xl mx-6 my-8">
-          {/* Vague animée */}
           <div className="wave-container">
             <div className="wave"></div>
           </div>

@@ -1,11 +1,15 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
-const Login = () => {
+const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setError(''); // Réinitialiser l'erreur
 
     const response = await fetch('/api/login/login', {
       method: 'POST',
@@ -15,34 +19,44 @@ const Login = () => {
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await response.json();
     if (response.ok) {
-      const data = await response.json();
       console.log('Connexion réussie:', data);
+      // Rediriger vers la page souhaitée après la connexion réussie
+      router.push('/dashboard'); // Remplacez '/app/page' par le chemin de votre page
     } else {
-      const errorData = await response.json();
-      console.error('Erreur de connexion:', errorData);
+      console.error('Erreur de connexion:', data);
+      setError(data.message);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        required
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Mot de passe"
-        required
-      />
-      <button type="submit">Se connecter</button>
-    </form>
+    <div>
+      <h1>Connexion</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Mot de passe</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button type="submit">Se connecter</button>
+      </form>
+    </div>
   );
 };
 
-export default Login;
+export default LoginPage;

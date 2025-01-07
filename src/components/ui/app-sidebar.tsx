@@ -6,7 +6,7 @@ import { useUser } from "@/services/sidebar/sidebar";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const user = useUser(); // Récupérer l'utilisateur via le hook
+  const user = useUser();
 
   const isActive = (path: string) => {
     return pathname === path ? "bg-gray-200" : "";

@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import "@/styles/page.css";
-// import { SidebarProvider } from "@/components/ui/sidebar";
-// import AppSidebar from "@/components/ui/app-sidebar";
-import Navbar from "@/components/ui/Navbar"; // Utilisez la bonne casse
+import "../src/app/globals.css";
 
 interface Order {
   id: number;
@@ -33,11 +30,8 @@ const Dashboard = () => {
   }, []);
 
   return (
-    // <SidebarProvider>
       <div className="flex h-screen bg-gray-50">
-        {/* <AppSidebar /> */}
         <div className="flex-1">
-          <Navbar />
           <main className="p-8 overflow-auto bg-white shadow-lg rounded-xl mx-6 my-8">
             <div className="wave-container">
               <div className="wave"></div>
@@ -74,8 +68,6 @@ const Dashboard = () => {
           </main>
         </div>
       </div>
-    // </SidebarProvider>
   );
 };
-
 export default Dashboard;

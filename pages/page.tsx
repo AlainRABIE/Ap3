@@ -1,6 +1,7 @@
+// Page.tsx
 import { useEffect, useState } from 'react';
-import { AffichStock, SupprimerMedicament, ModifierMedicament } from '@/services/medicaments/medicaments';
-import "@/styles/page.css";
+import { AffichStock, SupprimerMedicament } from '@/services/medicaments/medicaments';
+import "../src/app/globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -40,9 +41,9 @@ export default function Page() {
 
   return (
     <SidebarProvider>
-      <div className="flex">
+      <div className="flex h-screen">
         <AppSidebar />
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-4 overflow-y-auto">
           <div className="wave-container">
             <div className="wave"></div>
           </div>

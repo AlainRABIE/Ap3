@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import "../src/app/globals.css";
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');

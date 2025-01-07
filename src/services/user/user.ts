@@ -1,15 +1,19 @@
-// services/user/user.ts
 import { useState, useEffect } from "react";
 
-// Hook personnalisé pour récupérer l'utilisateur connecté
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export function useUser() {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Simule la récupération des données de l'utilisateur (par exemple depuis localStorage)
     const fetchedUser = localStorage.getItem("user");
     if (fetchedUser) {
-      // On peut aussi ajouter ici un traitement pour convertir la donnée si nécessaire (ex. JSON.parse)
       setUser(JSON.parse(fetchedUser));
     }
   }, []);

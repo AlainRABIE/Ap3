@@ -6,13 +6,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const { email, password } = req.body;
       console.log('Reçu côté serveur pour connexion:', { email, password });
 
-      // Vérifiez si les données de connexion sont fournies
       if (!email || !password) {
         console.error('Email ou mot de passe manquant pour la connexion');
         return res.status(400).json({ message: 'Email et mot de passe sont requis pour la connexion' });
       }
-
-      // Authentifiez l'utilisateur avec Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -31,10 +28,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Erreur serveur:', error.message); // Affiche le message d'erreur
+      console.error('Erreur serveur:', error.message); 
       res.status(500).json({ message: 'Erreur interne du serveur', error: error.message });
     } else {
-      console.error('Erreur serveur inconnue:', error); // Affiche l'erreur inconnue
+      console.error('Erreur serveur inconnue:', error);
       res.status(500).json({ message: 'Erreur interne du serveur' });
     }
   }

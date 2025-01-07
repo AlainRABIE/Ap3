@@ -33,24 +33,29 @@ export function AppSidebar() {
           >
             Afficher stock Médicaments
           </Link>
-          <Link
-            href="/materiel"
-            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/materiel")}`}
-          >
-            Afficher stock Matériel
-          </Link>
-          <Link
-            href="/fournisseur"
-            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/fournisseur")}`}
-          >
-            Afficher les Fournisseurs
-          </Link>
-          <Link
-            href="/commande"
-            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/commande")}`}
-          >
-            Liste de Commandes
-          </Link>
+
+          {user && (
+            <>
+              <Link
+                href="/materiel"
+                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/materiel")}`}
+              >
+                Afficher stock Matériel
+              </Link>
+              <Link
+                href="/fournisseur"
+                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/fournisseur")}`}
+              >
+                Afficher les Fournisseurs
+              </Link>
+              <Link
+                href="/commande"
+                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/commande")}`}
+              >
+                Liste de Commandes
+              </Link>
+            </>
+          )}
         </SidebarGroup>
 
         <SidebarGroup>

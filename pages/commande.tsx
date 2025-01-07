@@ -1,4 +1,4 @@
-// pages/order.tsx
+import "../src/app/globals.css";
 import { useState } from "react";
 import { useUser } from "@/services/user/user"; 
 import { useRouter } from "next/router";
@@ -31,11 +31,10 @@ const OrderPage = () => {
     setLoading(true);
 
     try {
-      // Envoie des données au serveur pour créer la commande
       const response = await fetch("/api/order", {
         method: "POST",
         body: JSON.stringify({
-          userId: user.id, // L'ID de l'utilisateur connecté
+          userId: user.id, 
           produit: formData.produit,
           quantite: formData.quantite,
         }),
@@ -47,7 +46,7 @@ const OrderPage = () => {
       if (response.ok) {
         const order = await response.json();
         alert("Commande passée avec succès !");
-        router.push("/orders"); // Rediriger vers la page des commandes si nécessaire
+        router.push("/orders");
       } else {
         alert("Une erreur est survenue lors de la création de la commande");
       }

@@ -3,10 +3,13 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } f
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/services/sidebar/sidebar";
+import { useState } from "react";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const user = useUser();
+  const [isStockOpen, setIsStockOpen] = useState(false);
+  const [isCommandeOpen, setIsCommandeOpen] = useState(false); // État pour Commande
 
   const isActive = (path: string) => {
     return pathname === path ? "bg-gray-200" : "";
@@ -15,7 +18,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="flex items-center space-x-2">
-        <img src="/favicon.ico" alt="Logo" className="h-8 w-8" style={{ height: "20px", width: "20px" }} />
+        <img src="/favicon.ico" alt="Logo" className="h-8 w-8" />
         <h2 className="text-xl font-bold">Ap3</h2>
       </SidebarHeader>
 
@@ -23,39 +26,78 @@ export function AppSidebar() {
         <SidebarGroup>
           <Link
             href="/"
-            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/")}`}
+            className={`block py-2 px-4 ${isActive("/")}`}
           >
             Accueil
           </Link>
-          <Link
-            href="/medicaments"
-            className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/medicaments")}`}
-          >
-            Afficher stock Médicaments
-          </Link>
 
-          {user && (
-            <>
-              <Link
-                href="/materiel"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/materiel")}`}
-              >
-                Afficher stock Matériel
-              </Link>
-              <Link
-                href="/fournisseur"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/fournisseur")}`}
-              >
-                Afficher les Fournisseurs
-              </Link>
-              <Link
-                href="/commande"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/commande")}`}
-              >
-                Liste de Commandes
-              </Link>
-            </>
-          )}
+          {/* Bouton Stock */}
+          <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsStockOpen(!isStockOpen)}>
+            <div className="flex items-center justify-between">
+              Stock
+              <span className="ml-2">{isStockOpen ? "▲" : "▼"}</span>
+            </div>
+            {isStockOpen && (
+              <div className="pl-4">
+                <Link
+                  href="/medicaments"
+                  className={`block py-2 px-4 ${isActive("/medicaments")}`}
+                >
+                  Stock Médicaments
+                </Link>
+                <Link
+                  href="/materiel"
+                  className={`block py-2 px-4 ${isActive("/materiel")}`}
+                >
+                  Stock Matériel
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Bouton Commande */}
+          <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsCommandeOpen(!isCommandeOpen)}>
+            <div className="flex items-center justify-between">
+              Commande
+              <span className="ml-2">{isCommandeOpen ? "▲" : "▼"}</span>
+            </div>
+            {isCommandeOpen && (
+              <div className="pl-4">
+                <Link
+                  href="/commande"
+                  className={`block py-2 px-4 ${isActive("/commande")}`}
+                >
+                  Liste des Commandes
+                </Link>
+                <Link
+                  href="/nouvelle-commande"
+                  className={`block py-2 px-4 ${isActive("/nouvelle-commande")}`}
+                >
+                  Nouvelle Commande
+                </Link>
+                <Link
+                  href="/commande-en-cours"
+                  className={`block py-2 px-4 ${isActive("/commande-en-cours")}`}
+                >
+                  Commande en cours de traitement
+                </Link>
+                <Link
+                  href="/historique-commandes"
+                  className={`block py-2 px-4 ${isActive("/historique-commandes")}`}
+                >
+                  Historique de commande
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Bouton Fournisseur */}
+          <Link
+            href="/fournisseur"
+            className={`block py-2 px-4 ${isActive("/fournisseur")}`}
+          >
+            Fournisseurs
+          </Link>
         </SidebarGroup>
 
         <SidebarGroup>
@@ -63,13 +105,13 @@ export function AppSidebar() {
             <>
               <Link
                 href="/settings"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/settings")}`}
+                className={`block py-2 px-4 ${isActive("/settings")}`}
               >
                 Paramètres
               </Link>
               <Link
                 href="/profile"
-                className={`block py-2 px-4 hover:bg-gray-200 transition-colors ${isActive("/profile")}`}
+                className={`block py-2 px-4 ${isActive("/profile")}`}
               >
                 Profil
               </Link>
@@ -104,4 +146,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-export default AppSidebar; // Assurez-vous d'exporter le composant
+
+export default AppSidebar;

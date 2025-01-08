@@ -1,4 +1,5 @@
-"use client";
+"use client"; // Ajoute cette ligne en haut de ton fichier
+
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,9 +8,9 @@ import { useState } from "react";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const user = useUser();
+  const { user, error } = useUser();
   const [isStockOpen, setIsStockOpen] = useState(false);
-  const [isCommandeOpen, setIsCommandeOpen] = useState(false); // État pour Commande
+  const [isCommandeOpen, setIsCommandeOpen] = useState(false);
 
   const isActive = (path: string) => {
     return pathname === path ? "bg-gray-200" : "";
@@ -24,10 +25,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <Link
-            href="/"
-            className={`block py-2 px-4 ${isActive("/")}`}
-          >
+          <Link href="/" className={`block py-2 px-4 ${isActive("/")}`}>
             Accueil
           </Link>
 
@@ -39,16 +37,10 @@ export function AppSidebar() {
             </div>
             {isStockOpen && (
               <div className="pl-4">
-                <Link
-                  href="/medicaments"
-                  className={`block py-2 px-4 ${isActive("/medicaments")}`}
-                >
+                <Link href="/medicaments" className={`block py-2 px-4 ${isActive("/medicaments")}`}>
                   Stock Médicaments
                 </Link>
-                <Link
-                  href="/materiel"
-                  className={`block py-2 px-4 ${isActive("/materiel")}`}
-                >
+                <Link href="/materiel" className={`block py-2 px-4 ${isActive("/materiel")}`}>
                   Stock Matériel
                 </Link>
               </div>
@@ -57,34 +49,22 @@ export function AppSidebar() {
 
           {/* Bouton Commande */}
           <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsCommandeOpen(!isCommandeOpen)}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify_between">
               Commande
               <span className="ml-2">{isCommandeOpen ? "▲" : "▼"}</span>
             </div>
             {isCommandeOpen && (
               <div className="pl-4">
-                <Link
-                  href="/commande"
-                  className={`block py-2 px-4 ${isActive("/commande")}`}
-                >
+                <Link href="/commande" className={`block py-2 px-4 ${isActive("/commande")}`}>
                   Liste des Commandes
                 </Link>
-                <Link
-                  href="/nouvelle-commande"
-                  className={`block py-2 px-4 ${isActive("/nouvelle-commande")}`}
-                >
+                <Link href="/nouvelle-commande" className={`block py-2 px-4 ${isActive("/nouvelle-commande")}`}>
                   Nouvelle Commande
                 </Link>
-                <Link
-                  href="/commande-en-cours"
-                  className={`block py-2 px-4 ${isActive("/commande-en-cours")}`}
-                >
+                <Link href="/commande-en-cours" className={`block py-2 px-4 ${isActive("/commande-en-cours")}`}>
                   Commande en cours de traitement
                 </Link>
-                <Link
-                  href="/historique-commandes"
-                  className={`block py-2 px-4 ${isActive("/historique-commandes")}`}
-                >
+                <Link href="/historique-commandes" className={`block py-2 px-4 ${isActive("/historique-commandes")}`}>
                   Historique de commande
                 </Link>
               </div>
@@ -92,10 +72,7 @@ export function AppSidebar() {
           </div>
 
           {/* Bouton Fournisseur */}
-          <Link
-            href="/fournisseur"
-            className={`block py-2 px-4 ${isActive("/fournisseur")}`}
-          >
+          <Link href="/fournisseur" className={`block py-2 px-4 ${isActive("/fournisseur")}`}>
             Fournisseurs
           </Link>
         </SidebarGroup>
@@ -103,25 +80,16 @@ export function AppSidebar() {
         <SidebarGroup>
           {user ? (
             <>
-              <Link
-                href="/settings"
-                className={`block py-2 px-4 ${isActive("/settings")}`}
-              >
+              <Link href="/settings" className={`block py-2 px-4 ${isActive("/settings")}`}>
                 Paramètres
               </Link>
-              <Link
-                href="/profile"
-                className={`block py-2 px-4 ${isActive("/profile")}`}
-              >
+              <Link href="/profile" className={`block py-2 px-4 ${isActive("/profile")}`}>
                 Profil
               </Link>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
+              <Link href="/login" className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                 Connexion
               </Link>
 
@@ -136,11 +104,24 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="flex flex-col items-start p-4">
-        {user && (
+        {user ? (
           <div className="w-full mb-4">
-            <p className="text-sm font-semibold">Bienvenue, {user.firstName} {user.lastName}</p>
+            <p className="text-sm font-semibold">Bienvenue, {user.name}</p>
           </div>
+        ) : (
+          <>
+            <Link href="/login" className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+              Connexion
+            </Link>
+
+            <Link href="/register">
+              <button className="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors mt-2">
+                Inscription
+              </button>
+            </Link>
+          </>
         )}
+        {error && <p className="text-sm text-red-600">Erreur : {error.message}</p>}
         <p className="text-sm text-gray-600">© 2025 Ap3 Alain RABIE BTS SIO 2023-2025</p>
       </SidebarFooter>
     </Sidebar>

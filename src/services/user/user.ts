@@ -1,44 +1,24 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
+type User = {
+  nom: string;
+};
 
-export function useUser() {
+export function useUser(): { user: User | null, error: Error | null } {
   const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchedUser = localStorage.getItem("user");
-    if (fetchedUser) {
-      setUser(JSON.parse(fetchedUser));
-    }
+    fetch("/api/user")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => setUser(data))
+      .catch((error) => setError(error));
   }, []);
 
-  return user;
-}
-
-export async function updateUserProfile(data: { firstName: string; lastName: string; email: string }) {
-  try {
-    const response = await fetch("/api/update-profile", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Erreur lors de la mise à jour du profil");
-    }
-
-    const updatedUser = await response.json();
-    return updatedUser;
-  } catch (error) {
-    console.error("Erreur de mise à jour du profil:", error);
-    throw error;
-  }
+  return { user, error };
 }

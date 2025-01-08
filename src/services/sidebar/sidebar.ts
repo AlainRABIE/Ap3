@@ -1,26 +1,29 @@
-// sidebar.ts
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-interface User {
-  firstName: string;
-  lastName: string;
-}
+type User = {
+  id: number;
+  email: string;
+  nom: string;
+  created_at: string;
+  updated_at: string;
+  // Ajoute d'autres propriétés utilisateur si nécessaire
+};
 
-export const useUser = () => {
+export function useUser(): { user: User | null, error: Error | null } {
   const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const userData = await fetch("/api/user");  
-      const userJson = await userData.json();
-
-      if (userJson.isAuthenticated) {
-        setUser({ firstName: userJson.firstName, lastName: userJson.lastName });
-      }
-    };
-
-    fetchUser();
+    fetch("/api/user")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => setUser(data))
+      .catch((error) => setError(error));
   }, []);
 
-  return user;
-};
+  return { user, error };
+}

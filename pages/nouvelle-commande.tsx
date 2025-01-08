@@ -19,7 +19,7 @@ interface Medicament {
 
 interface Fournisseur {
   id: number;
-  name: string;
+  nom: string; // Assurez-vous que la colonne `nom` existe et contient des données
 }
 
 const CommandesPage = () => {
@@ -33,8 +33,8 @@ const CommandesPage = () => {
     fournisseur_id: 0,
     produit_id: 0,
     quantite: 0,
-    statut: "En attente",
-    etat: "En attente",
+    statut: "",  // Enlever la valeur "En attente"
+    etat: "",    // Enlever la valeur "En attente"
   });
 
   // Fonction pour récupérer les médicaments
@@ -113,7 +113,7 @@ const CommandesPage = () => {
                   {medicament ? medicament.name : "Médicament non trouvé"}
                 </td>
                 <td className="px-4 py-2 border">
-                  {fournisseur ? fournisseur.name : "Fournisseur non trouvé"}
+                  {fournisseur ? fournisseur.nom : "Nom non spécifié"}
                 </td>
                 <td className="px-4 py-2 border">{commande.quantite}</td>
                 <td className="px-4 py-2 border">{commande.etat}</td>
@@ -172,7 +172,7 @@ const CommandesPage = () => {
                   <option value="">Sélectionner un fournisseur</option>
                   {fournisseurs.map((fourn) => (
                     <option key={fourn.id} value={fourn.id}>
-                      {fourn.name}
+                      {fourn.nom}
                     </option>
                   ))}
                 </select>
@@ -189,31 +189,16 @@ const CommandesPage = () => {
                   placeholder="Quantité"
                 />
               </div>
-
-              <div>
-                <label htmlFor="etat" className="block text-sm font-medium text-gray-700">État</label>
-                <select
-                  id="etat"
-                  value={newCommande.etat}
-                  onChange={(e) => setNewCommande({ ...newCommande, etat: e.target.value })}
-                  className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="En attente">En attente</option>
-                  <option value="Terminé">Terminé</option>
-                  <option value="Annulé">Annulé</option>
-                </select>
-              </div>
-
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
                   onClick={() => setIsFormVisible(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                 >
                   Annuler
                 </button>
                 <button
-                  type="submit"
+                  type="button"
                   onClick={handleAddCommande}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >

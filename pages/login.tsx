@@ -24,7 +24,7 @@ const LoginPage = () => {
     if (response.ok) {
       console.log('Connexion réussie:', data);
       // Rediriger vers la page souhaitée après la connexion réussie
-      router.push('/dashboard'); // Remplacez '/app/page' par le chemin de votre page
+      router.push('/dashboard'); // Remplacez '/dashboard' par le chemin de votre page
     } else {
       console.error('Erreur de connexion:', data);
       setError(data.message);
@@ -65,8 +65,13 @@ const LoginPage = () => {
             Se connecter
           </button>
         </form>
-        <div className="text-center mt-4">
-          <p className="text-sm">Pas encore de compte ? <a href="/register" className="text-blue-600 hover:underline">Inscrivez-vous</a></p>
+        <div className="text-center mt-4 space-y-2">
+          <p className="text-sm">
+            Pas encore de compte ? <a href="/register" className="text-blue-600 hover:underline">Inscrivez-vous</a>
+          </p>
+          <p className="text-sm">
+            <a href="/forgot-password" className="text-blue-600 hover:underline">Mot de passe oublié ?</a>
+          </p>
         </div>
       </div>
     </div>

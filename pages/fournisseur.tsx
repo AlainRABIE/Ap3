@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient"; // Assurez-vous de configurer votre instance Supabase
+import { supabase } from "@/lib/supabaseClient";
 import "../src/app/globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar"; // Gardez cela dans le bon contexte
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 
 // Définir l'interface pour le fournisseur
@@ -20,6 +20,7 @@ const FournisseursPage = () => {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [formData, setFormData] = useState({
+    id: null as number | null,
     nom: "",
     adresse: "",
     email: "",
@@ -63,6 +64,28 @@ const FournisseursPage = () => {
     }
   };
 
+  // Fonction pour modifier un fournisseur
+  const updateFournisseur = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from("fournisseur")
+        .update({
+          nom: formData.nom,
+          adresse: formData.adresse,
+          email: formData.email,
+          telephone: formData.telephone,
+          site_web: formData.site_web,
+        })
+        .eq("id", formData.id);
+      if (error) throw error;
+      fetchFournisseurs(); // Rafraîchit la liste après modification
+      setShowForm(false); // Masque le formulaire après modification
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du fournisseur", error);
+    }
+  };
+
   // Fonction pour gérer la modification du formulaire
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,6 +104,12 @@ const FournisseursPage = () => {
     } catch (error) {
       console.error("Erreur lors de la suppression du fournisseur", error);
     }
+  };
+
+  // Fonction pour afficher le formulaire d'édition avec les données du fournisseur
+  const editFournisseur = (fournisseur: Fournisseur) => {
+    setFormData(fournisseur);
+    setShowForm(true);
   };
 
   useEffect(() => {
@@ -106,10 +135,12 @@ const FournisseursPage = () => {
           {showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <form
-                onSubmit={addFournisseur}
+                onSubmit={formData.id ? updateFournisseur : addFournisseur}
                 className="bg-gray-700 p-6 rounded-lg border-2 border-white text-gray-300 w-full max-w-md mx-auto mb-6"
               >
-                <h2 className="text-2xl font-semibold mb-4">Ajouter un Fournisseur</h2>
+                <h2 className="text-2xl font-semibold mb-4">
+                  {formData.id ? "Éditer un Fournisseur" : "Ajouter un Fournisseur"}
+                </h2>
 
                 <div className="mb-4">
                   <label className="block mb-2">Nom</label>
@@ -172,7 +203,7 @@ const FournisseursPage = () => {
                     type="submit"
                     className="bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600"
                   >
-                    Ajouter
+                    {formData.id ? "Mettre à jour" : "Ajouter"}
                   </button>
                   <button
                     type="button"
@@ -211,7 +242,7 @@ const FournisseursPage = () => {
                     <td className="px-6 py-4">{fournisseur.site_web}</td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => alert(`Éditer le fournisseur ${fournisseur.nom}`)}
+                        onClick={() => editFournisseur(fournisseur)}
                         className="bg-blue-500 text-white py-1 px-3 rounded-lg hover:bg-blue-600 mr-2"
                       >
                         Éditer

@@ -6,6 +6,7 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState('utilisateur'); // Rôle par défaut
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -21,7 +22,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, role }), // Ajout du rôle
       });
 
       const data = await response.json();
@@ -91,6 +92,20 @@ const RegisterPage = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}
             />
+          </div>
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium">Rôle</label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setRole(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}
+            >
+              <option value="administrateur">Administrateur</option>
+              <option value="utilisateur">Utilisateur</option>
+            </select>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button type="submit" className="w-full px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">

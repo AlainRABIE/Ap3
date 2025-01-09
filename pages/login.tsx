@@ -10,7 +10,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(''); // Réinitialiser l'erreur
+    setError(''); 
 
     const response = await fetch('/api/login/login', {
       method: 'POST',

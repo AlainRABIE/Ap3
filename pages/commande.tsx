@@ -34,7 +34,6 @@ const OrderPage = () => {
       const response = await fetch("/api/order", {
         method: "POST",
         body: JSON.stringify({
-          userId: user.id, 
           produit: formData.produit,
           quantite: formData.quantite,
         }),

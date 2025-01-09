@@ -50,7 +50,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour récupérer les fournisseurs
   const fetchFournisseurs = async () => {
     const { data, error } = await supabase.from("fournisseur").select("*");
     if (error) {
@@ -60,7 +59,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour récupérer les commandes
   const fetchCommandes = async () => {
     const { data, error } = await supabase.from("commandes").select("*");
     if (error) {
@@ -70,14 +68,12 @@ const CommandesPage = () => {
     }
   };
 
-  // Hook pour récupérer les données au chargement
   useEffect(() => {
     fetchCommandes();
     fetchMedicaments();
     fetchFournisseurs();
   }, []);
 
-  // Fonction pour ajouter une commande
   const handleAddCommande = async () => {
     const { data, error } = await supabase.from("commandes").insert([newCommande]);
     if (error) {
@@ -88,7 +84,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour modifier la commande
   const handleEditCommande = async () => {
     if (!commandeToEdit) return;
 
@@ -110,7 +105,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour vérifier si la commande peut être modifiée (si < 3h)
   const canEditCommande = (createdAt: string) => {
     const createdDate = new Date(createdAt);
     const now = new Date();
@@ -121,12 +115,9 @@ const CommandesPage = () => {
   return (
     <SidebarProvider>
       <div className="flex">
-        {/* App Sidebar */}
         <div className="w-1/5">
           <AppSidebar />
         </div>
-
-        {/* Contenu principal centré horizontalement */}
         <div className="flex-1 p-4">
           <div className="w-full max-w-4xl mx-auto">
             <h2 className="text-xl font-bold mb-4">Liste des commandes</h2>
@@ -200,7 +191,6 @@ const CommandesPage = () => {
               Ajouter une commande
             </button>
 
-            {/* Formulaire de modification de commande */}
             {isEditFormVisible && commandeToEdit && (
               <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
                 <div className="bg-white p-8 rounded-lg w-96">

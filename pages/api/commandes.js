@@ -1,41 +1,30 @@
 // pages/api/commandes.js
+import { supabase } from "@/lib/supabaseClient";
 
-import { createClient } from '@supabase/supabase-js';
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    const { userId, type, articleId, quantité } = req.body;
 
-// Utilise les variables d'environnement définies dans ton fichier .env.local
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-console.log("Supabase URL:", supabaseUrl);
-console.log("Supabase Key:", supabaseKey ? "clé trouvée" : "clé non trouvée");
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-export default async (req, res) => {
-  console.log("Requête reçue pour les commandes");
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("Les variables d'environnement Supabase ne sont pas définies correctement.");
-    return res.status(500).json({ error: "Supabase configuration error" });
-  }
-
-  const { user_id } = req.query;
-
-  try {
+    // Ajout de la commande dans la base de données
     const { data, error } = await supabase
-      .from('Commandes')
-      .select('*')
-      .eq('user_id', user_id); // Récupère les commandes associées à l'utilisateur
+      .from('commandes')
+      .insert([
+        {
+          userId,
+          type,
+          articleId,
+          quantité,
+          statut: 'en attente',
+          dateCommande: new Date().toISOString(),
+        },
+      ]);
 
     if (error) {
-      console.error("Erreur lors de la récupération des commandes :", error.message);
-      return res.status(500).json({ error: error.message });
+      return res.status(400).json({ message: 'Erreur lors de la commande', error });
     }
 
-    console.log("Commandes récupérées avec succès :", data);
-    res.status(200).json(data);
-  } catch (e) {
-    console.error("Erreur lors de l'exécution de la requête :", e.message);
-    res.status(500).json({ error: e.message });
+    res.status(200).json({ message: 'Commande passée avec succès', data });
+  } else {
+    res.status(405).json({ message: 'Méthode non autorisée' });
   }
-};
+}

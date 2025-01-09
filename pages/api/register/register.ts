@@ -1,40 +1,52 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient'; // Assure-toi que tu as configuré Supabase dans ce fichier
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'POST') {
-      const { email, password } = req.body;
-      console.log('Reçu côté serveur pour inscription:', { email, password });
+      const { email, password, name, role } = req.body;
+      console.log('Données reçues côté serveur:', { email, password, name, role });
 
-      // Vérifiez si les données d'inscription sont fournies
-      if (!email || !password) {
-        console.error('Email ou mot de passe manquant pour l\'inscription');
-        return res.status(400).json({ message: 'Email et mot de passe sont requis pour l\'inscription' });
+      // Vérification des données requises
+      if (!email || !password || !name || !role) {
+        return res.status(400).json({ message: 'Tous les champs sont requis.' });
       }
 
-      // Stockez les informations d'inscription dans Supabase
-      const { data, error } = await supabase.auth.signUp({
+      // Inscription de l'utilisateur via Supabase
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) {
-        console.error('Erreur d\'inscription:', error.message);
-        return res.status(400).json({ message: error.message });
+      if (signUpError) {
+        console.error('Erreur d\'inscription:', signUpError.message);
+        return res.status(400).json({ message: signUpError.message });
       }
 
-      console.log('Utilisateur inscrit:', data.user);
+      // Insérer les informations supplémentaires dans la table 'users'
+      const { error: insertError } = await supabase
+        .from('users') // Remplace 'users' par le nom de ta table
+        .insert([
+          { email, name, role, user_id: data.user?.id } // Ajoute l'ID utilisateur de Supabase ici
+        ]);
+
+      if (insertError) {
+        console.error('Erreur d\'insertion dans la table users:', insertError.message);
+        return res.status(400).json({ message: insertError.message });
+      }
+
+      console.log('Utilisateur inscrit avec succès:', data.user);
       res.status(200).json({ message: 'Inscription réussie', user: data.user });
+
     } else {
-      console.error('Méthode non autorisée');
-      res.status(405).json({ message: 'Méthode non autorisée' });
+      return res.status(405).json({ message: 'Méthode non autorisée' });
     }
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Erreur serveur:', error.message); // Affiche le message d'erreur
+      console.error('Erreur serveur:', error.message);
       res.status(500).json({ message: 'Erreur interne du serveur', error: error.message });
     } else {
-      console.error('Erreur serveur inconnue:', error); // Affiche l'erreur inconnue
+      console.error('Erreur inconnue:', error);
       res.status(500).json({ message: 'Erreur interne du serveur' });
     }
   }

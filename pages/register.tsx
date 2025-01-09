@@ -6,7 +6,7 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState('utilisateur'); // Rôle par défaut
+  const [role, setRole] = useState('utilisateur');
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -14,7 +14,9 @@ const RegisterPage = () => {
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(''); // Réinitialiser l'erreur
+    setError(''); 
+
+    console.log('Données envoyées pour inscription:', { email, password, name, role }); // Log pour le debug
 
     try {
       const response = await fetch('/api/register/register', {
@@ -22,7 +24,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name, role }), // Ajout du rôle
+        body: JSON.stringify({ email, password, name, role }), 
       });
 
       const data = await response.json();
@@ -32,7 +34,7 @@ const RegisterPage = () => {
         setTimeout(() => {
           setShowPopup(false);
           router.push('/login');
-        }, 2000); // Rediriger après 2 secondes
+        }, 2000); 
       } else {
         console.error('Erreur d\'inscription:', data);
         setError(data.message);

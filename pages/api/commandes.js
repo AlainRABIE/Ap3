@@ -1,11 +1,9 @@
-// pages/api/commandes.js
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { userId, type, articleId, quantité } = req.body;
 
-    // Ajout de la commande dans la base de données
     const { data, error } = await supabase
       .from('commandes')
       .insert([

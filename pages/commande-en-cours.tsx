@@ -39,6 +39,7 @@ const CommandesPage = () => {
   });
 
   const [commandeToEdit, setCommandeToEdit] = useState<Commande | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Fonction pour récupérer les médicaments
   const fetchMedicaments = async () => {
@@ -68,10 +69,26 @@ const CommandesPage = () => {
     }
   };
 
+  const fetchUserRole = async () => {
+    const user = await supabase.auth.getUser();
+    if (user.data) {
+      const { data, error } = await supabase
+        .from("role")
+        .select("role_name")
+        .single();
+      if (error) {
+        console.error("Erreur lors de la récupération du rôle de l'utilisateur :", error.message);
+      } else {
+        setUserRole(data?.role_name || null);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchCommandes();
     fetchMedicaments();
     fetchFournisseurs();
+    fetchUserRole();
   }, []);
 
   const handleAddCommande = async () => {
@@ -176,6 +193,21 @@ const CommandesPage = () => {
                           >
                             Modifier (délai dépassé)
                           </button>
+                        )}
+                        {/* Afficher les boutons d'approbation ou de rejet uniquement pour les administrateurs */}
+                        {userRole === "administrateur" && (
+                          <>
+                            <button
+                              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 ml-2"
+                            >
+                              Approuver
+                            </button>
+                            <button
+                              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ml-2"
+                            >
+                              Rejeter
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>

@@ -1,105 +1,61 @@
-import "../src/app/globals.css";
-import { useState } from "react";
-import { useUser } from "@/services/user/user"; 
-import { useRouter } from "next/router";
+import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-const OrderPage = () => {
-  const user = useUser(); 
-  const router = useRouter();
+// Initialisation de Supabase avec les variables d'environnement
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-  const [formData, setFormData] = useState({
-    produit: "",
-    quantite: 1,
-  });
-  const [loading, setLoading] = useState(false);
+const Page = () => {
+  const [data, setData] = useState<any[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      // Récupérez les données de la table 'commandes'
+      const { data, error } = await supabase
+        .from('commandes')  // Nom de la table
+        .select('*');  // Sélectionne toutes les colonnes (vous pouvez être plus spécifique si nécessaire)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      alert("Vous devez être connecté pour passer une commande");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/order", {
-        method: "POST",
-        body: JSON.stringify({
-          produit: formData.produit,
-          quantite: formData.quantite,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const order = await response.json();
-        alert("Commande passée avec succès !");
-        router.push("/orders");
+      if (error) {
+        console.error('Erreur lors de la récupération des données:', error);
       } else {
-        alert("Une erreur est survenue lors de la création de la commande");
+        setData(data);
       }
-    } catch (error) {
-      console.error("Erreur:", error);
-      alert("Une erreur est survenue lors de la création de la commande");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchData();
+  }, []);
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <h2 className="text-2xl font-semibold mb-4">Passer une Commande</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block mb-1" htmlFor="produit">
-            Produit (médicament ou matériel)
-          </label>
-          <input
-            type="text"
-            id="produit"
-            name="produit"
-            value={formData.produit}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block mb-1" htmlFor="quantite">
-            Quantité
-          </label>
-          <input
-            type="number"
-            id="quantite"
-            name="quantite"
-            value={formData.quantite}
-            onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            min="1"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors"
-          disabled={loading}
-        >
-          {loading ? "Chargement..." : "Passer la commande"}
-        </button>
-      </form>
+    <div>
+      <h1>Liste des Commandes</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>ID Commande</th>
+            <th>ID Utilisateur</th>
+            <th>ID Produit</th>
+            <th>Quantité</th>
+            <th>État</th>
+            <th>Date de Création</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((item) => (
+            <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>{item.user_id}</td>
+              <td>{item.produit_id}</td>
+              <td>{item.quantite}</td>
+              <td>{item.etat}</td>
+              <td>{new Date(item.created_at).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default OrderPage;
+export default Page;

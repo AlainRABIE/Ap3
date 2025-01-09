@@ -1,12 +1,9 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import "../src/app/globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 
-// Définir l'interface pour le fournisseur
 interface Fournisseur {
   id: number;
   nom: string;
@@ -28,8 +25,9 @@ const FournisseursPage = () => {
     site_web: "",
   });
   const [showForm, setShowForm] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  // Fonction pour récupérer les fournisseurs
   const fetchFournisseurs = async () => {
     setIsLoading(true);
     try {
@@ -43,19 +41,53 @@ const FournisseursPage = () => {
     }
   };
 
-  // Fonction pour ajouter un fournisseur
+  const checkIfAdmin = async (userId: string) => {
+    const { data: roleData, error: roleError } = await supabase
+      .from("role")
+      .select("roleid")
+      .eq("id", userId)
+      .single();
+
+    if (roleError) {
+      console.error("Erreur lors de la récupération du rôle", roleError);
+      return;
+    }
+
+    // Vérifier si le rôle est 'admin'
+    if (roleData?.roleid === "admin") {
+      setIsAdmin(true);
+    }
+  };
+
+  // Fonction de gestion de la session
+  const checkSession = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session?.user) {
+      setUser(sessionData.session.user);
+      checkIfAdmin(sessionData.session.user.id); // Vérifier le rôle de l'utilisateur après la connexion
+    } else {
+      console.log("Aucun utilisateur connecté");
+      setUser(null);
+      setIsAdmin(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFournisseurs();
+    checkSession(); // Vérifie la session au moment du rendu
+  }, []);
+
+
   const addFournisseur = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.from("fournisseur").insert([
-        {
-          nom: formData.nom,
-          adresse: formData.adresse,
-          email: formData.email,
-          telephone: formData.telephone,
-          site_web: formData.site_web,
-        },
-      ]);
+      const { error } = await supabase.from("fournisseur").insert([{
+        nom: formData.nom,
+        adresse: formData.adresse,
+        email: formData.email,
+        telephone: formData.telephone,
+        site_web: formData.site_web,
+      }]);
       if (error) throw error;
       fetchFournisseurs(); // Rafraîchit la liste après ajout
       setShowForm(false); // Masque le formulaire après l'ajout
@@ -64,7 +96,6 @@ const FournisseursPage = () => {
     }
   };
 
-  // Fonction pour modifier un fournisseur
   const updateFournisseur = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -86,7 +117,6 @@ const FournisseursPage = () => {
     }
   };
 
-  // Fonction pour gérer la modification du formulaire
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -95,7 +125,6 @@ const FournisseursPage = () => {
     }));
   };
 
-  // Fonction pour supprimer un fournisseur
   const deleteFournisseur = async (id: number) => {
     try {
       const { error } = await supabase.from("fournisseur").delete().eq("id", id);
@@ -106,15 +135,10 @@ const FournisseursPage = () => {
     }
   };
 
-  // Fonction pour afficher le formulaire d'édition avec les données du fournisseur
   const editFournisseur = (fournisseur: Fournisseur) => {
     setFormData(fournisseur);
     setShowForm(true);
   };
-
-  useEffect(() => {
-    fetchFournisseurs();
-  }, []);
 
   return (
     <SidebarProvider>
@@ -122,16 +146,14 @@ const FournisseursPage = () => {
         <AppSidebar />
         <div className="p-6 text-white flex-1">
           <h1 className="text-3xl font-semibold mb-6">Gestion des Fournisseurs</h1>
-
-          {/* Bouton "Ajouter" */}
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors mb-6"
-          >
-            Ajouter un Fournisseur
-          </button>
-
-          {/* Overlay pour assombrir le fond */}
+          {isAdmin && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors mb-6"
+            >
+              Ajouter un Fournisseur
+            </button>
+          )}
           {showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <form
@@ -141,7 +163,6 @@ const FournisseursPage = () => {
                 <h2 className="text-2xl font-semibold mb-4">
                   {formData.id ? "Éditer un Fournisseur" : "Ajouter un Fournisseur"}
                 </h2>
-
                 <div className="mb-4">
                   <label className="block mb-2">Nom</label>
                   <input
@@ -197,18 +218,17 @@ const FournisseursPage = () => {
                     required
                   />
                 </div>
-
                 <div className="flex justify-between">
                   <button
                     type="submit"
-                    className="bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600"
+                    className="bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition-colors"
                   >
                     {formData.id ? "Mettre à jour" : "Ajouter"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="bg-red-500 text-white py-3 px-6 rounded-lg hover:bg-red-600"
+                    className="bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors"
                   >
                     Annuler
                   </button>
@@ -216,43 +236,45 @@ const FournisseursPage = () => {
               </form>
             </div>
           )}
-
-          {/* Tableau des fournisseurs */}
           {isLoading ? (
-            <p className="text-white">Chargement des fournisseurs...</p>
+            <p>Chargement...</p>
           ) : (
-            <table className="min-w-full table-auto border-collapse border border-gray-300">
+            <table className="table-auto w-full bg-gray-800 text-white border border-gray-600">
               <thead>
-                <tr className="bg-gray-800 text-white">
+                <tr>
                   <th className="px-6 py-3 border-b border-gray-300">Nom</th>
                   <th className="px-6 py-3 border-b border-gray-300">Adresse</th>
                   <th className="px-6 py-3 border-b border-gray-300">Email</th>
                   <th className="px-6 py-3 border-b border-gray-300">Téléphone</th>
                   <th className="px-6 py-3 border-b border-gray-300">Site Web</th>
-                  <th className="px-6 py-3 border-b border-gray-300">Action</th>
+                  <th className="px-6 py-3 border-b border-gray-300">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {fournisseurs.map((fournisseur) => (
-                  <tr key={fournisseur.id} className="border-b border-gray-200">
-                    <td className="px-6 py-4">{fournisseur.nom}</td>
-                    <td className="px-6 py-4">{fournisseur.adresse}</td>
-                    <td className="px-6 py-4">{fournisseur.email}</td>
-                    <td className="px-6 py-4">{fournisseur.telephone}</td>
-                    <td className="px-6 py-4">{fournisseur.site_web}</td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => editFournisseur(fournisseur)}
-                        className="bg-blue-500 text-white py-1 px-3 rounded-lg hover:bg-blue-600 mr-2"
-                      >
-                        Éditer
-                      </button>
-                      <button
-                        onClick={() => deleteFournisseur(fournisseur.id)}
-                        className="bg-red-500 text-white py-1 px-3 rounded-lg hover:bg-red-600"
-                      >
-                        Supprimer
-                      </button>
+                  <tr key={fournisseur.id} className="bg-gray-700 text-white">
+                    <td className="px-6 py-3">{fournisseur.nom}</td>
+                    <td className="px-6 py-3">{fournisseur.adresse}</td>
+                    <td className="px-6 py-3">{fournisseur.email}</td>
+                    <td className="px-6 py-3">{fournisseur.telephone}</td>
+                    <td className="px-6 py-3">{fournisseur.site_web}</td>
+                    <td className="px-6 py-3 flex gap-2">
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => editFournisseur(fournisseur)}
+                            className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600"
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            onClick={() => deleteFournisseur(fournisseur.id)}
+                            className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
+                          >
+                            Supprimer
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}

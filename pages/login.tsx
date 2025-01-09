@@ -23,8 +23,7 @@ const LoginPage = () => {
     const data = await response.json();
     if (response.ok) {
       console.log('Connexion réussie:', data);
-      // Rediriger vers la page souhaitée après la connexion réussie
-      router.push('/dashboard'); // Remplacez '/dashboard' par le chemin de votre page
+      router.push('/'); // Remplacez '/dashboard' par le chemin de votre page
     } else {
       console.error('Erreur de connexion:', data);
       setError(data.message);

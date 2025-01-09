@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialisation de Supabase avec les variables d'environnement
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -12,10 +11,9 @@ const Page = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Récupérez les données de la table 'commandes'
       const { data, error } = await supabase
-        .from('commandes')  // Nom de la table
-        .select('*');  // Sélectionne toutes les colonnes (vous pouvez être plus spécifique si nécessaire)
+        .from('commandes') 
+        .select('*');
 
       if (error) {
         console.error('Erreur lors de la récupération des données:', error);

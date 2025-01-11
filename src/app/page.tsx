@@ -1,8 +1,8 @@
 import './globals.css';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/ui/app-sidebar"; 
+import { Button } from '../../components/ui/button';
+import { SidebarProvider } from "../../components/ui/sidebar";
+import { AppSidebar } from "../../components/ui/app-sidebar"; 
 
 export default function Page() {
   return (

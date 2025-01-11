@@ -1,4 +1,4 @@
-import { Menubar } from "@/components/ui/Menubar";
+import { Menubar } from "../../components/ui/Menubar";
 import "./globals.css";
 
 export default function RootLayout({

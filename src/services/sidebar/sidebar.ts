@@ -6,7 +6,6 @@ type User = {
   nom: string;
   created_at: string;
   updated_at: string;
-  // Ajoute d'autres propriétés utilisateur si nécessaire
 };
 
 export function useUser(): { user: User | null, error: Error | null } {

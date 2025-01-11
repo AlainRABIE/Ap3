@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import "../src/app/globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/ui/app-sidebar";
+import { SidebarProvider } from "../components/ui/sidebar";
+import { AppSidebar } from "../components/ui/app-sidebar";
 
 // Définir un type pour les médicaments
 type Medicament = {

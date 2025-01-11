@@ -1,31 +1,19 @@
-"use client"; // Ajoute cette ligne en haut de ton fichier
+"use client"; // Assurez-vous que cette ligne est en haut de votre fichier
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "./sidebar";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useUser } from "@/services/sidebar/sidebar";
+import { usePathname } from "next/navigation";
+import { useUser } from "@/services/sidebar/useUser";
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const router = useRouter(); 
   const { user, error } = useUser();
   const [isStockOpen, setIsStockOpen] = useState(false);
   const [isCommandeOpen, setIsCommandeOpen] = useState(false);
 
   const isActive = (path: string) => {
     return pathname === path ? "bg-gray-200" : "";
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      console.log("Déconnexion réussie");
-      router.push("/login"); 
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion : ", error);
-    }
   };
 
   return (
@@ -41,7 +29,6 @@ export function AppSidebar() {
             Accueil
           </Link>
 
-          {/* Bouton Stock */}
           <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsStockOpen(!isStockOpen)}>
             <div className="flex items-center justify-between">
               Stock
@@ -59,7 +46,6 @@ export function AppSidebar() {
             )}
           </div>
 
-          {/* Bouton Commande */}
           <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsCommandeOpen(!isCommandeOpen)}>
             <div className="flex items-center justify-between">
               Commande
@@ -79,16 +65,10 @@ export function AppSidebar() {
                 <Link href="/historique-commandes" className={`block py-2 px-4 ${isActive("/historique-commandes")}`}>
                   Historique de commande
                 </Link>
-                <Link href="/dashboard" className={`block py-2 px-4 ${isActive("/settings")}`}>
-                Dashboard
-              </Link>
               </div>
-              
-              
             )}
           </div>
 
-          {/* Bouton Fournisseur */}
           <Link href="/fournisseur" className={`block py-2 px-4 ${isActive("/fournisseur")}`}>
             Fournisseurs
           </Link>
@@ -103,19 +83,12 @@ export function AppSidebar() {
               <Link href="/profile" className={`block py-2 px-4 ${isActive("/profile")}`}>
                 Profil
               </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors mt-2"
-              >
-                Déconnexion
-              </button>
             </>
           ) : (
             <>
               <Link href="/login" className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                 Connexion
               </Link>
-
               <Link href="/register">
                 <button className="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors mt-2">
                   Inscription
@@ -129,14 +102,13 @@ export function AppSidebar() {
       <SidebarFooter className="flex flex-col items-start p-4">
         {user ? (
           <div className="w-full mb-4">
-            <p className="text-sm font-semibold">Bienvenue, {user.nom}</p>
+            <p className="text-sm font-semibold">Bienvenue, {user.email}</p>
           </div>
         ) : (
           <>
             <Link href="/login" className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
               Connexion
             </Link>
-
             <Link href="/register">
               <button className="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors mt-2">
                 Inscription
@@ -144,7 +116,7 @@ export function AppSidebar() {
             </Link>
           </>
         )}
-        {error && <p className="text-sm text-red-600">Erreur : {error.message}</p>}
+        {error && <p className="text-sm text-red-600">Erreur : {error}</p>}
         <p className="text-sm text-gray-600">© 2025 Ap3 Alain RABIE BTS SIO 2023-2025</p>
       </SidebarFooter>
     </Sidebar>

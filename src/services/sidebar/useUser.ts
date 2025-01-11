@@ -1,57 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from 'react';
 
-// Type pour les commandes
-type Commande = {
-  id: number;
-  produit: string;
-  quantite: number;
-  date: string;
-  // Ajoute d'autres propriétés si nécessaire
-};
+interface User {
+  email: string;
+}
 
-// Type pour l'utilisateur
-type User = {
-  id: number;
-  name: string;
-  // Ajoute d'autres propriétés si nécessaire
-};
-
-export function useUser(): { user: User | null, error: Error | null } {
+export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/user")
-      .then((response) => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/user', {
+          credentials: 'include',
+        });
+        console.log('Requête envoyée à /api/user:', response);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
-      })
-      .then((data) => setUser(data))
-      .catch((error) => setError(error));
+        const data: User = await response.json();
+        setUser(data);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error('Erreur lors de la récupération des données utilisateur:', error.message);
+          setError(error.message);
+        } else {
+          console.error('Erreur inconnue lors de la récupération des données utilisateur:', error);
+          setError('Erreur inconnue');
+        }
+      }
+    };
+
+    fetchUser();
   }, []);
 
   return { user, error };
-}
-
-export function useCommandes(userId: number): { commandes: Commande[] | null, error: Error | null } {
-  const [commandes, setCommandes] = useState<Commande[] | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    if (userId) {
-      fetch(`/api/commandes?user_id=${userId}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => setCommandes(data))
-        .catch((error) => setError(error));
-    }
-  }, [userId]);
-
-  return { commandes, error };
-}
+};

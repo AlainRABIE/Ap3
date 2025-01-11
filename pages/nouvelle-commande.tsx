@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/ui/app-sidebar";
+import { SidebarProvider } from "../components/ui/sidebar";
+import { AppSidebar } from "../components/ui/app-sidebar";
 
 // Définition des types
 interface Commande {

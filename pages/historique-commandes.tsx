@@ -1,8 +1,8 @@
 // pages/historique-commandes.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient"; // Assurez-vous que vous avez configuré Supabase
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/ui/app-sidebar";
+import { SidebarProvider, useSidebar } from "../components/ui/sidebar";
+import { AppSidebar } from "../components/ui/app-sidebar";
 
 interface Commande {
   id_historique: number;

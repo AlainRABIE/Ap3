@@ -1,5 +1,7 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from "@/lib/supabaseClient";
+import Cookies from 'js-cookie';
 import "../src/app/globals.css";
 
 const LoginPage = () => {
@@ -8,25 +10,36 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    const token = Cookies.get('supabaseToken');
+    if (token) {
+      router.push('/');
+    }
+  }, [router]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(''); 
+    setError('');
 
-    const response = await fetch('/api/login/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const { data: { user, session }, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-    const data = await response.json();
-    if (response.ok) {
-      console.log('Connexion réussie:', data);
-      router.push('/'); // Remplacez '/dashboard' par le chemin de votre page
-    } else {
-      console.error('Erreur de connexion:', data);
-      setError(data.message);
+    if (authError) {
+      console.error('Erreur de connexion:', authError.message);
+      setError(authError.message);
+      return;
+    }
+
+    if (user && session) {
+      console.log('Connexion réussie:', user);
+      console.log('Token de session:', session.access_token);
+
+      // Utilisez js-cookie pour stocker le jeton d'accès dans les cookies
+      Cookies.set('supabaseToken', session.access_token, { expires: 1, secure: true, sameSite: 'Strict' });
+      console.log('Cookie après connexion:', document.cookie);
+
+      // Stocker la session dans le localStorage
+      localStorage.setItem('supabase.auth.token', session.access_token);
+      router.push('/');
     }
   };
 

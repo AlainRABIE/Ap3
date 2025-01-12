@@ -1,103 +1,133 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabaseClient';
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface EditProfileProps {
-  userId: number;  // ID de l'utilisateur pour récupérer ses données
-  onUpdate: (updatedUser: Partial<User>) => void;  // Mise à jour de l'utilisateur
-}
-
-const EditProfile: React.FC<EditProfileProps> = ({ userId, onUpdate }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+const ProfilePage = () => {
+  const [user, setUser] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    name: '',
+    password: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
-  // Fetch the user data when the component mounts
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch(`/api/user/${userId}`); // Utiliser l'ID de l'utilisateur pour récupérer ses données
-        if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des données utilisateur");
-        }
-        const data = await response.json();
-        setUser(data);
-        setIsLoading(false);  // Données chargées
-      } catch (error) {
-        setError("Impossible de charger les données utilisateur");
-        setIsLoading(false);  // Erreur ou données chargées
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        setFormData({
+          ...formData,
+          email: session.user.email ?? '',
+          name: session.user.user_metadata.full_name ?? '',
+        });
+      } else {
+        router.push('/login'); // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
       }
     };
 
-    fetchUserData();
-  }, [userId]);
+    checkSession();
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user) {
-      onUpdate({ name: user.name, email: user.email });
-      alert("Profil mis à jour !");
+    setError(null);
+    setSuccess(null);
+
+    if (formData.newPassword && formData.newPassword !== formData.confirmNewPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    try {
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        email: formData.email,
+        password: formData.newPassword || undefined,
+        data: { full_name: formData.name },
+      });
+
+      if (updateError) {
+        setError(updateError.message);
+      } else {
+        setSuccess("Profil mis à jour avec succès");
+      }
+    } catch (error) {
+      setError('Erreur lors de la mise à jour du profil');
     }
   };
 
-  // Affichage du message de chargement
-  if (isLoading) {
-    return <p>Chargement des informations utilisateur...</p>;
-  }
-
-  // Affichage d'une erreur si elle existe
-  if (error) {
-    return <p>{error}</p>;
-  }
-
-  // Si le profil n'est pas disponible
-  if (!user) {
-    return <p>Impossible de trouver l'utilisateur.</p>;
-  }
-
   return (
-    <div className="edit-profile max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
-      <h1 className="text-xl font-bold mb-4">Modifier le profil</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700" htmlFor="name">
-            Nom
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={user.name}
-            onChange={(e) => setUser({ ...user, name: e.target.value })}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700" htmlFor="email">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={user.email}
-            onChange={(e) => setUser({ ...user, email: e.target.value })}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-        >
-          Sauvegarder les modifications
-        </button>
-      </form>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-8 bg-white rounded shadow-md">
+        <h1 className="text-2xl font-bold text-center mb-6">Modifier le Profil</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium">Email</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium">Nom</label>
+            <input
+              id="name"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="newPassword" className="block text-sm font-medium">Nouveau mot de passe</label>
+            <input
+              id="newPassword"
+              type="password"
+              name="newPassword"
+              value={formData.newPassword}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="confirmNewPassword" className="block text-sm font-medium">Confirmer le nouveau mot de passe</label>
+            <input
+              id="confirmNewPassword"
+              type="password"
+              name="confirmNewPassword"
+              value={formData.confirmNewPassword}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {success && <p className="text-green-500 text-sm">{success}</p>}
+          <button type="submit" className="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700">
+            Mettre à jour le profil
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default EditProfile;
+export default ProfilePage;

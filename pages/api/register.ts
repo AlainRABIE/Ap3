@@ -1,54 +1,58 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseClient'; // Assure-toi que tu as configuré Supabase dans ce fichier
+import { supabase } from '@/lib/supabaseClient';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'POST') {
       const { email, password, name, role } = req.body;
-      console.log('Données reçues côté serveur:', { email, password, name, role });
+      console.log('Données reçues pour inscription:', { email, password, name, role });
 
-      // Vérification des données requises
       if (!email || !password || !name || !role) {
-        return res.status(400).json({ message: 'Tous les champs sont requis.' });
+        console.error('Tous les champs sont requis');
+        return res.status(400).json({ message: 'Tous les champs sont requis' });
       }
 
-      // Inscription de l'utilisateur via Supabase
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Vérifiez si le rôle existe dans la table "role"
+      const { data: roleData, error: roleError } = await supabase
+        .from('role')
+        .select('id')
+        .eq('name', role)
+        .single();
+
+      if (roleError || !roleData) {
+        console.error('Le rôle spécifié n\'existe pas');
+        return res.status(400).json({ message: 'Le rôle spécifié n\'existe pas' });
+      }
+
+      // Inscription de l'utilisateur avec Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (signUpError) {
-        console.error('Erreur d\'inscription:', signUpError.message);
-        return res.status(400).json({ message: signUpError.message });
+      if (error) {
+        console.error('Erreur d\'inscription:', error.message);
+        return res.status(400).json({ message: error.message });
       }
 
-      // Insérer les informations supplémentaires dans la table 'users'
-      const { error: insertError } = await supabase
-        .from('users') // Remplace 'users' par le nom de ta table
-        .insert([
-          { email, name, role, user_id: data.user?.id } // Ajoute l'ID utilisateur de Supabase ici
-        ]);
+      // Ajout des informations de l'utilisateur dans la table "User"
+      const { error: userError } = await supabase
+        .from('User')
+        .insert([{ email, name, roleid: roleData.id }]);
 
-      if (insertError) {
-        console.error('Erreur d\'insertion dans la table users:', insertError.message);
-        return res.status(400).json({ message: insertError.message });
+      if (userError) {
+        console.error('Erreur lors de l\'ajout de l\'utilisateur dans la table:', userError.message);
+        return res.status(400).json({ message: userError.message });
       }
 
-      console.log('Utilisateur inscrit avec succès:', data.user);
-      res.status(200).json({ message: 'Inscription réussie', user: data.user });
-
+      console.log('Inscription réussie');
+      res.status(200).json({ message: 'Inscription réussie' });
     } else {
-      return res.status(405).json({ message: 'Méthode non autorisée' });
+      res.status(405).json({ message: 'Méthode non autorisée' });
     }
   } catch (error) {
-    if (error instanceof Error) {
-      console.error('Erreur serveur:', error.message);
-      res.status(500).json({ message: 'Erreur interne du serveur', error: error.message });
-    } else {
-      console.error('Erreur inconnue:', error);
-      res.status(500).json({ message: 'Erreur interne du serveur' });
-    }
+    console.error('Erreur serveur:', error);
+    res.status(500).json({ message: 'Erreur interne du serveur' });
   }
 };
 

@@ -1,56 +1,61 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import "../src/app/globals.css";
+import { supabase } from "@/lib/supabaseClient";
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState('utilisateur');
+  const [role, setRole] = useState('');
+  const [roles, setRoles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
   const router = useRouter();
 
-  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(''); 
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const { data, error } = await supabase.from('role').select('name');
+      if (error) {
+        console.error('Erreur lors de la récupération des rôles:', error.message);
+      } else {
+        setRoles(data.map((r) => r.name));
+      }
+    };
 
-    console.log('Données envoyées pour inscription:', { email, password, name, role }); // Log pour le debug
+    fetchRoles();
+  }, []);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
 
     try {
-      const response = await fetch('/api/register/register', {
+      const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name, role }), 
+        body: JSON.stringify({ email, password, name, role }),
       });
 
       const data = await response.json();
-      if (response.ok) {
-        console.log('Inscription réussie:', data);
-        setShowPopup(true);
-        setTimeout(() => {
-          setShowPopup(false);
-          router.push('/login');
-        }, 2000); 
-      } else {
-        console.error('Erreur d\'inscription:', data);
-        setError(data.message);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Une erreur s\'est produite lors de l\'inscription.');
       }
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      }
+
+      console.log('Inscription réussie:', data);
+      router.push('/login');
+    } catch (error: any) {
+      console.error('Erreur lors de l\'inscription:', error.message);
+      setError(error.message);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}>
-      <div className="w-full max-w-md p-8 bg-white rounded shadow-md" style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-full max-w-md p-8 bg-white rounded shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6">Inscription</h1>
-        <form onSubmit={handleRegister} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium">Email</label>
             <input
@@ -59,30 +64,19 @@ const RegisterPage = () => {
               value={email}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium">Mot de passe</label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 px-3 py-2 text-gray-500"
-              >
-                {showPassword ? "🙈" : "👁️"}
-              </button>
-            </div>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
           </div>
           <div>
             <label htmlFor="name" className="block text-sm font-medium">Nom</label>
@@ -91,8 +85,8 @@ const RegisterPage = () => {
               type="text"
               value={name}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
           <div>
@@ -102,26 +96,20 @@ const RegisterPage = () => {
               value={role}
               onChange={(e: ChangeEvent<HTMLSelectElement>) => setRole(e.target.value)}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              style={{ backgroundColor: 'var(--background-main)', color: 'var(--text-main)' }}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             >
-              <option value="administrateur">Administrateur</option>
-              <option value="utilisateur">Utilisateur</option>
+              <option value="">Sélectionnez un rôle</option>
+              {roles.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
             </select>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button type="submit" className="w-full px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+          <button type="submit" className="w-full px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700">
             S'inscrire
           </button>
         </form>
       </div>
-      {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-md">
-            <p className="text-lg font-bold">Inscription faite !</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

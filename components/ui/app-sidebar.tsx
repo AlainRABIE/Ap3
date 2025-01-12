@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/services/sidebar/useUser";
 import { useState } from "react";
+import Cookies from 'js-cookie'; // Importez js-cookie pour gérer les cookies
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -14,6 +15,12 @@ export function AppSidebar() {
 
   const isActive = (path: string) => {
     return pathname === path ? "bg-gray-200" : "";
+  };
+
+  const handleLogout = () => {
+    Cookies.remove('supabaseToken'); // Supprimer le token des cookies
+    localStorage.removeItem('supabase.auth.token'); // Supprimer le token du localStorage
+    window.location.href = '/login'; // Rediriger vers la page de connexion
   };
 
   return (
@@ -83,6 +90,12 @@ export function AppSidebar() {
               <Link href="/profile" className={`block py-2 px-4 ${isActive("/profile")}`}>
                 Profil
               </Link>
+              <button
+                className="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors mt-2"
+                onClick={handleLogout}
+              >
+                Déconnexion
+              </button>
             </>
           ) : (
             <>

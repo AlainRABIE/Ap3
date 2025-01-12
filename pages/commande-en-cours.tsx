@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { AppSidebar } from "../components/ui/app-sidebar";
 
-// Définition des types
 interface Commande {
   id: number;
   user_id: number;
@@ -41,7 +40,6 @@ const CommandesPage = () => {
   const [commandeToEdit, setCommandeToEdit] = useState<Commande | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Fonction pour récupérer les médicaments
   const fetchMedicaments = async () => {
     const { data, error } = await supabase.from("medicaments").select("*");
     if (error) {

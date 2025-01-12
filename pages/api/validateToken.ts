@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { parseCookies } from 'nookies';
+import { parseCookies, setCookie, destroyCookie } from 'nookies';
 import { supabase } from '@/lib/supabaseClient';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -11,6 +11,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const cookies = parseCookies({ req });
     const token = cookies.supabaseToken;
     console.log('Token reçu:', token);
+
     if (!token) {
       console.error('Token d\'accès manquant');
       return res.status(401).json({ message: 'Token d\'accès manquant' });
@@ -19,7 +20,27 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error) {
       console.error('Erreur de validation du token:', error.message);
-      return res.status(401).json({ message: 'Token d\'accès invalide' });
+      
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession({ refresh_token: cookies.refreshToken });
+      if (refreshError || !session) {
+        console.error('Erreur lors du rafraîchissement du token:', refreshError?.message);
+        destroyCookie({ res }, 'supabaseToken');
+        destroyCookie({ res }, 'refreshToken');
+        return res.status(401).json({ message: 'Token d\'accès invalide' });
+      }
+
+      setCookie({ res }, 'supabaseToken', session.access_token, {
+        maxAge: 60 * 60 * 24 * 7, // 1 semaine
+        path: '/',
+      });
+
+      setCookie({ res }, 'refreshToken', session.refresh_token, {
+        maxAge: 60 * 60 * 24 * 7, // 1 semaine
+        path: '/',
+      });
+
+      console.log('Token rafraîchi avec succès');
+      return res.status(200).json(session.user);
     }
 
     console.log('Utilisateur validé:', user);

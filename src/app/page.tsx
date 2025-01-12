@@ -1,8 +1,8 @@
 "use client";
+
 import './globals.css';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, handleLogout } from '@/lib/supabaseClient';
 import { SidebarProvider } from "../../components/ui/sidebar";
 import { AppSidebar } from "../../components/ui/app-sidebar"; 
 
@@ -12,40 +12,71 @@ export default function Page() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
+      try {
+        const response = await fetch('/api/validateToken');
+        const result = await response.json();
 
-        const { data: roleData, error: roleError } = await supabase
-          .from('User')
-          .select('roleid')
-          .eq('id', session.user.id)
-          .single();
+        if (response.ok) {
+          setUser(result);
+          console.log('Utilisateur validé:', result);
 
-        if (roleError) {
-          console.error('Erreur lors de la récupération du rôle', roleError);
-          return;
+          // Récupération du roleid de la table User
+          const { data: roleData, error: roleError } = await supabase
+            .from('User')
+            .select('roleid')
+            .eq('id', result.id) // Assurez-vous que result.id est un int4
+            .single();
+
+          console.log('roleData:', roleData);
+          console.log('roleError:', roleError);
+
+          if (roleError) {
+            console.error('Erreur lors de la récupération du rôle:', roleError);
+            return;
+          }
+
+          if (!roleData || !roleData.roleid) {
+            console.error('roleid non trouvé dans les données récupérées');
+            return;
+          }
+
+          // Récupération du nom du rôle de la table role
+          const { data: roleDetails, error: roleDetailsError } = await supabase
+            .from('role')
+            .select('name')
+            .eq('id', roleData.roleid) // Assurez-vous que roleData.roleid est un int4
+            .single();
+
+          console.log('roleDetails:', roleDetails);
+          console.log('roleDetailsError:', roleDetailsError);
+
+          if (roleDetailsError) {
+            console.error('Erreur lors de la récupération des détails du rôle:', roleDetailsError);
+            return;
+          }
+
+          setRole(roleDetails.name);
+        } else {
+          console.error('Erreur de validation du token:', result.message);
+          handleLogout();
         }
-
-        const { data: roleDetails, error: roleDetailsError } = await supabase
-          .from('role')
-          .select('name')
-          .eq('id', roleData.roleid)
-          .single();
-
-        if (roleDetailsError) {
-          console.error('Erreur lors de la récupération des détails du rôle', roleDetailsError);
-          return;
-        }
-
-        setRole(roleDetails.name);
-      } else {
-        setUser(null);
-        setRole(null);
+      } catch (error) {
+        console.error('Erreur lors de la vérification de la session:', error);
+        handleLogout();
       }
     };
 
     checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        handleLogout();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

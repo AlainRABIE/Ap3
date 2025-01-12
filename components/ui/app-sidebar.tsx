@@ -1,11 +1,11 @@
-"use client"; // Assurez-vous que cette ligne est en haut de votre fichier
+"use client"; 
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from "./sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/services/sidebar/useUser";
 import { useState } from "react";
-import Cookies from 'js-cookie'; // Importez js-cookie pour gérer les cookies
+import Cookies from 'js-cookie'; 
 
 export function AppSidebar() {
   const pathname = usePathname();

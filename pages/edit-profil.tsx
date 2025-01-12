@@ -26,7 +26,7 @@ const ProfilePage = () => {
           name: session.user.user_metadata.full_name ?? '',
         });
       } else {
-        router.push('/login'); // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
+        router.push('/login');  
       }
     };
 

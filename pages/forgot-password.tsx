@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient'; // Assure-toi d'importer correctement ton client Supabase
+import { supabase } from '@/lib/supabaseClient';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -15,8 +15,8 @@ const ForgotPassword = () => {
 
       setMessage('Un lien de réinitialisation a été envoyé à votre adresse email.');
       setError('');
-    } catch (error: unknown) { // Spécifie le type 'unknown' ici
-      if (error instanceof Error) {  // Vérifie si l'erreur est une instance de 'Error'
+    } catch (error: unknown) { 
+      if (error instanceof Error) { 
         setError(error.message);
       } else {
         setError('Une erreur est survenue.');

@@ -1,5 +1,3 @@
-// src/components/ui/label.tsx
-
 import React from "react";
 
 interface LabelProps {

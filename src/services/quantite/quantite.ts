@@ -28,7 +28,6 @@ export const updateStock = async (produitId: number, quantity: number): Promise<
 
 export const revertStock = async (produitId: number, quantity: number): Promise<{ success: boolean, message?: string }> => {
   try {
-    // Réinstaure la quantité du stock
     const { data, error } = await supabase
       .from('produits')
       .update({

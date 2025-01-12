@@ -18,9 +18,9 @@ export function AppSidebar() {
   };
 
   const handleLogout = () => {
-    Cookies.remove('supabaseToken'); // Supprimer le token des cookies
-    localStorage.removeItem('supabase.auth.token'); // Supprimer le token du localStorage
-    window.location.href = '/login'; // Rediriger vers la page de connexion
+    Cookies.remove('supabaseToken'); 
+    localStorage.removeItem('supabase.auth.token'); 
+    window.location.href = '/login'; 
   };
 
   return (

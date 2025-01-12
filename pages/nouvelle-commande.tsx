@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { AppSidebar } from "../components/ui/app-sidebar";
 
-// Définition des types
 interface Commande {
   id: number;
   user_id: number;
@@ -44,7 +43,6 @@ const CommandesPage = () => {
 
   const [commandeToEdit, setCommandeToEdit] = useState<Commande | null>(null);
 
-  // Fonction pour récupérer les médicaments
   const fetchMedicaments = async () => {
     const { data, error } = await supabase.from("medicaments").select("*");
     if (error) {
@@ -54,7 +52,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour récupérer les fournisseurs
   const fetchFournisseurs = async () => {
     const { data, error } = await supabase.from("fournisseur").select("*");
     if (error) {
@@ -64,7 +61,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour récupérer les commandes
   const fetchCommandes = async () => {
     const { data, error } = await supabase.from("commandes").select("*");
     if (error) {
@@ -74,14 +70,12 @@ const CommandesPage = () => {
     }
   };
 
-  // Hook pour récupérer les données au chargement
   useEffect(() => {
     fetchCommandes();
     fetchMedicaments();
     fetchFournisseurs();
   }, []);
 
-  // Fonction pour ajouter une commande
   const handleAddCommande = async () => {
     const { data, error } = await supabase.from("commandes").insert([newCommande]);
     if (error) {
@@ -92,7 +86,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour modifier la commande
   const handleEditCommande = async () => {
     if (!commandeToEdit) return;
 
@@ -116,7 +109,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour vérifier si la commande peut être modifiée (si < 3h)
   const canEditCommande = (createdAt: string) => {
     const createdDate = new Date(createdAt);
     const now = new Date();
@@ -201,7 +193,6 @@ const CommandesPage = () => {
           Ajouter une commande
         </button>
 
-        {/* Formulaire de modification de commande */}
         {isEditFormVisible && commandeToEdit && (
           <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
             <div className="bg-white p-8 rounded-lg w-96">
@@ -272,7 +263,6 @@ const CommandesPage = () => {
           </div>
         )}
 
-        {/* Formulaire d'ajout de commande */}
         {isFormVisible && (
           <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
             <div className="bg-white p-8 rounded-lg w-96">

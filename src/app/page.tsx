@@ -19,12 +19,12 @@ export default function Page() {
         if (response.ok) {
           setUser(result);
           console.log('Utilisateur validé:', result);
+          console.log('Type de result.id:', typeof result.id);
 
-          // Récupération du roleid de la table User
           const { data: roleData, error: roleError } = await supabase
             .from('User')
             .select('roleid')
-            .eq('id', result.id) // Assurez-vous que result.id est un int4
+            .eq('id', Number(result.id)) 
             .single();
 
           console.log('roleData:', roleData);
@@ -40,11 +40,12 @@ export default function Page() {
             return;
           }
 
-          // Récupération du nom du rôle de la table role
+          console.log('Type de roleData.roleid:', typeof roleData.roleid);
+
           const { data: roleDetails, error: roleDetailsError } = await supabase
             .from('role')
             .select('name')
-            .eq('id', roleData.roleid) // Assurez-vous que roleData.roleid est un int4
+            .eq('id', Number(roleData.roleid)) 
             .single();
 
           console.log('roleDetails:', roleDetails);

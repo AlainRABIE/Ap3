@@ -53,18 +53,16 @@ const FournisseursPage = () => {
       return;
     }
 
-    // Vérifier si le rôle est 'admin'
     if (roleData?.roleid === "admin") {
       setIsAdmin(true);
     }
   };
 
-  // Fonction de gestion de la session
   const checkSession = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData?.session?.user) {
       setUser(sessionData.session.user);
-      checkIfAdmin(sessionData.session.user.id); // Vérifier le rôle de l'utilisateur après la connexion
+      checkIfAdmin(sessionData.session.user.id);
     } else {
       console.log("Aucun utilisateur connecté");
       setUser(null);
@@ -74,7 +72,7 @@ const FournisseursPage = () => {
 
   useEffect(() => {
     fetchFournisseurs();
-    checkSession(); // Vérifie la session au moment du rendu
+    checkSession(); 
   }, []);
 
 
@@ -89,8 +87,8 @@ const FournisseursPage = () => {
         site_web: formData.site_web,
       }]);
       if (error) throw error;
-      fetchFournisseurs(); // Rafraîchit la liste après ajout
-      setShowForm(false); // Masque le formulaire après l'ajout
+      fetchFournisseurs();
+      setShowForm(false); 
     } catch (error) {
       console.error("Erreur lors de l'ajout du fournisseur", error);
     }
@@ -110,8 +108,8 @@ const FournisseursPage = () => {
         })
         .eq("id", formData.id);
       if (error) throw error;
-      fetchFournisseurs(); // Rafraîchit la liste après modification
-      setShowForm(false); // Masque le formulaire après modification
+      fetchFournisseurs();
+      setShowForm(false); 
     } catch (error) {
       console.error("Erreur lors de la mise à jour du fournisseur", error);
     }
@@ -129,7 +127,7 @@ const FournisseursPage = () => {
     try {
       const { error } = await supabase.from("fournisseur").delete().eq("id", id);
       if (error) throw error;
-      fetchFournisseurs(); // Rafraîchit la liste après suppression
+      fetchFournisseurs(); 
     } catch (error) {
       console.error("Erreur lors de la suppression du fournisseur", error);
     }

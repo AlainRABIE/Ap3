@@ -30,12 +30,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       setCookie({ res }, 'supabaseToken', session.access_token, {
-        maxAge: 60 * 60 * 24 * 7, // 1 semaine
+        maxAge: 60 * 60 * 24 * 7, 
         path: '/',
       });
 
       setCookie({ res }, 'refreshToken', session.refresh_token, {
-        maxAge: 60 * 60 * 24 * 7, // 1 semaine
+        maxAge: 60 * 60 * 24 * 7, 
         path: '/',
       });
 

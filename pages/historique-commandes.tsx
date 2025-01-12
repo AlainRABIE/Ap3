@@ -1,6 +1,5 @@
-// pages/historique-commandes.tsx
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // Assurez-vous que vous avez configuré Supabase
+import { supabase } from "@/lib/supabaseClient"; 
 import { SidebarProvider, useSidebar } from "../components/ui/sidebar";
 import { AppSidebar } from "../components/ui/app-sidebar";
 
@@ -8,8 +7,8 @@ interface Commande {
   id_historique: number;
   quantite: number;
   date_creation: string;
-  medicament_nom: string;  // Nom du médicament
-  commande_nom: string;    // Nom de la commande
+  medicament_nom: string;  
+  commande_nom: string;    
 }
 
 const HistoriqueCommandes = () => {

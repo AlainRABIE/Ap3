@@ -12,7 +12,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ message: 'Tous les champs sont requis' });
       }
 
-      // Vérifiez si le rôle existe dans la table "role"
       const { data: roleData, error: roleError } = await supabase
         .from('role')
         .select('id')
@@ -24,7 +23,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ message: 'Le rôle spécifié n\'existe pas' });
       }
 
-      // Inscription de l'utilisateur avec Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -35,7 +33,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({ message: error.message });
       }
 
-      // Ajout des informations de l'utilisateur dans la table "User"
       const { error: userError } = await supabase
         .from('User')
         .insert([{ email, name, roleid: roleData.id }]);

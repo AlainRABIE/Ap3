@@ -24,7 +24,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       console.log('Connexion réussie:', data.user);
 
-      // Stocker le jeton d'accès dans les cookies
       res.setHeader('Set-Cookie', `supabaseToken=${data.session.access_token}; Path=/; HttpOnly; Secure; SameSite=Strict`);
 
       res.status(200).json({ message: 'Connexion réussie', user: data.user });

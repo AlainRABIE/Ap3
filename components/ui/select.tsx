@@ -1,5 +1,3 @@
-// src/components/ui/select.tsx
-
 import React from "react";
 
 interface SelectProps {

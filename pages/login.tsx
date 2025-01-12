@@ -33,11 +33,8 @@ const LoginPage = () => {
       console.log('Connexion réussie:', user);
       console.log('Token de session:', session.access_token);
 
-      // Utilisez js-cookie pour stocker le jeton d'accès dans les cookies
       Cookies.set('supabaseToken', session.access_token, { expires: 1, secure: true, sameSite: 'Strict' });
       console.log('Cookie après connexion:', document.cookie);
-
-      // Stocker la session dans le localStorage
       localStorage.setItem('supabase.auth.token', session.access_token);
       router.push('/');
     }

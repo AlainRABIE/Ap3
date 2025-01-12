@@ -1,10 +1,7 @@
-// services/commandeService.ts
+import { supabase } from "@/lib/supabaseClient";
 
-import { supabase } from "@/lib/supabaseClient"; // Assurez-vous que ce chemin est correct
-
-// Définition de l'interface Commande
 interface Commande {
-  id: number; // L'ID sera généré par Supabase
+  id: number; 
   user_id: number;
   fournisseur_id: number;
   produit_id: number;
@@ -13,9 +10,8 @@ interface Commande {
   etat: string;
 }
 
-// Méthode pour ajouter une commande
 export const addCommande = async (
-  commande: Omit<Commande, 'id'> // On omet 'id' car il sera généré automatiquement par Supabase
+  commande: Omit<Commande, 'id'> 
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
     const { data, error } = await supabase.from("commandes").insert([commande]);
@@ -33,7 +29,6 @@ export const addCommande = async (
   }
 };
 
-// Méthode pour récupérer toutes les commandes
 export const getCommandes = async (): Promise<Commande[]> => {
   try {
     const { data, error } = await supabase.from("commandes").select("*");
@@ -44,7 +39,7 @@ export const getCommandes = async (): Promise<Commande[]> => {
     }
 
     console.log("Commandes récupérées :", data);
-    return data as Commande[]; // Typecasting explicite pour s'assurer que 'data' correspond à un tableau de Commande
+    return data as Commande[]; 
   } catch (error) {
     console.error("Une erreur est survenue lors de la récupération des commandes :", error);
     return [];

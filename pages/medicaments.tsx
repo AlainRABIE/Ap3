@@ -4,7 +4,6 @@ import "../src/app/globals.css";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { AppSidebar } from "../components/ui/app-sidebar";
 
-// Définir un type pour les médicaments
 type Medicament = {
   id: number;
   name: string;
@@ -25,7 +24,6 @@ const MedicamentsPage = () => {
     maladies_non_compatibles: "",
   });
 
-  // Récupérer les médicaments depuis Supabase
   useEffect(() => {
     const fetchMedicaments = async () => {
       setLoading(true);
@@ -37,7 +35,7 @@ const MedicamentsPage = () => {
         if (error) throw new Error(error.message);
 
         if (Array.isArray(data)) {
-          setMedicaments(data as Medicament[]); // S'assurer que les données sont du type attendu
+          setMedicaments(data as Medicament[]);
         } else {
           console.error("Les données récupérées ne sont pas sous forme de tableau.");
         }
@@ -51,7 +49,6 @@ const MedicamentsPage = () => {
     fetchMedicaments();
   }, []);
 
-  // Supprimer un médicament
   const handleDelete = async (id: number) => {
     const confirmDelete = window.confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?");
     if (!confirmDelete) return;
@@ -75,12 +72,9 @@ const MedicamentsPage = () => {
     }
   };
 
-  // Voir les détails d'un médicament
   const handleDetail = (medicament: Medicament) => {
     setSelectedMedicament(medicament);
   };
-
-  // Modifier un médicament
   const handleEdit = (medicament: Medicament) => {
     setFormData({
       name: medicament.name,

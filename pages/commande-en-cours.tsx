@@ -72,12 +72,12 @@ const CommandesPage = () => {
     if (user.data) {
       const { data, error } = await supabase
         .from("role")
-        .select("role_name")
+        .select("roleid")
         .single();
       if (error) {
         console.error("Erreur lors de la récupération du rôle de l'utilisateur :", error.message);
       } else {
-        setUserRole(data?.role_name || null);
+        setUserRole(data?.roleid || null);
       }
     }
   };

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import "../src/app/globals.css";
+import { User } from "@supabase/supabase-js";
+import { fetchFournisseurs, checkIfAdmin, addFournisseur, updateFournisseur, deleteFournisseur } from "@/services/fournisseur/fournisseur"; // Assure-toi que le chemin est correct
 import { SidebarProvider } from "../components/ui/sidebar";
 import { AppSidebar } from "../components/ui/app-sidebar";
-import { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Fournisseur {
   id: number;
@@ -12,14 +12,6 @@ interface Fournisseur {
   email: string;
   telephone: string;
   site_web: string;
-}
-
-interface UserRole {
-  id: string;
-  roleid: number;
-  role?: {
-    name: string;
-  };
 }
 
 const FournisseursPage = () => {
@@ -37,56 +29,14 @@ const FournisseursPage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  const fetchFournisseurs = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("fournisseur")
-        .select("*")
-        .order('nom', { ascending: true });
-      
-      if (error) throw error;
-      setFournisseurs(data || []);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des fournisseurs", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const checkIfAdmin = async (userId: string) => {
-    try {
-      const { data: userData, error } = await supabase
-        .from("user")
-        .select(`
-          id,
-          role:roleid (
-            name
-          )
-        `)
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Erreur lors de la récupération de l'utilisateur", error);
-        setIsAdmin(false);
-        return;
-      }
-
-      setIsAdmin(userData?.role?.name === "admin");
-    } catch (error) {
-      console.error("Erreur lors de la vérification du rôle administrateur", error);
-      setIsAdmin(false);
-    }
-  };
-
   const checkSession = async () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      
+
       if (sessionData?.session?.user) {
         setUser(sessionData.session.user);
-        await checkIfAdmin(sessionData.session.user.id);
+        const isAdmin = await checkIfAdmin(sessionData.session.user.id);
+        setIsAdmin(isAdmin);
       } else {
         setUser(null);
         setIsAdmin(false);
@@ -101,7 +51,9 @@ const FournisseursPage = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchFournisseurs();
+      const fournisseurs = await fetchFournisseurs();
+      setFournisseurs(fournisseurs);
+      setIsLoading(false);
     };
 
     initialize();
@@ -109,7 +61,8 @@ const FournisseursPage = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
-        await checkIfAdmin(session.user.id);
+        const isAdmin = await checkIfAdmin(session.user.id);
+        setIsAdmin(isAdmin);
       } else {
         setUser(null);
         setIsAdmin(false);
@@ -121,65 +74,36 @@ const FournisseursPage = () => {
     };
   }, []);
 
-  const addFournisseur = async (e: React.FormEvent) => {
+  const handleAddFournisseur = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const { error } = await supabase.from("fournisseur").insert([{
-        nom: formData.nom,
-        adresse: formData.adresse,
-        email: formData.email,
-        telephone: formData.telephone,
-        site_web: formData.site_web,
-      }]);
-      
-      if (error) throw error;
-      
-      await fetchFournisseurs();
-      setShowForm(false);
-      setFormData({
-        id: null,
-        nom: "",
-        adresse: "",
-        email: "",
-        telephone: "",
-        site_web: "",
-      });
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du fournisseur", error);
-    }
+    await addFournisseur(formData);
+    const fournisseurs = await fetchFournisseurs();
+    setFournisseurs(fournisseurs);
+    setShowForm(false);
+    setFormData({
+      id: null,
+      nom: "",
+      adresse: "",
+      email: "",
+      telephone: "",
+      site_web: "",
+    });
   };
 
-  const updateFournisseur = async (e: React.FormEvent) => {
+  const handleUpdateFournisseur = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (!formData.id) throw new Error("ID du fournisseur manquant");
-
-      const { error } = await supabase
-        .from("fournisseur")
-        .update({
-          nom: formData.nom,
-          adresse: formData.adresse,
-          email: formData.email,
-          telephone: formData.telephone,
-          site_web: formData.site_web,
-        })
-        .eq("id", formData.id);
-      
-      if (error) throw error;
-      
-      await fetchFournisseurs();
-      setShowForm(false);
-      setFormData({
-        id: null,
-        nom: "",
-        adresse: "",
-        email: "",
-        telephone: "",
-        site_web: "",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du fournisseur", error);
-    }
+    await updateFournisseur(formData);
+    const fournisseurs = await fetchFournisseurs();
+    setFournisseurs(fournisseurs);
+    setShowForm(false);
+    setFormData({
+      id: null,
+      nom: "",
+      adresse: "",
+      email: "",
+      telephone: "",
+      site_web: "",
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,26 +114,17 @@ const FournisseursPage = () => {
     }));
   };
 
-  const deleteFournisseur = async (id: number) => {
+  const handleDeleteFournisseur = async (id: number) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?")) {
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from("fournisseur")
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      await fetchFournisseurs();
-    } catch (error) {
-      console.error("Erreur lors de la suppression du fournisseur", error);
-    }
+    await deleteFournisseur(id);
+    const fournisseurs = await fetchFournisseurs();
+    setFournisseurs(fournisseurs);
   };
 
-  const editFournisseur = (fournisseur: Fournisseur) => {
+  const handleEditFournisseur = (fournisseur: Fournisseur) => {
     setFormData(fournisseur);
     setShowForm(true);
   };
@@ -242,7 +157,7 @@ const FournisseursPage = () => {
           {showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <form
-                onSubmit={formData.id ? updateFournisseur : addFournisseur}
+                onSubmit={formData.id ? handleUpdateFournisseur : handleAddFournisseur}
                 className="bg-gray-700 p-6 rounded-lg border-2 border-white text-gray-300 w-full max-w-md mx-auto mb-6"
               >
                 <h2 className="text-2xl font-semibold mb-4">
@@ -327,62 +242,50 @@ const FournisseursPage = () => {
               <p className="text-xl">Chargement...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="table-auto w-full bg-gray-800 text-white border border-gray-600">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 border-b border-gray-300">Nom</th>
-                    <th className="px-6 py-3 border-b border-gray-300">Adresse</th>
-                    <th className="px-6 py-3 border-b border-gray-300">Email</th>
-                    <th className="px-6 py-3 border-b border-gray-300">Téléphone</th>
-                    <th className="px-6 py-3 border-b border-gray-300">Site Web</th>
-                    {isAdmin && (
-                      <th className="px-6 py-3 border-b border-gray-300">Actions</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {fournisseurs.map((fournisseur) => (
-                    <tr key={fournisseur.id} className="hover:bg-gray-700">
-                      <td className="px-6 py-3 border-b border-gray-600">{fournisseur.nom}</td>
-                      <td className="px-6 py-3 border-b border-gray-600">{fournisseur.adresse}</td>
-                      <td className="px-6 py-3 border-b border-gray-600">
-                        <a href={`mailto:${fournisseur.email}`} className="text-blue-400 hover:text-blue-300">
-                          {fournisseur.email}
-                        </a>
-                      </td>
-                      <td className="px-6 py-3 border-b border-gray-600">
-                        <a href={`tel:${fournisseur.telephone}`} className="text-blue-400 hover:text-blue-300">
-                          {fournisseur.telephone}
-                        </a>
-                      </td>
-                      <td className="px-6 py-3 border-b border-gray-600">
-                        <a href={fournisseur.site_web} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                          {fournisseur.site_web}
-                        </a>
-                      </td>
-                      {isAdmin && (
-                        <td className="px-6 py-3 border-b border-gray-600">
-                          <div className="flex gap-2">
+            <div>
+              {fournisseurs.length === 0 ? (
+                <p>Aucun fournisseur trouvé.</p>
+              ) : (
+                <table className="w-full text-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="border-b border-gray-500 p-3 text-left">Nom</th>
+                      <th className="border-b border-gray-500 p-3 text-left">Adresse</th>
+                      <th className="border-b border-gray-500 p-3 text-left">Email</th>
+                      <th className="border-b border-gray-500 p-3 text-left">Téléphone</th>
+                      <th className="border-b border-gray-500 p-3 text-left">Site Web</th>
+                      {isAdmin && <th className="border-b border-gray-500 p-3 text-left">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fournisseurs.map((fournisseur) => (
+                      <tr key={fournisseur.id}>
+                        <td className="border-b border-gray-500 p-3">{fournisseur.nom}</td>
+                        <td className="border-b border-gray-500 p-3">{fournisseur.adresse}</td>
+                        <td className="border-b border-gray-500 p-3">{fournisseur.email}</td>
+                        <td className="border-b border-gray-500 p-3">{fournisseur.telephone}</td>
+                        <td className="border-b border-gray-500 p-3">{fournisseur.site_web}</td>
+                        {isAdmin && (
+                          <td className="border-b border-gray-500 p-3 flex space-x-4">
                             <button
-                              onClick={() => editFournisseur(fournisseur)}
-                              className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600"
+                              onClick={() => handleEditFournisseur(fournisseur)}
+                              className="bg-yellow-500 text-white py-1 px-4 rounded-lg hover:bg-yellow-600 transition-colors"
                             >
-                              Modifier
+                              Éditer
                             </button>
                             <button
-                              onClick={() => deleteFournisseur(fournisseur.id)}
-                              className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
+                              onClick={() => handleDeleteFournisseur(fournisseur.id)}
+                              className="bg-red-500 text-white py-1 px-4 rounded-lg hover:bg-red-600 transition-colors"
                             >
                               Supprimer
                             </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
         </div>

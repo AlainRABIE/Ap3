@@ -1,36 +1,91 @@
-import { supabase } from "@/lib/supabaseClient"; 
+import { supabase } from "@/lib/supabaseClient";
 
-export interface Produit {
-  id: number;
-  nom: string;
-  description: string;
-  prix: number;
-}
-
-export interface FournisseurWithProduits {
-  id: number;
-  nom: string;
-  adresse: string;
-  email: string;
-  telephone: string;
-  site_web: string;
-  produits: Produit[];
-}
-
-export const getAllFournisseurs = async (): Promise<FournisseurWithProduits[]> => {
+export const fetchFournisseurs = async () => {
   try {
-    const { data: fournisseurs, error } = await supabase
+    const { data, error } = await supabase
       .from("fournisseur")
-      .select("id, nom, adresse, email, telephone, site_web, produits(id, nom, description, prix)")
-      .order("nom"); 
+      .select("*")
+      .order('nom', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Erreur lors de la récupération des fournisseurs", error);
+    return [];
+  }
+};
+
+export const checkIfAdmin = async (userId: string) => {
+  try {
+    const { data: userData, error } = await supabase
+      .from("user")
+      .select(`
+        id,
+        role:roleid (
+          name
+        )
+      `)
+      .eq("id", userId)
+      .single();
 
     if (error) {
-      throw new Error(error.message);
+      console.error("Erreur lors de la récupération de l'utilisateur", error);
+      return false;
     }
 
-    return fournisseurs as FournisseurWithProduits[];
+    return userData?.role?.name === "admin";
   } catch (error) {
-    console.error("Erreur lors de la récupération des fournisseurs:", error);
-    throw error;
+    console.error("Erreur lors de la vérification du rôle administrateur", error);
+    return false;
+  }
+};
+
+export const addFournisseur = async (formData: any) => {
+  try {
+    const { error } = await supabase.from("fournisseur").insert([{
+      nom: formData.nom,
+      adresse: formData.adresse,
+      email: formData.email,
+      telephone: formData.telephone,
+      site_web: formData.site_web,
+    }]);
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du fournisseur", error);
+  }
+};
+
+export const updateFournisseur = async (formData: any) => {
+  try {
+    if (!formData.id) throw new Error("ID du fournisseur manquant");
+
+    const { error } = await supabase
+      .from("fournisseur")
+      .update({
+        nom: formData.nom,
+        adresse: formData.adresse,
+        email: formData.email,
+        telephone: formData.telephone,
+        site_web: formData.site_web,
+      })
+      .eq("id", formData.id);
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du fournisseur", error);
+  }
+};
+
+export const deleteFournisseur = async (id: number) => {
+  try {
+    const { error } = await supabase
+      .from("fournisseur")
+      .delete()
+      .eq("id", id);
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error("Erreur lors de la suppression du fournisseur", error);
   }
 };

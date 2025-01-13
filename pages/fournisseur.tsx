@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import "../src/app/globals.css";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { AppSidebar } from "../components/ui/app-sidebar";
+import { User } from "@supabase/supabase-js";
 
 interface Fournisseur {
   id: number;
@@ -11,6 +12,14 @@ interface Fournisseur {
   email: string;
   telephone: string;
   site_web: string;
+}
+
+interface UserRole {
+  id: string;
+  roleid: number;
+  role?: {
+    name: string;
+  };
 }
 
 const FournisseursPage = () => {
@@ -26,14 +35,18 @@ const FournisseursPage = () => {
   });
   const [showForm, setShowForm] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const fetchFournisseurs = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.from("fournisseur").select("*");
+      const { data, error } = await supabase
+        .from("fournisseur")
+        .select("*")
+        .order('nom', { ascending: true });
+      
       if (error) throw error;
-      setFournisseurs(data);
+      setFournisseurs(data || []);
     } catch (error) {
       console.error("Erreur lors de la récupération des fournisseurs", error);
     } finally {
@@ -42,39 +55,71 @@ const FournisseursPage = () => {
   };
 
   const checkIfAdmin = async (userId: string) => {
-    const { data: roleData, error: roleError } = await supabase
-      .from("role")
-      .select("roleid")
-      .eq("id", userId)
-      .single();
+    try {
+      const { data: userData, error } = await supabase
+        .from("user")
+        .select(`
+          id,
+          role:roleid (
+            name
+          )
+        `)
+        .eq("id", userId)
+        .single();
 
-    if (roleError) {
-      console.error("Erreur lors de la récupération du rôle", roleError);
-      return;
-    }
+      if (error) {
+        console.error("Erreur lors de la récupération de l'utilisateur", error);
+        setIsAdmin(false);
+        return;
+      }
 
-    if (roleData?.roleid === "admin") {
-      setIsAdmin(true);
+      setIsAdmin(userData?.role?.name === "admin");
+    } catch (error) {
+      console.error("Erreur lors de la vérification du rôle administrateur", error);
+      setIsAdmin(false);
     }
   };
 
   const checkSession = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session?.user) {
-      setUser(sessionData.session.user);
-      checkIfAdmin(sessionData.session.user.id);
-    } else {
-      console.log("Aucun utilisateur connecté");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (sessionData?.session?.user) {
+        setUser(sessionData.session.user);
+        await checkIfAdmin(sessionData.session.user.id);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la vérification de la session", error);
       setUser(null);
       setIsAdmin(false);
     }
   };
 
   useEffect(() => {
-    fetchFournisseurs();
-    checkSession(); 
-  }, []);
+    const initialize = async () => {
+      await checkSession();
+      await fetchFournisseurs();
+    };
 
+    initialize();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        await checkIfAdmin(session.user.id);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   const addFournisseur = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,9 +131,19 @@ const FournisseursPage = () => {
         telephone: formData.telephone,
         site_web: formData.site_web,
       }]);
+      
       if (error) throw error;
-      fetchFournisseurs();
-      setShowForm(false); 
+      
+      await fetchFournisseurs();
+      setShowForm(false);
+      setFormData({
+        id: null,
+        nom: "",
+        adresse: "",
+        email: "",
+        telephone: "",
+        site_web: "",
+      });
     } catch (error) {
       console.error("Erreur lors de l'ajout du fournisseur", error);
     }
@@ -97,6 +152,8 @@ const FournisseursPage = () => {
   const updateFournisseur = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!formData.id) throw new Error("ID du fournisseur manquant");
+
       const { error } = await supabase
         .from("fournisseur")
         .update({
@@ -107,9 +164,19 @@ const FournisseursPage = () => {
           site_web: formData.site_web,
         })
         .eq("id", formData.id);
+      
       if (error) throw error;
-      fetchFournisseurs();
-      setShowForm(false); 
+      
+      await fetchFournisseurs();
+      setShowForm(false);
+      setFormData({
+        id: null,
+        nom: "",
+        adresse: "",
+        email: "",
+        telephone: "",
+        site_web: "",
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du fournisseur", error);
     }
@@ -124,10 +191,19 @@ const FournisseursPage = () => {
   };
 
   const deleteFournisseur = async (id: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?")) {
+      return;
+    }
+
     try {
-      const { error } = await supabase.from("fournisseur").delete().eq("id", id);
+      const { error } = await supabase
+        .from("fournisseur")
+        .delete()
+        .eq("id", id);
+      
       if (error) throw error;
-      fetchFournisseurs(); 
+      
+      await fetchFournisseurs();
     } catch (error) {
       console.error("Erreur lors de la suppression du fournisseur", error);
     }
@@ -146,12 +222,23 @@ const FournisseursPage = () => {
           <h1 className="text-3xl font-semibold mb-6">Gestion des Fournisseurs</h1>
           {isAdmin && (
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => {
+                setFormData({
+                  id: null,
+                  nom: "",
+                  adresse: "",
+                  email: "",
+                  telephone: "",
+                  site_web: "",
+                });
+                setShowForm(true);
+              }}
               className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors mb-6"
             >
               Ajouter un Fournisseur
             </button>
           )}
+
           {showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <form
@@ -234,50 +321,69 @@ const FournisseursPage = () => {
               </form>
             </div>
           )}
+
           {isLoading ? (
-            <p>Chargement...</p>
+            <div className="flex justify-center items-center h-64">
+              <p className="text-xl">Chargement...</p>
+            </div>
           ) : (
-            <table className="table-auto w-full bg-gray-800 text-white border border-gray-600">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 border-b border-gray-300">Nom</th>
-                  <th className="px-6 py-3 border-b border-gray-300">Adresse</th>
-                  <th className="px-6 py-3 border-b border-gray-300">Email</th>
-                  <th className="px-6 py-3 border-b border-gray-300">Téléphone</th>
-                  <th className="px-6 py-3 border-b border-gray-300">Site Web</th>
-                  <th className="px-6 py-3 border-b border-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fournisseurs.map((fournisseur) => (
-                  <tr key={fournisseur.id} className="bg-gray-700 text-white">
-                    <td className="px-6 py-3">{fournisseur.nom}</td>
-                    <td className="px-6 py-3">{fournisseur.adresse}</td>
-                    <td className="px-6 py-3">{fournisseur.email}</td>
-                    <td className="px-6 py-3">{fournisseur.telephone}</td>
-                    <td className="px-6 py-3">{fournisseur.site_web}</td>
-                    <td className="px-6 py-3 flex gap-2">
-                      {isAdmin && (
-                        <>
-                          <button
-                            onClick={() => editFournisseur(fournisseur)}
-                            className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600"
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            onClick={() => deleteFournisseur(fournisseur.id)}
-                            className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
-                          >
-                            Supprimer
-                          </button>
-                        </>
-                      )}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="table-auto w-full bg-gray-800 text-white border border-gray-600">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 border-b border-gray-300">Nom</th>
+                    <th className="px-6 py-3 border-b border-gray-300">Adresse</th>
+                    <th className="px-6 py-3 border-b border-gray-300">Email</th>
+                    <th className="px-6 py-3 border-b border-gray-300">Téléphone</th>
+                    <th className="px-6 py-3 border-b border-gray-300">Site Web</th>
+                    {isAdmin && (
+                      <th className="px-6 py-3 border-b border-gray-300">Actions</th>
+                    )}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {fournisseurs.map((fournisseur) => (
+                    <tr key={fournisseur.id} className="hover:bg-gray-700">
+                      <td className="px-6 py-3 border-b border-gray-600">{fournisseur.nom}</td>
+                      <td className="px-6 py-3 border-b border-gray-600">{fournisseur.adresse}</td>
+                      <td className="px-6 py-3 border-b border-gray-600">
+                        <a href={`mailto:${fournisseur.email}`} className="text-blue-400 hover:text-blue-300">
+                          {fournisseur.email}
+                        </a>
+                      </td>
+                      <td className="px-6 py-3 border-b border-gray-600">
+                        <a href={`tel:${fournisseur.telephone}`} className="text-blue-400 hover:text-blue-300">
+                          {fournisseur.telephone}
+                        </a>
+                      </td>
+                      <td className="px-6 py-3 border-b border-gray-600">
+                        <a href={fournisseur.site_web} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                          {fournisseur.site_web}
+                        </a>
+                      </td>
+                      {isAdmin && (
+                        <td className="px-6 py-3 border-b border-gray-600">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => editFournisseur(fournisseur)}
+                              className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600"
+                            >
+                              Modifier
+                            </button>
+                            <button
+                              onClick={() => deleteFournisseur(fournisseur.id)}
+                              className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

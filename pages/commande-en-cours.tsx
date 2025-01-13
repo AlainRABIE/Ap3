@@ -192,7 +192,6 @@ const CommandesPage = () => {
                             Modifier (délai dépassé)
                           </button>
                         )}
-                        {/* Afficher les boutons d'approbation ou de rejet uniquement pour les administrateurs */}
                         {userRole === "administrateur" && (
                           <>
                             <button

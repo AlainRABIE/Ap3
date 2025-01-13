@@ -129,7 +129,6 @@ export function AppSidebar() {
             </Link>
           </>
         )}
-        {error && <p className="text-sm text-red-600">Erreur : {error}</p>}
         <p className="text-sm text-gray-600">© 2025 Ap3 Alain RABIE BTS SIO 2023-2025</p>
       </SidebarFooter>
     </Sidebar>

@@ -35,84 +35,62 @@ export function AppSidebar() {
           <Link href="/" className={`block py-2 px-4 ${isActive("/")}`}>
             Accueil
           </Link>
-
-          <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsStockOpen(!isStockOpen)}>
-            <div className="flex items-center justify-between">
-              Stock
-              <span className="ml-2">{isStockOpen ? "▲" : "▼"}</span>
-            </div>
-            {isStockOpen && (
-              <div className="pl-4">
-                <Link href="/medicaments" className={`block py-2 px-4 ${isActive("/medicaments")}`}>
-                  Stock Médicaments
-                </Link>
-                <Link href="/materiel" className={`block py-2 px-4 ${isActive("/materiel")}`}>
-                  Stock Matériel
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsCommandeOpen(!isCommandeOpen)}>
-            <div className="flex items-center justify-between">
-              Commande
-              <span className="ml-2">{isCommandeOpen ? "▲" : "▼"}</span>
-            </div>
-            {isCommandeOpen && (
-              <div className="pl-4">
-                <Link href="/commande" className={`block py-2 px-4 ${isActive("/commande")}`}>
-                  Liste des Commandes
-                </Link>
-                <Link href="/nouvelle-commande" className={`block py-2 px-4 ${isActive("/nouvelle-commande")}`}>
-                  Nouvelle Commande
-                </Link>
-                <Link href="/commande-en-cours" className={`block py-2 px-4 ${isActive("/commande-en-cours")}`}>
-                  Commande en cours de traitement
-                </Link>
-                <Link href="/historique-commandes" className={`block py-2 px-4 ${isActive("/historique-commandes")}`}>
-                  Historique de commande
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <Link href="/fournisseur" className={`block py-2 px-4 ${isActive("/fournisseur")}`}>
-            Fournisseurs
-          </Link>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          {user ? (
+          
+          {user && (
             <>
-              <Link href="/settings" className={`block py-2 px-4 ${isActive("/settings")}`}>
-                Paramètres
+              <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsStockOpen(!isStockOpen)}>
+                <div className="flex items-center justify-between">
+                  Stock
+                  <span className="ml-2">{isStockOpen ? "▲" : "▼"}</span>
+                </div>
+                {isStockOpen && (
+                  <div className="pl-4">
+                    <Link href="/medicaments" className={`block py-2 px-4 ${isActive("/medicaments")}`}>
+                      Stock Médicaments
+                    </Link>
+                    <Link href="/materiel" className={`block py-2 px-4 ${isActive("/materiel")}`}>
+                      Stock Matériel
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              <div className="block py-2 px-4 cursor-pointer" onClick={() => setIsCommandeOpen(!isCommandeOpen)}>
+                <div className="flex items-center justify-between">
+                  Commande
+                  <span className="ml-2">{isCommandeOpen ? "▲" : "▼"}</span>
+                </div>
+                {isCommandeOpen && (
+                  <div className="pl-4">
+                    <Link href="/commande" className={`block py-2 px-4 ${isActive("/commande")}`}>
+                      Liste des Commandes
+                    </Link>
+                    <Link href="/nouvelle-commande" className={`block py-2 px-4 ${isActive("/nouvelle-commande")}`}>
+                      Nouvelle Commande
+                    </Link>
+                    <Link href="/commande-en-cours" className={`block py-2 px-4 ${isActive("/commande-en-cours")}`}>
+                      Commande en cours de traitement
+                    </Link>
+                    <Link href="/historique-commandes" className={`block py-2 px-4 ${isActive("/historique-commandes")}`}>
+                      Historique de commande
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              <Link href="/fournisseur" className={`block py-2 px-4 ${isActive("/fournisseur")}`}>
+                Fournisseurs
               </Link>
-              <Link href="/profile" className={`block py-2 px-4 ${isActive("/profile")}`}>
-                Profil
-              </Link>
-              <button
-                className="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors mt-2"
-                onClick={handleLogout}
-              >
-                Déconnexion
-              </button>
-            </>
-          ) : (
-            <>
-              {/* <Link href="/login" className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                Connexion
-              </Link>
-              <Link href="/register">
-                <button className="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors mt-2">
-                  Inscription
-                </button>
-              </Link> */}
             </>
           )}
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="flex flex-col items-start p-4">
+        <Link href="/settings" className={`block py-2 px-4 ${isActive("/settings")}`}>
+          Paramètres de l'application
+        </Link>
+        
         {user ? (
           <div className="w-full mb-4">
             <p className="text-sm font-semibold">Bienvenue, {user.email}</p>

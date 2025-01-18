@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import "../src/app/globals.css";
-import { SidebarProvider } from "../components/ui/sidebar";
-import { AppSidebar } from "../components/ui/app-sidebar";
+import MenubarRe from "../components/ui/MenuBarRe";
 
 type Medicament = {
   id: number;
@@ -35,9 +34,7 @@ const MedicamentsPage = () => {
         if (error) throw new Error(error.message);
 
         if (Array.isArray(data)) {
-          setMedicaments(data as Medicament[]);
-        } else {
-          console.error("Les données récupérées ne sont pas sous forme de tableau.");
+          setMedicaments(data);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des médicaments:", error);
@@ -49,33 +46,8 @@ const MedicamentsPage = () => {
     fetchMedicaments();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    const confirmDelete = window.confirm("Êtes-vous sûr de vouloir supprimer ce médicament ?");
-    if (!confirmDelete) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("medicaments")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw new Error(`Erreur lors de la suppression : ${error.message}`);
-
-      setMedicaments((prevMedicaments) =>
-        prevMedicaments.filter((medicament) => medicament.id !== id)
-      );
-
-      alert("Médicament supprimé avec succès.");
-    } catch (error) {
-      console.error("Erreur lors de la suppression du médicament:", error);
-      alert("Erreur lors de la suppression du médicament.");
-    }
-  };
-
-  const handleDetail = (medicament: Medicament) => {
-    setSelectedMedicament(medicament);
-  };
   const handleEdit = (medicament: Medicament) => {
+    setSelectedMedicament(medicament);
     setFormData({
       name: medicament.name,
       description: medicament.description,
@@ -83,164 +55,170 @@ const MedicamentsPage = () => {
       maladies_non_compatibles: medicament.maladies_non_compatibles,
     });
     setIsEditing(true);
-    setSelectedMedicament(medicament);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedMedicament) return;
-
+  const handleDelete = async (id: number) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("medicaments")
-        .update(formData)
-        .eq("id", selectedMedicament.id);
+        .delete()
+        .eq("id", id);
 
       if (error) throw new Error(error.message);
 
-      setMedicaments((prevMedicaments) =>
-        prevMedicaments.map((medicament) =>
-          medicament.id === selectedMedicament.id ? { ...medicament, ...formData } : medicament
-        )
-      );
+      setMedicaments(medicaments.filter((medicament) => medicament.id !== id));
+    } catch (error) {
+      console.error("Erreur lors de la suppression du médicament:", error);
+    }
+  };
 
-      alert("Médicament mis à jour avec succès.");
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    try {
+      if (isEditing && selectedMedicament) {
+        const { error } = await supabase
+          .from("medicaments")
+          .update(formData)
+          .eq("id", selectedMedicament.id);
+
+        if (error) throw new Error(error.message);
+
+        setMedicaments(
+          medicaments.map((medicament) =>
+            medicament.id === selectedMedicament.id ? { ...medicament, ...formData } : medicament
+          )
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("medicaments")
+          .insert([formData]);
+
+        if (error) throw new Error(error.message);
+
+        if (data) {
+          setMedicaments([...medicaments, ...data]);
+        }
+      }
+
       setIsEditing(false);
       setSelectedMedicament(null);
+      setFormData({
+        name: "",
+        description: "",
+        posologie: "",
+        maladies_non_compatibles: "",
+      });
     } catch (error) {
-      console.error("Erreur lors de la modification du médicament:", error);
-      alert("Erreur lors de la modification du médicament.");
+      console.error("Erreur lors de la soumission du formulaire:", error);
     }
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex">
-        <AppSidebar />
-
-        <div className="container mx-auto p-4 flex-1">
-          <h1 className="text-2xl font-bold mb-4">Médicaments en Stock</h1>
-
-          {loading ? (
-            <p>Chargement des médicaments...</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-collapse">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 border-b">Nom</th>
-                    <th className="px-4 py-2 border-b">Description</th>
-                    <th className="px-4 py-2 border-b">Posologie</th>
-                    <th className="px-4 py-2 border-b">Maladies non compatibles</th>
-                    <th className="px-4 py-2 border-b">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {medicaments.map((medicament) => (
-                    <tr key={medicament.id}>
-                      <td className="px-4 py-2 border-b">{medicament.name}</td>
-                      <td className="px-4 py-2 border-b">{medicament.description}</td>
-                      <td className="px-4 py-2 border-b">{medicament.posologie}</td>
-                      <td className="px-4 py-2 border-b">{medicament.maladies_non_compatibles}</td>
-                      <td className="px-4 py-2 border-b">
-                        <button
-                          onClick={() => handleDetail(medicament)}
-                          className="text-blue-500 hover:text-blue-700 mr-2"
-                        >
-                          Détail
-                        </button>
-                        <button
-                          onClick={() => handleEdit(medicament)}
-                          className="text-green-500 hover:text-green-700"
-                        >
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => handleDelete(medicament.id)}
-                          className="text-red-500 hover:text-red-700 ml-2"
-                        >
-                          Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {selectedMedicament && !isEditing && (
-            <div className="mt-4">
-              <h2 className="text-xl font-semibold mb-2">Détails du Médicament</h2>
-              <p><strong>Nom:</strong> {selectedMedicament.name}</p>
-              <p><strong>Description:</strong> {selectedMedicament.description}</p>
-              <p><strong>Posologie:</strong> {selectedMedicament.posologie}</p>
-              <p><strong>Maladies non compatibles:</strong> {selectedMedicament.maladies_non_compatibles}</p>
-            </div>
-          )}
-
-          {isEditing && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-xl font-semibold mb-2 text-black">Modifier le Médicament</h2>
-                <form onSubmit={handleFormSubmit}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-black">Nom</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-black">Description</label>
-                    <input
-                      type="text"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-black">Posologie</label>
-                    <input
-                      type="text"
-                      value={formData.posologie}
-                      onChange={(e) => setFormData({ ...formData, posologie: e.target.value })}
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-black">Maladies non compatibles</label>
-                    <input
-                      type="text"
-                      value={formData.maladies_non_compatibles}
-                      onChange={(e) =>
-                        setFormData({ ...formData, maladies_non_compatibles: e.target.value })
-                      }
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded"
-                    />
-                  </div>
-                  <div className="flex justify-between">
-                    <button type="submit" className="bg-blue-500 text-white p-2 rounded hover:bg-blue-700">
-                      Enregistrer
+    <div className="relative flex h-screen bg-gray-800">
+      <div className="animated-background"></div>
+      <div className="waves"></div>
+      <MenubarRe />
+      <main className="main-content flex-1 p-8 overflow-auto">
+        <h1 className="text-4xl font-bold mb-6 text-white">Liste des Médicaments</h1>
+        {loading ? (
+          <p className="text-white">Chargement...</p>
+        ) : (
+          <table className="min-w-full table-auto mb-4">
+            <thead>
+              <tr>
+                <th className="px-4 py-2 border">Nom</th>
+                <th className="px-4 py-2 border">Description</th>
+                <th className="px-4 py-2 border">Posologie</th>
+                <th className="px-4 py-2 border">Maladies Non Compatibles</th>
+                <th className="px-4 py-2 border">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {medicaments.map((medicament) => (
+                <tr key={medicament.id}>
+                  <td className="px-4 py-2 border">{medicament.name}</td>
+                  <td className="px-4 py-2 border">{medicament.description}</td>
+                  <td className="px-4 py-2 border">{medicament.posologie}</td>
+                  <td className="px-4 py-2 border">{medicament.maladies_non_compatibles}</td>
+                  <td className="px-4 py-2 border">
+                    <button
+                      onClick={() => handleEdit(medicament)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded"
+                    >
+                      Modifier
                     </button>
                     <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      className="bg-gray-300 text-black p-2 rounded hover:bg-gray-400"
+                      onClick={() => handleDelete(medicament.id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded ml-2"
                     >
-                      Annuler
+                      Supprimer
                     </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </SidebarProvider>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+            <input
+              id="description"
+              name="description"
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="posologie" className="block text-sm font-medium text-gray-700">Posologie</label>
+            <input
+              id="posologie"
+              name="posologie"
+              type="text"
+              value={formData.posologie}
+              onChange={(e) => setFormData({ ...formData, posologie: e.target.value })}
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="maladies_non_compatibles" className="block text-sm font-medium text-gray-700">Maladies Non Compatibles</label>
+            <input
+              id="maladies_non_compatibles"
+              name="maladies_non_compatibles"
+              type="text"
+              value={formData.maladies_non_compatibles}
+              onChange={(e) => setFormData({ ...formData, maladies_non_compatibles: e.target.value })}
+              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {isEditing ? "Mettre à jour" : "Ajouter"}
+          </button>
+        </form>
+      </main>
+    </div>
   );
 };
 

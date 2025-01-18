@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient"; 
-import { SidebarProvider, useSidebar } from "../components/ui/sidebar";
-import { AppSidebar } from "../components/ui/app-sidebar";
+import MenubarRe from "../components/ui/MenuBarRe";
 
 interface Commande {
   id_historique: number;
@@ -34,7 +33,6 @@ const HistoriqueCommandes = () => {
           medicament_nom: commande.medicaments?.nom || "Nom non disponible",
           commande_nom: commande.commandes?.nom || "Nom non disponible",
         }));
-
         setCommandes(commandesWithNames);
       }
     };
@@ -43,41 +41,37 @@ const HistoriqueCommandes = () => {
   }, []);
 
   return (
-    <div className="flex">
-      <AppSidebar />
-      <div className="flex-1 p-4">
-        <h1 className="text-3xl font-semibold text-center mb-8">Historique des Commandes</h1>
-        <table className="min-w-full table-auto">
+    <div className="relative flex h-screen bg-gray-800">
+      <div className="animated-background"></div>
+      <div className="waves"></div>
+      <MenubarRe />
+      <main className="main-content flex-1 p-8 overflow-auto">
+        <h1 className="text-4xl font-bold mb-6 text-white">Historique des Commandes</h1>
+        <table className="min-w-full table-auto mb-4">
           <thead>
             <tr>
-              <th className="py-2 px-4 border-b">Commande</th>
-              <th className="py-2 px-4 border-b">Médicament</th>
-              <th className="py-2 px-4 border-b">Quantité</th>
-              <th className="py-2 px-4 border-b">Date de création</th>
+              <th className="px-4 py-2 border">ID Historique</th>
+              <th className="px-4 py-2 border">Nom du Médicament</th>
+              <th className="px-4 py-2 border">Nom de la Commande</th>
+              <th className="px-4 py-2 border">Quantité</th>
+              <th className="px-4 py-2 border">Date de Création</th>
             </tr>
           </thead>
           <tbody>
             {commandes.map((commande) => (
-              <tr key={commande.id_historique} className="hover:bg-gray-100">
-                <td className="py-2 px-4 border-b">{commande.commande_nom}</td>
-                <td className="py-2 px-4 border-b">{commande.medicament_nom}</td>
-                <td className="py-2 px-4 border-b">{commande.quantite}</td>
-                <td className="py-2 px-4 border-b">{new Date(commande.date_creation).toLocaleString()}</td>
+              <tr key={commande.id_historique}>
+                <td className="px-4 py-2 border">{commande.id_historique}</td>
+                <td className="px-4 py-2 border">{commande.medicament_nom}</td>
+                <td className="px-4 py-2 border">{commande.commande_nom}</td>
+                <td className="px-4 py-2 border">{commande.quantite}</td>
+                <td className="px-4 py-2 border">{new Date(commande.date_creation).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </main>
     </div>
   );
 };
 
-const HistoriqueCommandesPage = () => {
-  return (
-    <SidebarProvider>
-      <HistoriqueCommandes />
-    </SidebarProvider>
-  );
-};
-
-export default HistoriqueCommandesPage;
+export default HistoriqueCommandes;

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { SidebarProvider } from "../components/ui/sidebar";
-import { AppSidebar } from "../components/ui/app-sidebar";
+import MenubarRe from "../components/ui/MenuBarRe";
 
 interface Commande {
   id: number;
@@ -117,10 +116,12 @@ const CommandesPage = () => {
   };
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <div className="container mx-auto p-4">
-        <h2 className="text-xl font-bold mb-4">Liste des commandes</h2>
+    <div className="relative flex h-screen bg-gray-800">
+      <div className="animated-background"></div>
+      <div className="waves"></div>
+      <MenubarRe />
+      <main className="main-content flex-1 p-8 overflow-auto">
+        <h2 className="text-xl font-bold mb-4 text-white">Liste des commandes</h2>
         <table className="min-w-full table-auto mb-4">
           <thead>
             <tr>
@@ -332,8 +333,8 @@ const CommandesPage = () => {
             </div>
           </div>
         )}
-      </div>
-    </SidebarProvider>
+      </main>
+    </div>
   );
 };
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import MenubarRe from '../components/ui/MenuBarRe';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,32 +27,37 @@ const Page = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Liste des Commandes</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>ID Commande</th>
-            <th>ID Utilisateur</th>
-            <th>ID Produit</th>
-            <th>Quantité</th>
-            <th>État</th>
-            <th>Date de Création</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.id}>
-              <td>{item.id}</td>
-              <td>{item.user_id}</td>
-              <td>{item.produit_id}</td>
-              <td>{item.quantite}</td>
-              <td>{item.etat}</td>
-              <td>{new Date(item.created_at).toLocaleString()}</td>
+    <div className="relative flex h-screen bg-gray-800">
+      <div className="animated-background"></div>
+      <div className="waves"></div>
+      <MenubarRe />
+      <main className="main-content flex-1 p-8 overflow-auto">
+        <h1 className="text-4xl font-bold mb-6 text-white">Liste des Commandes</h1>
+        <table className="min-w-full table-auto mb-4">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 border">ID Commande</th>
+              <th className="px-4 py-2 border">ID Utilisateur</th>
+              <th className="px-4 py-2 border">ID Produit</th>
+              <th className="px-4 py-2 border">Quantité</th>
+              <th className="px-4 py-2 border">État</th>
+              <th className="px-4 py-2 border">Date de Création</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.id}>
+                <td className="px-4 py-2 border">{item.id}</td>
+                <td className="px-4 py-2 border">{item.user_id}</td>
+                <td className="px-4 py-2 border">{item.produit_id}</td>
+                <td className="px-4 py-2 border">{item.quantite}</td>
+                <td className="px-4 py-2 border">{item.etat}</td>
+                <td className="px-4 py-2 border">{new Date(item.created_at).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </main>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { parseCookies, setCookie, destroyCookie } from 'nookies';
 import { supabase } from '@/lib/supabaseClient';
+import jwt from 'jsonwebtoken';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
@@ -9,7 +10,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const cookies = parseCookies({ req });
-    const token = cookies.supabaseToken;
+    let token = cookies.supabaseToken; // Use let instead of const
     console.log('Token reçu:', token);
 
     if (!token) {
@@ -17,10 +18,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(401).json({ message: 'Token d\'accès manquant' });
     }
 
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error) {
-      console.error('Erreur de validation du token:', error.message);
-      
+    // Vérifiez si le token est expiré
+    const decodedToken = jwt.decode(token) as { exp: number };
+    const isTokenExpired = decodedToken.exp * 1000 < Date.now();
+
+    if (isTokenExpired) {
+      console.log('Token expiré, tentative de rafraîchissement...');
       const { data: { session }, error: refreshError } = await supabase.auth.refreshSession({ refresh_token: cookies.refreshToken });
       if (refreshError || !session) {
         console.error('Erreur lors du rafraîchissement du token:', refreshError?.message);
@@ -40,7 +43,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       });
 
       console.log('Token rafraîchi avec succès');
-      return res.status(200).json(session.user);
+      token = session.access_token;
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error) {
+      console.error('Erreur de validation du token:', error.message);
+      return res.status(401).json({ message: 'Token d\'accès invalide' });
     }
 
     console.log('Utilisateur validé:', user);

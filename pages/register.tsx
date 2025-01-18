@@ -57,7 +57,7 @@ const RegisterPage = () => {
         <h1 className="text-2xl font-bold text-center mb-6">Inscription</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium">Email</label>
+            <label htmlFor="email" className="block text-sm font-medium" style={{ color: 'black' }}>Email</label>
             <input
               id="email"
               type="email"
@@ -68,7 +68,7 @@ const RegisterPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium">Mot de passe</label>
+            <label htmlFor="password" className="block text-sm font-medium" style={{ color: 'black' }}>Mot de passe</label>
             <input
               id="password"
               type="password"
@@ -79,7 +79,7 @@ const RegisterPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="name" className="block text-sm font-medium">Nom</label>
+            <label htmlFor="name" className="block text-sm font-medium" style={{ color: 'black' }}>Nom</label>
             <input
               id="name"
               type="text"
@@ -90,7 +90,7 @@ const RegisterPage = () => {
             />
           </div>
           <div>
-            <label htmlFor="role" className="block text-sm font-medium">Rôle</label>
+            <label htmlFor="role" className="block text-sm font-medium" style={{ color: 'black' }}>Rôle</label>
             <select
               id="role"
               value={role}

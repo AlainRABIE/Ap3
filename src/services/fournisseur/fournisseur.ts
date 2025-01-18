@@ -15,25 +15,49 @@ export const fetchFournisseurs = async () => {
   }
 };
 
-export const checkIfAdmin = async (userId: string) => {
+export const getUserRole = async (userId: string) => {
   try {
     const { data: userData, error } = await supabase
-      .from("user")
+      .from("User")
       .select(`
         id,
-        role:roleid (
-          name
-        )
+        roleid
       `)
       .eq("id", userId)
       .single();
 
     if (error) {
-      console.error("Erreur lors de la récupération de l'utilisateur", error);
-      return false;
+      console.error("Erreur lors de la récupération du rôle", error);
+      return null;
     }
 
-    return userData?.role?.name === "admin";
+    const roleId = userData?.roleid;
+    if (!roleId) {
+      return null;
+    }
+
+    const { data: roleData, error: roleError } = await supabase
+      .from("role")
+      .select("name")
+      .eq("id", roleId)
+      .single();
+
+    if (roleError) {
+      console.error("Erreur lors de la récupération du nom du rôle", roleError);
+      return null;
+    }
+
+    return roleData?.name || null;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du rôle", error);
+    return null;
+  }
+};
+
+export const checkIfAdmin = async (userId: string) => {
+  try {
+    const roleName = await getUserRole(userId);
+    return roleName === "admin";
   } catch (error) {
     console.error("Erreur lors de la vérification du rôle administrateur", error);
     return false;

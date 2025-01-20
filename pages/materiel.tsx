@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 const MaterielPage = () => {
-  const [materiels, setMateriels] = useState<any[]>([]); // État pour stocker les matériels récupérés
+  const [materiels, setMateriels] = useState<any[]>([]); 
   const [nom, setNom] = useState("");
   const [description, setDescription] = useState("");
   const [quantite, setQuantite] = useState("");
@@ -17,28 +17,26 @@ const MaterielPage = () => {
   const [dateExpiration, setDateExpiration] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // Fonction pour récupérer les matériels depuis Supabase
   const fetchMateriels = async () => {
     const { data, error } = await supabase
-      .from("materiels") // Nom de la table dans Supabase
-      .select("*"); // Sélectionner toutes les colonnes
+      .from("materiels")
+      .select("*"); 
 
     if (error) {
       console.error("Erreur lors de la récupération des matériels:", error);
       return;
     }
 
-    setMateriels(data); // Mettre à jour l'état avec les données récupérées
+    setMateriels(data); 
   };
 
   useEffect(() => {
-    fetchMateriels(); // Appeler la fonction de récupération des données au montage du composant
+    fetchMateriels(); 
   }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Vérification et ajustement de la date d'expiration
     const expirationDate = dateExpiration.trim() === "" ? null : dateExpiration;
 
     const materielData = {
@@ -47,7 +45,7 @@ const MaterielPage = () => {
       quantite,
       numero_serie: numeroSerie,
       etat,
-      date_expiration: expirationDate, // Utiliser null si la date est vide
+      date_expiration: expirationDate, 
     };
 
     try {
@@ -59,9 +57,8 @@ const MaterielPage = () => {
         throw new Error(`Erreur lors de l'ajout du matériel: ${error.message}`);
       }
 
-      // Si l'ajout est réussi, on ferme le modal et recharge les matériels
       setShowModal(false);
-      fetchMateriels(); // Recharger les matériels après ajout
+      fetchMateriels();
       setNom("");
       setDescription("");
       setQuantite("");
@@ -119,7 +116,6 @@ const MaterielPage = () => {
           </table>
         </div>
 
-        {/* Modal pour ajouter un matériel */}
         {showModal && (
           <div className="fixed inset-0 flex justify-center items-center bg-gray-500 bg-opacity-50">
             <div className="bg-white p-6 rounded-lg">

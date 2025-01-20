@@ -25,17 +25,7 @@ const CommandesPage = () => {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
-  const [isFormVisible, setIsFormVisible] = useState(false);
   const [isEditFormVisible, setIsEditFormVisible] = useState(false);
-  const [newCommande, setNewCommande] = useState<Commande>({
-    id: 0,
-    user_id: 1,
-    fournisseur_id: 0,
-    produit_id: 0,
-    quantite: 0,
-    created_at: new Date().toISOString(),
-  });
-
   const [commandeToEdit, setCommandeToEdit] = useState<Commande | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -87,16 +77,6 @@ const CommandesPage = () => {
     fetchFournisseurs();
     fetchUserRole();
   }, []);
-
-  const handleAddCommande = async () => {
-    const { data, error } = await supabase.from("commandes").insert([newCommande]);
-    if (error) {
-      console.error("Erreur lors de l'ajout de la commande :", error.message);
-    } else {
-      fetchCommandes();
-      setIsFormVisible(false);
-    }
-  };
 
   const handleEditCommande = async () => {
     if (!commandeToEdit) return;
@@ -210,13 +190,6 @@ const CommandesPage = () => {
               })}
             </tbody>
           </table>
-
-          <button
-            onClick={() => setIsFormVisible(true)}
-            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Ajouter une commande
-          </button>
 
           {isEditFormVisible && commandeToEdit && (
             <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">

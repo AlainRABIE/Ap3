@@ -1,8 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 
-export const getUserRole = async (userId: number) => { // Changé en number au lieu de string
+export const getUserRole = async (userId: number) => { 
   try {
-    // Récupérer l'id du rôle de l'utilisateur depuis la table User
     const { data, error } = await supabase
       .from("User")
       .select("roleid")
@@ -14,7 +13,6 @@ export const getUserRole = async (userId: number) => { // Changé en number au l
       return null;
     }
 
-    // Récupérer le nom du rôle depuis la table role
     const { data: roleData, error: roleError } = await supabase
       .from("role")
       .select("name")

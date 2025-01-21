@@ -4,7 +4,7 @@ import * as React from "react";
 import { Menubar, MenubarContent, MenubarGroup, MenubarItem, MenubarTrigger, MenubarMenu, MenubarSub, MenubarSubTrigger, MenubarSubContent } from "./Menubar";
 import Link from "next/link";
 import { FiSettings } from "react-icons/fi";
-import { useUser } from "@/services/sidebar/useUser"; // Assurez-vous que ce chemin est correct
+import { useUser } from "@/services/sidebar/useUser"; 
 
 const MenubarRe = () => {
   const { user, error } = useUser();

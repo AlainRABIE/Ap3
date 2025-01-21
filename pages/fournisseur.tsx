@@ -1,38 +1,52 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import MenubarRe from '../components/ui/MenuBarRe';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
+import { getUserRole } from "./api/role";
+import MenubarRe from "../components/ui/MenuBarRe";
 
-const FournisseurPage = () => {
-  const [user, setUser] = useState<any>(null);
+type Fournisseur = {
+  id: number;
+  nom: string;
+  adresse: string;
+  email: string;
+  telephone: string;
+  site_web: string;
+  medicament_id: number;
+};
+
+const fetchFournisseurs = async (): Promise<Fournisseur[]> => {
+  const { data, error } = await supabase.from("fournisseur").select("*");
+  if (error) {
+    console.error("Erreur lors de la récupération des fournisseurs :", error.message);
+    return [];
+  }
+  return data || [];
+};
+
+const Fournisseur = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [fournisseurs, setFournisseurs] = useState<any[]>([]);
+  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchFournisseurs = async () => {
-    const { data, error } = await supabase.from('fournisseurs').select('*');
-    if (error) {
-      console.error('Erreur lors de la récupération des fournisseurs', error);
-      return [];
-    }
-    return data;
-  };
-
   const checkSession = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const userRole = await getUserRole(session.user.id);
-        setUserRole(userRole);
-        setIsAdmin(userRole === 'admin');
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setIsAdmin(false);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
+      // Récupérer l'ID numérique de l'utilisateur depuis la table User
+      const { data: userData } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+
+      if (userData) {
+        const role = await getUserRole(userData.id);
+        setUserRole(role);
+        setIsAdmin(role === "administrateur"); // Changé de "admin" à "administrateur"
       }
-    } catch (error) {
-      console.error("Erreur lors de la vérification de la session", error);
+    } else {
       setUser(null);
       setUserRole(null);
       setIsAdmin(false);
@@ -42,8 +56,8 @@ const FournisseurPage = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      const fournisseurs = await fetchFournisseurs();
-      setFournisseurs(fournisseurs);
+      const fetchedFournisseurs = await fetchFournisseurs();
+      setFournisseurs(fetchedFournisseurs);
       setIsLoading(false);
     };
 
@@ -52,9 +66,18 @@ const FournisseurPage = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
-        const userRole = await getUserRole(session.user.id); // Passer l'ID de l'utilisateur en string
-        setUserRole(userRole);
-        setIsAdmin(userRole === 'admin');
+        // Récupérer l'ID numérique de l'utilisateur depuis la table User
+        const { data: userData } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userData) {
+          const role = await getUserRole(userData.id);
+          setUserRole(role);
+          setIsAdmin(role === "administrateur"); // Changé de "admin" à "administrateur"
+        }
       } else {
         setUser(null);
         setUserRole(null);
@@ -71,36 +94,39 @@ const FournisseurPage = () => {
     <div className="relative flex h-screen bg-gray-800">
       <div className="animated-background"></div>
       <div className="waves"></div>
+
       <MenubarRe />
-      <main className="main-content flex-1 p-8 overflow-auto">
-        <h1 className="text-4xl font-bold mb-6 text-white">Liste des Fournisseurs</h1>
+
+      <div className="content">
         {isLoading ? (
-          <p className="text-white">Chargement...</p>
+          <p>Loading...</p>
         ) : (
-          <table className="min-w-full table-auto mb-4">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 border">ID</th>
-                <th className="px-4 py-2 border">Nom</th>
-                <th className="px-4 py-2 border">Email</th>
-                <th className="px-4 py-2 border">Téléphone</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div>
+            <h1 className="text-white text-xl mb-4">Liste des Fournisseurs</h1>
+            {isAdmin && (
+              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded">
+                Ajouter un fournisseur
+              </button>
+            )}
+            <ul>
               {fournisseurs.map((fournisseur) => (
-                <tr key={fournisseur.id}>
-                  <td className="px-4 py-2 border">{fournisseur.id}</td>
-                  <td className="px-4 py-2 border">{fournisseur.nom}</td>
-                  <td className="px-4 py-2 border">{fournisseur.email}</td>
-                  <td className="px-4 py-2 border">{fournisseur.telephone}</td>
-                </tr>
+                <li key={fournisseur.id} className="text-white mb-4">
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <h2 className="text-lg font-bold">{fournisseur.nom}</h2>
+                    <p><strong>Adresse:</strong> {fournisseur.adresse}</p>
+                    <p><strong>Email:</strong> {fournisseur.email}</p>
+                    <p><strong>Téléphone:</strong> {fournisseur.telephone}</p>
+                    <p><strong>Site web:</strong> {fournisseur.site_web}</p>
+                    <p><strong>Médicament ID:</strong> {fournisseur.medicament_id}</p>
+                  </div>
+                </li>
               ))}
-            </tbody>
-          </table>
+            </ul>
+          </div>
         )}
-      </main>
+      </div>
     </div>
   );
 };
 
-export default FournisseurPage;
+export default Fournisseur;

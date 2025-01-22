@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, TooltipItem } from 'chart.js';
 import { supabase } from "@/lib/supabaseClient";
 import MenubarRe from '../components/ui/MenuBarRe';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 interface MedicamentData {
   nom_medicament: string;
@@ -16,9 +16,15 @@ interface MaterielData {
   count: number;
 }
 
+interface OrderData {
+  type: string;
+  count: number;
+}
+
 interface ChartData {
   labels: string[];
   datasets: {
+    label: string;
     data: number[];
     backgroundColor: string[];
   }[];
@@ -27,6 +33,7 @@ interface ChartData {
 const Dashboard = () => {
   const [medicamentsData, setMedicamentsData] = useState<MedicamentData[]>([]);
   const [materielsData, setMaterielsData] = useState<MaterielData[]>([]);
+  const [ordersData, setOrdersData] = useState<OrderData[]>([]);
 
   useEffect(() => {
     const fetchMedicaments = async () => {
@@ -45,28 +52,74 @@ const Dashboard = () => {
       else setMaterielsData(data as MaterielData[]);
     };
 
+    const fetchOrders = async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('type');
+      
+      if (error) console.error(error);
+      else {
+        const groupedData = data.reduce((acc: { [key: string]: number }, order) => {
+          const type = order.type;
+          if (!acc[type]) {
+            acc[type] = 0;
+          }
+          acc[type]++;
+          return acc;
+        }, {});
+
+        const formattedData = Object.keys(groupedData).map((type) => ({
+          type,
+          count: groupedData[type],
+        }));
+
+        setOrdersData(formattedData as OrderData[]);
+      }
+    };
+
     fetchMedicaments();
     fetchMateriels();
+    fetchOrders();
   }, []);
 
-  const medicamentsChartData: ChartData = {
-    labels: medicamentsData.map((item) => item.nom_medicament),
+  const chartData: ChartData = {
+    labels: ['Médicaments', 'Matériels', 'Commandes'],
     datasets: [
       {
-        data: medicamentsData.map((item) => item.count),
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+        label: 'Médicaments',
+        data: [medicamentsData.reduce((sum, item) => sum + item.count, 0)],
+        backgroundColor: ['#FF6384'],
+      },
+      {
+        label: 'Matériels',
+        data: [materielsData.reduce((sum, item) => sum + item.count, 0)],
+        backgroundColor: ['#36A2EB'],
+      },
+      {
+        label: 'Commandes',
+        data: [ordersData.reduce((sum, item) => sum + item.count, 0)],
+        backgroundColor: ['#FFCE56'],
       },
     ],
   };
 
-  const materielsChartData: ChartData = {
-    labels: materielsData.map((item) => item.nom_materiel),
-    datasets: [
-      {
-        data: materielsData.map((item) => item.count),
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+  const chartOptions = {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function (context: TooltipItem<'bar'>) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.raw !== null) {
+              label += context.raw;
+            }
+            return label;
+          },
+        },
       },
-    ],
+    },
   };
 
   return (
@@ -76,14 +129,10 @@ const Dashboard = () => {
       <MenubarRe />
       <main className="main-content flex-1 p-8 overflow-auto">
         <h1 className="text-4xl font-bold mb-6 text-white">Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8">
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-white">Répartition des Médicaments</h2>
-            <Pie data={medicamentsChartData} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-white">Répartition des Matériels</h2>
-            <Pie data={materielsChartData} />
+            <h2 className="text-2xl font-semibold mb-4 text-white">Diagramme de commande</h2>
+            <Bar data={chartData} options={chartOptions} />
           </div>
         </div>
       </main>

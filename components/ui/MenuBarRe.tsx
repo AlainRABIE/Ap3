@@ -1,13 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { Menubar, MenubarContent, MenubarGroup, MenubarItem, MenubarTrigger, MenubarMenu, MenubarSub, MenubarSubTrigger, MenubarSubContent } from "./Menubar";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarTrigger,
+  MenubarMenu,
+} from "./Menubar";
 import Link from "next/link";
 import { FiSettings } from "react-icons/fi";
 import { useUser } from "@/services/sidebar/useUser"; 
 
 const MenubarRe = () => {
-  const { user, error } = useUser();
+  const { user, logout } = useUser(); 
+
+  const handleLogout = async () => {
+    try {
+      await logout(); // Déconnectez l'utilisateur
+      alert("Déconnexion réussie !");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
+    }
+  };
 
   return (
     <Menubar className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-gray-900 shadow-lg rounded-t-lg flex justify-around w-full max-w-4xl p-2">
@@ -82,8 +98,14 @@ const MenubarRe = () => {
       </MenubarMenu>
 
       {user ? (
-        <div className="block py-2 px-4 text-gray-300">
-          Bienvenue, {user.email}
+        <div className="flex items-center space-x-4">
+          <span className="block py-2 px-4 text-gray-300">Bienvenue, {user.email}</span>
+          <button
+            onClick={handleLogout}
+            className="block py-2 px-4 text-gray-300 hover:bg-red-700 bg-red-600 rounded"
+          >
+            Déconnexion
+          </button>
         </div>
       ) : (
         <MenubarMenu>

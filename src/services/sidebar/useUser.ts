@@ -34,5 +34,27 @@ export const useUser = () => {
     fetchUser();
   }, []);
 
-  return { user, error };
+  const logout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error(`Erreur lors de la déconnexion : ${response.status}`);
+      }
+      setUser(null); 
+      console.log('Déconnexion réussie');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Erreur lors de la déconnexion:', error.message);
+        setError(error.message);
+      } else {
+        console.error('Erreur inconnue lors de la déconnexion:', error);
+        setError('Erreur inconnue');
+      }
+    }
+  };
+
+  return { user, error, logout };
 };

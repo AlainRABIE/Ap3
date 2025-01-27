@@ -115,12 +115,12 @@ const StockMaterielsPage = () => {
       try {
         const { data, error } = await supabase
           .from("materiels")
-          .select("id, name");
+          .select("id_materiel, nom");
 
         if (error) throw new Error(error.message);
 
         if (Array.isArray(data)) {
-          setMateriels(data);
+          setMateriels(data.map(item => ({ id: item.id_materiel, name: item.nom })));
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des matériels:", error);

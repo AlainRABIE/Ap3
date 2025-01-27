@@ -50,134 +50,131 @@ const Sidebar = () => {
         <h1 className="text-lg font-semibold">Application</h1>
       </div>
 
-      {/* Sidebar Menu */}
       <div className="flex-grow p-4">
-        <Menubar className="flex flex-col space-y-2">
-          {/* Menu items */}
-          <Link href="/" className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-            Accueil
-          </Link>
+        {user && (
+          <Menubar className="flex flex-col space-y-2">
+            <Link href="/" className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+              Accueil
+            </Link>
 
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              Stock
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <Link href="/stock_medicaments" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Stock Médicaments
-                </Link>
-              </MenubarItem>
-              <MenubarItem>
-                <Link href="/stock_materiel" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Stock Matériel
-                </Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              Commande
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <Link href="/commande" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Liste des Commandes
-                </Link>
-              </MenubarItem>
-              <MenubarItem>
-                <Link href="/commande-en-cours" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Commande en cours de traitement
-                </Link>
-              </MenubarItem>
-              <MenubarItem>
-                <Link href="/historique-commandes" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Historique de commande
-                </Link>
-              </MenubarItem>
-              {user && isAdmin && (
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                Stock
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
                 <MenubarItem>
-                  <Link href="/liste-utilisateurs" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                    Liste d'utilisateur
+                  <Link href="/stock_medicaments" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Stock Médicaments
                   </Link>
                 </MenubarItem>
-              )}
-            </MenubarContent>
-          </MenubarMenu>
+                <MenubarItem>
+                  <Link href="/stock_materiel" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Stock Matériel
+                  </Link>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              Fournisseurs
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <Link href="/fournisseur" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Fournisseurs
-                </Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                Commande
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
+                <MenubarItem>
+                  <Link href="/commande" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Liste des Commandes
+                  </Link>
+                </MenubarItem>
+                <MenubarItem>
+                  <Link href="/commande-en-cours" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Commande en cours de traitement
+                  </Link>
+                </MenubarItem>
+                <MenubarItem>
+                  <Link href="/historique-commandes" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Historique de commande
+                  </Link>
+                </MenubarItem>
+                {isAdmin && (
+                  <MenubarItem>
+                    <Link href="/user" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                      Liste d'utilisateur
+                    </Link>
+                  </MenubarItem>
+                )}
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              <FiSettings className="inline-block mr-2" /> Paramètres
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <Link href="/settings" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Paramètres
-                </Link>
-                <Link href="/profil" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Profil
-                </Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                Fournisseurs
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
+                <MenubarItem>
+                  <Link href="/fournisseur" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Fournisseurs
+                  </Link>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              Dashboard
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <Link href="/dashboard" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Dashboard
-                </Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <FiSettings className="inline-block mr-2" /> Paramètres
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
+                <MenubarItem>
+                  <Link href="/settings" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Paramètres
+                  </Link>
+                  <Link href="/profil" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Profil
+                  </Link>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              Déconnexion
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <button onClick={logout} className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Déconnexion
-                </button>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                Dashboard
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
+                <MenubarItem>
+                  <Link href="/dashboard" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Dashboard
+                  </Link>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu>
-            <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
-              <FiBell className="inline-block mr-2" /> Notifications
-            </MenubarTrigger>
-            <MenubarContent className="bg-gray-900 text-gray-300">
-              <MenubarItem>
-                <Link href="/notifications" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                  Voir les Notifications
-                </Link>
-              </MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-        </Menubar>
-      </div>
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                Déconnexion
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
+                <MenubarItem>
+                  <button onClick={logout} className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Déconnexion
+                  </button>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-      {/* Connexion et Inscription en bas */}
-      <div className="mt-auto p-4">
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <FiBell className="inline-block mr-2" /> Notifications
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900 text-gray-300">
+                <MenubarItem>
+                  <Link href="/notifications" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Voir les Notifications
+                  </Link>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+          </Menubar>
+        )}
+
         {!user && (
           <Menubar>
             <MenubarMenu>
@@ -199,12 +196,14 @@ const Sidebar = () => {
             </MenubarMenu>
           </Menubar>
         )}
+      </div>
+
+      {/* Connexion et Inscription en bas */}
+      <div className="mt-auto p-4">
         {user && (
-          <>
-            <div className="block py-2 px-4 text-gray-300">
-              Bienvenue, {user.email}
-            </div>
-          </>
+          <div className="block py-2 px-4 text-gray-300">
+            Bienvenue, {user.email}
+          </div>
         )}
       </div>
     </div>

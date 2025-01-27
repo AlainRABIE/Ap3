@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
-  // Vous pouvez ajouter d'autres configurations ici
 };
 
 export default nextConfig;

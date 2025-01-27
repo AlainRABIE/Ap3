@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MenubarRe from '../components/ui/MenuBarRe';
 
 const SettingsPage = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [language, setLanguage] = useState('fr');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    localStorage.getItem('notifications') === 'enabled'
-  );
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [language, setLanguage] = useState<string>('fr');
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
+
+  // Ajouter ou supprimer la classe 'dark' au chargement du composant ou à chaque changement de thème
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [isDarkMode]); // Cette fonction se déclenche chaque fois que 'isDarkMode' change
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
-    document.body.classList.toggle('dark-mode', !isDarkMode);
   };
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -20,7 +26,9 @@ const SettingsPage = () => {
   const toggleNotifications = () => {
     const newStatus = notificationsEnabled ? 'disabled' : 'enabled';
     setNotificationsEnabled(!notificationsEnabled);
-    localStorage.setItem('notifications', newStatus);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notifications', newStatus);
+    }
   };
 
   return (
@@ -31,6 +39,7 @@ const SettingsPage = () => {
         <div className="settings-page p-4">
           <h1 className="text-2xl font-bold mb-4 text-white">Paramètres de l'application</h1>
 
+          {/* Thème */}
           <div className="settings-group mb-4">
             <h2 className="text-xl font-semibold mb-2 text-white">Thème</h2>
             <button
@@ -41,6 +50,7 @@ const SettingsPage = () => {
             </button>
           </div>
 
+          {/* Langue */}
           <div className="settings-group mb-4">
             <h2 className="text-xl font-semibold mb-2 text-white">Langue</h2>
             <select value={language} onChange={handleLanguageChange} className="py-2 px-4 border rounded-md">
@@ -51,6 +61,7 @@ const SettingsPage = () => {
             </select>
           </div>
 
+          {/* Notifications */}
           <div className="settings-group mb-4">
             <h2 className="text-xl font-semibold mb-2 text-white">Notifications</h2>
             <button

@@ -1,125 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, TooltipItem } from 'chart.js';
 import { supabase } from "@/lib/supabaseClient";
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
 import MenubarRe from '../components/ui/MenuBarRe';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
 
-interface MedicamentData {
+interface MedicamentStockData {
   nom_medicament: string;
-  count: number;
-}
-
-interface MaterielData {
-  nom_materiel: string;
-  count: number;
-}
-
-interface OrderData {
-  type: string;
-  count: number;
-}
-
-interface ChartData {
-  labels: string[];
-  datasets: {
-    label: string;
-    data: number[];
-    backgroundColor: string[];
-  }[];
+  quantite_en_stock: number;
 }
 
 const Dashboard = () => {
-  const [medicamentsData, setMedicamentsData] = useState<MedicamentData[]>([]);
-  const [materielsData, setMaterielsData] = useState<MaterielData[]>([]);
-  const [ordersData, setOrdersData] = useState<OrderData[]>([]);
+  const [medicamentsData, setMedicamentsData] = useState<MedicamentStockData[]>([]);
 
   useEffect(() => {
-    const fetchMedicaments = async () => {
+    const fetchMedicamentsStock = async () => {
+      // Récupérer les médicaments et leurs quantités en stock
       const { data, error } = await supabase
-        .rpc('count_medicaments');  
-      
-      if (error) console.error(error);
-      else setMedicamentsData(data as MedicamentData[]);
-    };
+        .from('stock_medicaments') // Table des stocks de médicaments
+        .select('id_medicament, quantite_en_stock'); // Sélectionner les colonnes nécessaires
 
-    const fetchMateriels = async () => {
-      const { data, error } = await supabase
-        .rpc('count_materiels');  
-      
-      if (error) console.error(error);
-      else setMaterielsData(data as MaterielData[]);
-    };
+      if (error) {
+        console.error(error);
+      } else {
+        // Récupérer les informations des médicaments depuis la table "medicaments"
+        const medicamentsIds = data?.map(item => item.id_medicament);
+        const { data: medicaments, error: medicamentsError } = await supabase
+          .from('medicaments') // Table des médicaments
+          .select('id, name')
+          .in('id', medicamentsIds); // Filtrer par les IDs des médicaments ayant du stock
 
-    const fetchOrders = async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('type');
-      
-      if (error) console.error(error);
-      else {
-        const groupedData = data.reduce((acc: { [key: string]: number }, order) => {
-          const type = order.type;
-          if (!acc[type]) {
-            acc[type] = 0;
-          }
-          acc[type]++;
-          return acc;
-        }, {});
+        if (medicamentsError) {
+          console.error(medicamentsError);
+        } else {
+          // Fusionner les données des stocks et des médicaments
+          const mergedData = medicaments.map((medicament: any) => {
+            const stockItem = data?.find((stock: any) => stock.id_medicament === medicament.id);
+            return {
+              nom_medicament: medicament.name,
+              quantite_en_stock: stockItem?.quantite_en_stock || 0,
+            };
+          });
 
-        const formattedData = Object.keys(groupedData).map((type) => ({
-          type,
-          count: groupedData[type],
-        }));
-
-        setOrdersData(formattedData as OrderData[]);
+          setMedicamentsData(mergedData);
+        }
       }
     };
 
-    fetchMedicaments();
-    fetchMateriels();
-    fetchOrders();
+    fetchMedicamentsStock();
   }, []);
 
-  const chartData: ChartData = {
-    labels: ['Médicaments', 'Matériels', 'Commandes'],
+  // Préparer les données pour le graphique circulaire (camembert)
+  const chartData = {
+    labels: medicamentsData.map(item => item.nom_medicament),
     datasets: [
       {
-        label: 'Médicaments',
-        data: [medicamentsData.reduce((sum, item) => sum + item.count, 0)],
-        backgroundColor: ['#FF6384'],
-      },
-      {
-        label: 'Matériels',
-        data: [materielsData.reduce((sum, item) => sum + item.count, 0)],
-        backgroundColor: ['#36A2EB'],
-      },
-      {
-        label: 'Commandes',
-        data: [ordersData.reduce((sum, item) => sum + item.count, 0)],
-        backgroundColor: ['#FFCE56'],
+        label: 'Médicaments en stock',
+        data: medicamentsData.map(item => item.quantite_en_stock),
+        backgroundColor: medicamentsData.map(() => `#${Math.floor(Math.random() * 16777215).toString(16)}`), // Couleurs aléatoires
       },
     ],
-  };
-
-  const chartOptions = {
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: function (context: TooltipItem<'bar'>) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.raw !== null) {
-              label += context.raw;
-            }
-            return label;
-          },
-        },
-      },
-    },
   };
 
   return (
@@ -131,8 +72,10 @@ const Dashboard = () => {
         <h1 className="text-4xl font-bold mb-6 text-white">Dashboard</h1>
         <div className="grid grid-cols-1 gap-8">
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-white">Diagramme de commande</h2>
-            <Bar data={chartData} options={chartOptions} />
+            <h2 className="text-2xl font-semibold mb-4 text-white">Camembert des Médicaments en Stock</h2>
+            <div className="bg-gray-700 p-6 rounded-lg">
+              <Pie data={chartData} />
+            </div>
           </div>
         </div>
       </main>

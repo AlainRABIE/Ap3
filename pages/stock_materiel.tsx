@@ -6,7 +6,7 @@ import { User } from "@supabase/supabase-js";
 import { getUserRole } from "./api/role";
 
 type StockMateriel = {
-  id_stock: number;
+  id_stock?: number;
   materiel_id: number;
   quantite: number;
   date_ajout: string;
@@ -21,14 +21,13 @@ const StockMaterielsPage = () => {
     materiel_id: 0,
     quantite: 0,
   });
-  const [materiels, setMateriels] = useState<{ id: number, name: string }[]>([]);
+  const [materiels, setMateriels] = useState<{ id: number; name: string }[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
 
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Fetch stock_materiel data
   useEffect(() => {
     const fetchStockMateriels = async () => {
       setLoading(true);
@@ -109,18 +108,17 @@ const StockMaterielsPage = () => {
     };
   }, []);
 
-  // Fetch materiels data
   useEffect(() => {
     const fetchMateriels = async () => {
       try {
         const { data, error } = await supabase
           .from("materiels")
-          .select("id, name");
+          .select("id_materiel, nom");
 
         if (error) throw new Error(error.message);
 
         if (Array.isArray(data)) {
-          setMateriels(data);
+          setMateriels(data.map(item => ({ id: item.id_materiel, name: item.nom })));
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des matériels:", error);
@@ -137,6 +135,7 @@ const StockMaterielsPage = () => {
       quantite: stock.quantite,
     });
     setIsEditing(true);
+    setShowModal(true);
   };
 
   const handleDelete = async (id_stock: number) => {
@@ -157,26 +156,44 @@ const StockMaterielsPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (formData.materiel_id === 0 || formData.quantite === 0) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
     try {
-      if (isEditing && selectedStock) {
-        const { error } = await supabase
-          .from("stock_materiel")
-          .update(formData)
-          .eq("id_stock", selectedStock.id_stock);
+      const { data, error } = await supabase
+        .from("stock_materiel")
+        .upsert([{
+          id_stock: selectedStock?.id_stock,
+          materiel_id: formData.materiel_id,
+          quantite: formData.quantite,
+          date_ajout: new Date().toISOString(),
+        }])
+        .select();
 
-        if (error) throw new Error(error.message);
-
-        setStockMateriels(
-          stockMateriels.map((stock) =>
-            stock.id_stock === selectedStock.id_stock ? { ...stock, ...formData } : stock
-          )
-        );
+      if (error) {
+        throw new Error(error.message);
       }
+
+      if (Array.isArray(data) && data.length > 0) {
+        const newData = data[0];
+        setStockMateriels((prevStockMateriels) => [
+          ...prevStockMateriels.filter((stock) => stock.id_stock !== newData.id_stock),
+          { 
+            ...newData, 
+            id_stock: newData.id_stock || 0 
+          }
+        ]);
+      }
+
+      alert("Matériel modifié avec succès !");
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du stock:", error);
+      console.error("Erreur lors de la modification du matériel:", error);
+      alert("Erreur lors de la modification du matériel, veuillez réessayer.");
     } finally {
-      setIsEditing(false);
-      setSelectedStock(null);
+      setShowModal(false);
+      setFormData({ materiel_id: 0, quantite: 0 });
     }
   };
 
@@ -194,7 +211,10 @@ const StockMaterielsPage = () => {
           <div>
             <h1 className="text-white text-xl mb-4">Stock des Matériels</h1>
             {isAdmin && (
-              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded">
+              <button
+                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={() => setShowModal(true)}
+              >
                 Ajouter un matériel
               </button>
             )}
@@ -209,7 +229,7 @@ const StockMaterielsPage = () => {
                       <div className="mt-4">
                         <button
                           className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
-                          onClick={() => handleDelete(stock.id_stock)}
+                          onClick={() => handleDelete(stock.id_stock || 0)}
                         >
                           Supprimer
                         </button>
@@ -225,18 +245,66 @@ const StockMaterielsPage = () => {
                 </li>
               ))}
             </ul>
-            {isEditing && selectedStock && (
-              <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
-                <h2 className="text-lg font-bold text-white mb-4">Modifier le Stock</h2>
-                {/* Add form fields here for editing the stock */}
-                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
-                  Enregistrer
-                </button>
-              </form>
-            )}
           </div>
         )}
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg">
+            <h2 className="text-xl font-bold mb-4">Modifier le Matériel</h2>
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label htmlFor="materiel_id" className="block text-sm font-medium text-gray-700">
+                  Matériel
+                </label>
+                <select
+                  id="materiel_id"
+                  value={formData.materiel_id}
+                  onChange={(e) => setFormData({ ...formData, materiel_id: parseInt(e.target.value) })}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value={0}>Sélectionner un matériel</option>
+                  {materiels.map((materiel) => (
+                    <option key={materiel.id} value={materiel.id}>
+                      {materiel.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="quantite" className="block text-sm font-medium text-gray-700">
+                  Quantité
+                </label>
+                <input
+                  id="quantite"
+                  type="number"
+                  value={formData.quantite}
+                  onChange={(e) => setFormData({ ...formData, quantite: parseInt(e.target.value) })}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="mr-2 px-4 py-2 bg-gray-400 text-white rounded"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  Modifier
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

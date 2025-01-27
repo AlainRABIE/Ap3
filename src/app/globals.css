@@ -4,16 +4,16 @@
 
 @layer base {
   :root {
-    --background-main: #121212; 
-    --text-main: #ffffff; 
-    --sidebar-background: 0 0% 98%; 
-    --sidebar-foreground: 240 5.3% 26.1%; 
-    --sidebar-primary: 240 5.9% 10%; 
-    --sidebar-primary-foreground: 0 0% 98%; 
-    --sidebar-accent: 240 4.8% 95.9%; 
-    --sidebar-accent-foreground: 240 5.9% 10%; 
-    --sidebar-border: 220 13% 91%; 
-    --sidebar-ring: 217.2 91.2% 59.8%; 
+    --background-main: #121212;  /* Fond noir mat */
+    --text-main: #ffffff;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -33,7 +33,7 @@
 @layer base {
   * {
     @apply border-border;
-    box-sizing: border-box; 
+    box-sizing: border-box;
   }
 
   body {
@@ -42,36 +42,35 @@
 }
 
 body {
-  background-color: var(--background-main);
+  background-color: var(--background-main); /* Fond noir mat */
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   margin: 0;
   display: flex;
-  flex-direction: column; 
-  width: 100vw; 
-  height: 100vh; 
-  overflow: hidden; 
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .flex.h-screen.bg-black {
-  width: 100%; /* Assurez-vous que la div prend toute la largeur */
-  height: 100%; /* Assurez-vous que la div prend toute la hauteur */
+  width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column; /* Utilisez column pour que les éléments enfants s'empilent verticalement */
+  flex-direction: column;
 }
 
 main {
-  background-color: var(--background-main); /* Fond noir mat pour la page principale */
-  color: var(--text-main); /* Texte blanc pour la page principale */
+  background-color: var(--background-main);
+  color: var(--text-main);
   flex: 1;
   padding: 1rem;
-  overflow: auto; 
-  border-radius: 0; 
-  margin: 0; 
-  height: 100%; 
+  overflow: auto;
+  border-radius: 0;
+  margin: 0;
+  height: 100%;
 }
 
-/* Ajoutez les motifs de vagues diagonales */
 .animated-background {
   position: absolute;
   top: 0;
@@ -80,7 +79,17 @@ main {
   height: 100%;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent);
   background-size: 56px 56px;
+  animation: moveWaves 15s linear infinite;
   z-index: -1;
+}
+
+@keyframes moveWaves {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 56px 56px;
+  }
 }
 
 .waves {
@@ -92,5 +101,6 @@ main {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent);
   background-size: 56px 56px;
   opacity: 0.1;
+  animation: moveWaves 25s linear infinite;
   z-index: -1;
 }

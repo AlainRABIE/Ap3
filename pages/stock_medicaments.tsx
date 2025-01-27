@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import "../src/app/globals.css";
 import MenubarRe from "../components/ui/MenuBarRe";
+import { User } from "@supabase/supabase-js";
+import { getUserRole } from "./api/role";
 
 type StockMedicament = {
   id_stock: number;
@@ -19,12 +21,15 @@ const StockMedicamentsPage = () => {
   const [formData, setFormData] = useState({
     medicament_id: 0,
     quantite: 0,
-    date_expiration: "", // Le champ date_expiration est initialisé ici
+    date_expiration: "",
   });
-  const [medicaments, setMedicaments] = useState<{ id: number, name: string }[]>([]);
-  const [showModal, setShowModal] = useState<boolean>(false); // état pour afficher/masquer le modal
+  const [medicaments, setMedicaments] = useState<{ id: number; name: string }[]>([]);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
-  // Fetch stock_medicaments data
+  const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     const fetchStockMedicaments = async () => {
       setLoading(true);
@@ -51,16 +56,67 @@ const StockMedicamentsPage = () => {
       }
     };
 
-    fetchStockMedicaments();
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        const { data: userData } = await supabase
+          .from("User")
+          .select("id")
+          .eq("email", session.user.email)
+          .single();
+
+        if (userData) {
+          const role = await getUserRole(userData.id);
+          setUserRole(role);
+          setIsAdmin(role === "administrateur");
+        }
+      } else {
+        setUser(null);
+        setUserRole(null);
+        setIsAdmin(false);
+      }
+    };
+
+    const initialize = async () => {
+      await checkSession();
+      await fetchStockMedicaments();
+    };
+
+    initialize();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        const { data: userData } = await supabase
+          .from("User")
+          .select("id")
+          .eq("email", session.user.email)
+          .single();
+
+        if (userData) {
+          const role = await getUserRole(userData.id);
+          setUserRole(role);
+          setIsAdmin(role === "administrateur");
+        }
+      } else {
+        setUser(null);
+        setUserRole(null);
+        setIsAdmin(false);
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
-  // Fetch medicaments data
   useEffect(() => {
     const fetchMedicaments = async () => {
       try {
         const { data, error } = await supabase
           .from("medicaments")
-          .select("id, name");  // Change 'nom' to 'name'
+          .select("id, name");
 
         if (error) throw new Error(error.message);
 
@@ -80,7 +136,7 @@ const StockMedicamentsPage = () => {
     setFormData({
       medicament_id: stock.medicament_id,
       quantite: stock.quantite,
-      date_expiration: stock.date_expiration || "", // Remplir la date d'expiration si elle existe
+      date_expiration: stock.date_expiration || "",
     });
     setIsEditing(true);
   };
@@ -117,162 +173,73 @@ const StockMedicamentsPage = () => {
             stock.id_stock === selectedStock.id_stock ? { ...stock, ...formData } : stock
           )
         );
-      } else {
-        const { data, error } = await supabase
-          .from("stock_medicaments")
-          .insert([formData]);
-
-        if (error) throw new Error(error.message);
-
-        if (data) {
-          setStockMedicaments([...stockMedicaments, ...data]);
-        }
       }
-
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du stock:", error);
+    } finally {
       setIsEditing(false);
       setSelectedStock(null);
-      setFormData({
-        medicament_id: 0,
-        quantite: 0,
-        date_expiration: "",
-      });
-      setShowModal(false); // Masque le formulaire après soumission
-    } catch (error) {
-      console.error("Erreur lors de la soumission du formulaire:", error);
     }
-  };
-
-  // Fonction pour obtenir le nom du médicament à partir de l'ID
-  const getMedicamentName = (medicament_id: number) => {
-    const medicament = medicaments.find((med) => med.id === medicament_id);
-    return medicament ? medicament.name : "Inconnu"; // Change 'nom' to 'name'
   };
 
   return (
     <div className="relative flex h-screen bg-gray-800">
       <div className="animated-background"></div>
       <div className="waves"></div>
+
       <MenubarRe />
-      <main className="main-content flex-1 p-8 overflow-auto">
-        <h1 className="text-4xl font-bold mb-6 text-white">Stock des Médicaments</h1>
 
-        {/* Bouton Ajouter */}
-        <button
-          onClick={() => setShowModal(true)}
-          className="absolute top-5 right-5 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Ajouter
-        </button>
-
+      <div className="content">
         {loading ? (
-          <p className="text-white">Chargement...</p>
+          <p>Loading...</p>
         ) : (
-          <table className="min-w-full table-auto mb-4">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 border">ID Stock</th>
-                <th className="px-4 py-2 border">Médicament</th>
-                <th className="px-4 py-2 border">Quantité</th>
-                <th className="px-4 py-2 border">Date d'Ajout</th>
-                <th className="px-4 py-2 border">Date d'Expiration</th>
-                <th className="px-4 py-2 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div>
+            <h1 className="text-white text-xl mb-4">Stock des Médicaments</h1>
+            {isAdmin && (
+              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded">
+                Ajouter un médicament
+              </button>
+            )}
+            <ul>
               {stockMedicaments.map((stock) => (
-                <tr key={stock.id_stock}>
-                  <td className="px-4 py-2 border">{stock.id_stock}</td>
-                  <td className="px-4 py-2 border">{getMedicamentName(stock.medicament_id)}</td>
-                  <td className="px-4 py-2 border">{stock.quantite}</td>
-                  <td className="px-4 py-2 border">{stock.date_ajout}</td>
-                  <td className="px-4 py-2 border">{stock.date_expiration || "N/A"}</td>
-                  <td className="px-4 py-2 border">
-                    <button
-                      onClick={() => handleEdit(stock)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => handleDelete(stock.id_stock)}
-                      className="bg-red-500 text-white px-4 py-2 rounded ml-2"
-                    >
-                      Supprimer
-                    </button>
-                  </td>
-                </tr>
+                <li key={stock.id_stock} className="text-white mb-4">
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <h2 className="text-lg font-bold">{stock.medicament_id}</h2>
+                    <p><strong>Quantité:</strong> {stock.quantite}</p>
+                    <p><strong>Date d'ajout:</strong> {stock.date_ajout}</p>
+                    <p><strong>Date d'expiration:</strong> {stock.date_expiration || "N/A"}</p>
+                    {isAdmin && (
+                      <div className="mt-4">
+                        <button
+                          className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
+                          onClick={() => handleDelete(stock.id_stock)}
+                        >
+                          Supprimer
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-yellow-500 text-white rounded"
+                          onClick={() => handleEdit(stock)}
+                        >
+                          Modifier
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </li>
               ))}
-            </tbody>
-          </table>
-        )}
-
-        {/* Modal pour ajouter un médicament */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-              <h2 className="text-2xl font-bold mb-4">Ajouter un Médicament</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="medicament_id" className="block text-sm font-medium text-gray-700">Médicament</label>
-                  <select
-                    id="medicament_id"
-                    name="medicament_id"
-                    value={formData.medicament_id}
-                    onChange={(e) => setFormData({ ...formData, medicament_id: +e.target.value })}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="" disabled>Choisissez un médicament</option>
-                    {medicaments.map((medicament) => (
-                      <option key={medicament.id} value={medicament.id}>
-                        {medicament.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="quantite" className="block text-sm font-medium text-gray-700">Quantité</label>
-                  <input
-                    id="quantite"
-                    name="quantite"
-                    type="number"
-                    value={formData.quantite}
-                    onChange={(e) => setFormData({ ...formData, quantite: +e.target.value })}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="date_expiration" className="block text-sm font-medium text-gray-700">Date d'Expiration</label>
-                  <input
-                    id="date_expiration"
-                    name="date_expiration"
-                    type="date"
-                    value={formData.date_expiration}
-                    onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                  >
-                    Sauvegarder
-                  </button>
-                </div>
+            </ul>
+            {isEditing && selectedStock && (
+              <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
+                <h2 className="text-lg font-bold text-white mb-4">Modifier le Stock</h2>
+                {/* Add form fields here for editing the stock */}
+                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
+                  Enregistrer
+                </button>
               </form>
-            </div>
+            )}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 };

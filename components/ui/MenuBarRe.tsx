@@ -59,7 +59,7 @@ const MenuBarRe = () => {
         <MenubarContent className="bg-gray-900 text-gray-300">
           <MenubarItem>
             <Link
-              href="/medicaments"
+              href="/stock_medicaments"
               className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
             >
               Stock Médicaments

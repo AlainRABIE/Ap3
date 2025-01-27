@@ -10,7 +10,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const cookies = parseCookies({ req });
-    let token = cookies.supabaseToken; // Use let instead of const
+    let token = cookies.supabaseToken;
     console.log('Token reçu:', token);
 
     if (!token) {
@@ -18,7 +18,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(401).json({ message: 'Token d\'accès manquant' });
     }
 
-    // Vérifiez si le token est expiré
     const decodedToken = jwt.decode(token) as { exp: number };
     const isTokenExpired = decodedToken.exp * 1000 < Date.now();
 

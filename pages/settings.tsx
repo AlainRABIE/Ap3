@@ -26,7 +26,6 @@ const SettingsPage = () => {
   return (
     <div className="relative flex h-screen bg-gray-800">
       <div className="animated-background"></div>
-      <div className="waves"></div>
       <MenubarRe />
       <main className="main-content flex-1 p-8 overflow-auto">
         <div className="settings-page p-4">

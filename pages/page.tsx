@@ -1,7 +1,7 @@
 "use client";
 
 import './globals.css';
-import CustomMenubar from "../../components/ui/MenuBarRe";
+import CustomMenubar from "../components/ui/MenuBarRe";
 
 export default function Page() {
   return (

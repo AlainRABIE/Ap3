@@ -1,9 +1,9 @@
-import type { NextConfig } from "next";
-import type { Configuration } from "webpack";
+import type { NextConfig } from 'next';
+import type { Configuration } from 'webpack';
 
 const nextConfig: NextConfig = {
-  output: "standalone", // Permet un meilleur déploiement sur Vercel
-
+  reactStrictMode: true,
+  output: 'standalone',
   webpackDevMiddleware: (config: Configuration) => {
     config.watchOptions = {
       poll: 1000,

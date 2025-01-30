@@ -2,8 +2,6 @@ import type { NextConfig } from "next";
 import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
-  experimental: {
-  },
   output: "standalone", // Permet un meilleur déploiement sur Vercel
 
   webpackDevMiddleware: (config: Configuration) => {

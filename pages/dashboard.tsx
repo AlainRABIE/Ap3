@@ -126,11 +126,7 @@ const Dashboard = () => {
       <div className="waves"></div>
       <MenubarRe />
       <main className="main-content flex-1 p-8 overflow-auto">
-        <h1 className="text-4xl font-bold mb-6 text-white">Graphiques des Commandes et Matériels</h1>
-
-        {/* Affichage du nombre de visites */}
-        <div className="text-xl text-white mb-4">Nombre de visites : {visites}</div>
-
+        <h1 className="text-4xl font-bold mb-6 text-white">Graphiques des Commandes et Matériels et des Visites du Site</h1>
         <div className="flex space-x-8">
           {/* Graphique des commandes (Médicaments) */}
           <div className="bg-gray-700 p-6 rounded-lg">
@@ -173,8 +169,9 @@ const Dashboard = () => {
           </div>
 
           {/* Graphique des visites */}
+          
           <div className="bg-gray-700 p-6 rounded-lg">
-            <h2 className="text-2xl font-semibold mb-4 text-white">Nombre de Visites</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-white">Nombre de visite du site</h2>
             <div style={{ width: '300px', height: '300px' }}> {/* Taille ajustée */}
               <Pie data={chartDataVisites} options={{
                 responsive: true,
@@ -186,6 +183,7 @@ const Dashboard = () => {
                   },
                   tooltip: {
                     backgroundColor: '#333',
+                    
                   },
                 }
               }} />

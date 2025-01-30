@@ -36,10 +36,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         path: '/',
       });
 
-      setCookie({ res }, 'refreshToken', session.refresh_token, {
-        maxAge: 60 * 60 * 24 * 7, 
-        path: '/',
-      });
+      // setCookie({ res }, 'refreshToken', session.refresh_token, {
+      //   maxAge: 60 * 60 * 24 * 7, 
+      //   path: '/',
+      // });
 
       console.log('Token rafraîchi avec succès');
       token = session.access_token;

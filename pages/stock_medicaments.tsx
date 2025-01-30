@@ -19,8 +19,10 @@ const StockMedicamentsPage = () => {
   const [selectedStock, setSelectedStock] = useState<StockMedicament | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [formData, setFormData] = useState({
+    id_stock: 0,
     medicament_id: 0,
     quantite: 0,
+    date_ajout: new Date().toISOString(),
     date_expiration: "",
   });
   const [medicaments, setMedicaments] = useState<{ id: number; name: string }[]>([]);
@@ -29,6 +31,85 @@ const StockMedicamentsPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
+      const { data: userData } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+
+      if (userData) {
+        const role = await getUserRole(userData.id);
+        setUserRole(role);
+        setIsAdmin(role === "administrateur");
+      }
+    } else {
+      setUser(null);
+      setUserRole(null);
+      setIsAdmin(false);
+    }
+  };
+  const fetchStockMedicaments = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("stock_medicaments")
+        .select(`
+          id_stock, 
+          medicament_id, 
+          quantite, 
+          date_ajout, 
+          date_expiration
+        `);
+
+      if (error) throw new Error(error.message);
+
+      if (Array.isArray(data)) {
+        setStockMedicaments(data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des stocks:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    const initialize = async () => {
+      await checkSession();
+      await fetchStockMedicaments();
+    };
+
+    initialize();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        const { data: userData } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userData) {
+          const role = await getUserRole(userData.id);
+          setUserRole(role);
+          setIsAdmin(role === "administrateur");
+        }
+      } else {
+        setUser(null);
+        setUserRole(null);
+        setIsAdmin(false);
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchStockMedicaments = async () => {
@@ -56,59 +137,7 @@ const StockMedicamentsPage = () => {
       }
     };
 
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const { data: userData } = await supabase
-          .from("User")
-          .select("id")
-          .eq("email", session.user.email)
-          .single();
-
-        if (userData) {
-          const role = await getUserRole(userData.id);
-          setUserRole(role);
-          setIsAdmin(role === "administrateur");
-        }
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setIsAdmin(false);
-      }
-    };
-
-    const initialize = async () => {
-      await checkSession();
-      await fetchStockMedicaments();
-    };
-
-    initialize();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: userData } = await supabase
-          .from("User")
-          .select("id")
-          .eq("email", session.user.email)
-          .single();
-
-        if (userData) {
-          const role = await getUserRole(userData.id);
-          setUserRole(role);
-          setIsAdmin(role === "administrateur");
-        }
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setIsAdmin(false);
-      }
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
+    fetchStockMedicaments();
   }, []);
 
   useEffect(() => {
@@ -134,8 +163,7 @@ const StockMedicamentsPage = () => {
   const handleEdit = (stock: StockMedicament) => {
     setSelectedStock(stock);
     setFormData({
-      medicament_id: stock.medicament_id,
-      quantite: stock.quantite,
+      ...stock,
       date_expiration: stock.date_expiration || "",
     });
     setIsEditing(true);
@@ -173,12 +201,21 @@ const StockMedicamentsPage = () => {
             stock.id_stock === selectedStock.id_stock ? { ...stock, ...formData } : stock
           )
         );
+      } else {
+        const { error } = await supabase
+          .from("stock_medicaments")
+          .insert([formData]);
+
+        if (error) throw new Error(error.message);
+
+        setStockMedicaments([...stockMedicaments, formData]);
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour du stock:", error);
     } finally {
       setIsEditing(false);
       setSelectedStock(null);
+      setShowModal(false);
     }
   };
 
@@ -196,7 +233,7 @@ const StockMedicamentsPage = () => {
           <div>
             <h1 className="text-white text-xl mb-4">Stock des Médicaments</h1>
             {isAdmin && (
-              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded">
+              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded" onClick={() => setShowModal(true)}>
                 Ajouter un médicament
               </button>
             )}
@@ -227,13 +264,79 @@ const StockMedicamentsPage = () => {
                   </div>
                 </li>
               ))}
-            </ul>
+            </ul>            
             {isEditing && selectedStock && (
               <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
                 <h2 className="text-lg font-bold text-white mb-4">Modifier le Stock</h2>
-                {/* Add form fields here for editing the stock */}
+                <input
+                  type="number"
+                  placeholder="ID du médicament"
+                  value={formData.medicament_id}
+                  onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
+                  className="mb-2 p-2 rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="Quantité"
+                  value={formData.quantite}
+                  onChange={(e) => setFormData({ ...formData, quantite: Number(e.target.value) })}
+                  className="mb-2 p-2 rounded"
+                />
+                <input
+                  type="date"
+                  placeholder="Date d'expiration"
+                  value={formData.date_expiration}
+                  onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
+                  className="mb-2 p-2 rounded"
+                />
                 <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
                   Enregistrer
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-gray-500 text-white rounded ml-2"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setSelectedStock(null);
+                  }}
+                >
+                  Annuler
+                </button>
+              </form>
+            )}
+            {showModal && (
+              <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
+                <h2 className="text-lg font-bold text-white mb-4">Ajouter un Stock</h2>
+                <input
+                  type="number"
+                  placeholder="ID du médicament"
+                  value={formData.medicament_id}
+                  onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
+                  className="mb-2 p-2 rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="Quantité"
+                  value={formData.quantite}
+                  onChange={(e) => setFormData({ ...formData, quantite: Number(e.target.value) })}
+                  className="mb-2 p-2 rounded"
+                />
+                <input
+                  type="date"
+                  placeholder="Date d'expiration"
+                  value={formData.date_expiration}
+                  onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
+                  className="mb-2 p-2 rounded"
+                />
+                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
+                  Ajouter
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-gray-500 text-white rounded ml-2"
+                  onClick={() => setShowModal(false)}
+                >
+                  Annuler
                 </button>
               </form>
             )}

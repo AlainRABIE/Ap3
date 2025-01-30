@@ -1,64 +1,121 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabaseClient";
 import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import MenubarRe from '../components/ui/MenuBarRe';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
-
-interface MedicamentStockData {
-  nom_medicament: string;
-  quantite_en_stock: number;
-}
+// Enregistrer les composants nécessaires de Chart.js
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
-  const [medicamentsData, setMedicamentsData] = useState<MedicamentStockData[]>([]);
+  const [commandes, setCommandes] = useState<any[]>([]);
+  const [materiels, setMateriels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true); // Variable de chargement
+  const [visites, setVisites] = useState<number>(0);
 
   useEffect(() => {
-    const fetchMedicamentsStock = async () => {
-      // Récupérer les médicaments et leurs quantités en stock
-      const { data, error } = await supabase
-        .from('stock_medicaments') // Table des stocks de médicaments
-        .select('id_medicament, quantite_en_stock'); // Sélectionner les colonnes nécessaires
+    const fetchData = async () => {
+      // Récupérer toutes les commandes de la table commande_médicaments
+      const { data: commandesData, error: commandesError } = await supabase
+        .from('commande_médicaments')
+        .select('*');
 
-      if (error) {
-        console.error(error);
-      } else {
-        // Récupérer les informations des médicaments depuis la table "medicaments"
-        const medicamentsIds = data?.map(item => item.id_medicament);
-        const { data: medicaments, error: medicamentsError } = await supabase
-          .from('medicaments') // Table des médicaments
-          .select('id, name')
-          .in('id', medicamentsIds); // Filtrer par les IDs des médicaments ayant du stock
+      // Récupérer toutes les données de la table stock_materiel
+      const { data: materielsData, error: materielsError } = await supabase
+        .from('stock_materiel')
+        .select('*');
 
-        if (medicamentsError) {
-          console.error(medicamentsError);
-        } else {
-          // Fusionner les données des stocks et des médicaments
-          const mergedData = medicaments.map((medicament: any) => {
-            const stockItem = data?.find((stock: any) => stock.id_medicament === medicament.id);
-            return {
-              nom_medicament: medicament.name,
-              quantite_en_stock: stockItem?.quantite_en_stock || 0,
-            };
-          });
-
-          setMedicamentsData(mergedData);
-        }
+      if (commandesError || materielsError) {
+        console.error(commandesError || materielsError);
+        setLoading(false);
+        return;
       }
+
+      console.log("Commandes récupérées:", commandesData); 
+      console.log("Matériels récupérés:", materielsData); 
+      setCommandes(commandesData || []);
+      setMateriels(materielsData || []);
+      setLoading(false);
     };
 
-    fetchMedicamentsStock();
+    fetchData();
+
+    // Gérer le compteur de visites dans le localStorage
+    const visitesActuelles = parseInt(localStorage.getItem('visites') || '0', 10) + 1;
+    localStorage.setItem('visites', visitesActuelles.toString());
+    setVisites(visitesActuelles);
+
   }, []);
 
-  // Préparer les données pour le graphique circulaire (camembert)
-  const chartData = {
-    labels: medicamentsData.map(item => item.nom_medicament),
+  if (loading) {
+    return <div>Chargement...</div>; // Message de chargement
+  }
+
+  if (commandes.length === 0 || materiels.length === 0) {
+    return <div>Aucune donnée trouvée.</div>; // Message si aucune donnée
+  }
+
+  // Préparer les données pour le graphique des médicaments
+  const chartDataMedicaments = {
+    labels: commandes.map((commande: any) => `Médicament ${commande.id_stock_medicament}`),
     datasets: [
       {
-        label: 'Médicaments en stock',
-        data: medicamentsData.map(item => item.quantite_en_stock),
-        backgroundColor: medicamentsData.map(() => `#${Math.floor(Math.random() * 16777215).toString(16)}`), // Couleurs aléatoires
+        label: 'Médicaments',
+        data: commandes.map(() => 1),  // Chaque médicament obtient une valeur 1
+        backgroundColor: commandes.map(() => 'rgba(54, 162, 235, 0.6)'),  // Couleur des médicaments (bleu clair)
+        borderColor: 'rgba(54, 162, 235, 1)', // Bordure bleu
+        borderWidth: 2,
+      },
+      {
+        label: 'Quantités',
+        data: commandes.map((commande: any) => commande.quantite),  // Quantités commandées
+        backgroundColor: commandes.map(() => 'rgba(255, 99, 132, 0.6)'),  // Couleur des quantités (rose)
+        borderColor: 'rgba(255, 99, 132, 1)', // Bordure rose
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  // Préparer les données pour le graphique des matériels
+  const chartDataMateriels = {
+    labels: materiels.map((materiel: any) => `Matériel ${materiel.materiel_id}`),
+    datasets: [
+      {
+        label: 'Matériels',
+        data: materiels.map(() => 1),  // Chaque matériel obtient une valeur 1
+        backgroundColor: materiels.map(() => 'rgba(75, 192, 192, 0.6)'),  // Couleur des matériels (vert clair)
+        borderColor: 'rgba(75, 192, 192, 1)', // Bordure vert
+        borderWidth: 2,
+      },
+      {
+        label: 'Quantités',
+        data: materiels.map((materiel: any) => materiel.quantite),  // Quantités de matériels
+        backgroundColor: materiels.map(() => 'rgba(153, 102, 255, 0.6)'),  // Couleur des quantités de matériels (violet)
+        borderColor: 'rgba(153, 102, 255, 1)', // Bordure violet
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  // Données pour le graphique des visites
+  const chartDataVisites = {
+    labels: ['Visites'],
+    datasets: [
+      {
+        label: 'Visites',
+        data: [visites],
+        backgroundColor: ['rgba(255, 159, 64, 0.6)'],
+        borderColor: ['rgba(255, 159, 64, 1)'],
+        borderWidth: 2,
       },
     ],
   };
@@ -69,12 +126,69 @@ const Dashboard = () => {
       <div className="waves"></div>
       <MenubarRe />
       <main className="main-content flex-1 p-8 overflow-auto">
-        <h1 className="text-4xl font-bold mb-6 text-white">Dashboard</h1>
-        <div className="grid grid-cols-1 gap-8">
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-white">Camembert des Médicaments en Stock</h2>
-            <div className="bg-gray-700 p-6 rounded-lg">
-              <Pie data={chartData} />
+        <h1 className="text-4xl font-bold mb-6 text-white">Graphiques des Commandes et Matériels</h1>
+
+        {/* Affichage du nombre de visites */}
+        <div className="text-xl text-white mb-4">Nombre de visites : {visites}</div>
+
+        <div className="flex space-x-8">
+          {/* Graphique des commandes (Médicaments) */}
+          <div className="bg-gray-700 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4 text-white">Quantité Commandée par Médicament</h2>
+            <div style={{ width: '300px', height: '300px' }}> {/* Taille ajustée */}
+              <Pie data={chartDataMedicaments} options={{
+                responsive: true,
+                plugins: {
+                  title: {
+                    display: true,
+                    text: 'Quantité de Médicaments Commandés',
+                    color: '#fff',
+                  },
+                  tooltip: {
+                    backgroundColor: '#333',
+                  },
+                }
+              }} />
+            </div>
+          </div>
+
+          {/* Graphique des matériels */}
+          <div className="bg-gray-700 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4 text-white">Quantité de Matériels en Stock</h2>
+            <div style={{ width: '300px', height: '300px' }}> {/* Taille ajustée */}
+              <Pie data={chartDataMateriels} options={{
+                responsive: true,
+                plugins: {
+                  title: {
+                    display: true,
+                    text: 'Quantité de Matériels en Stock',
+                    color: '#fff',
+                  },
+                  tooltip: {
+                    backgroundColor: '#333',
+                  },
+                }
+              }} />
+            </div>
+          </div>
+
+          {/* Graphique des visites */}
+          <div className="bg-gray-700 p-6 rounded-lg">
+            <h2 className="text-2xl font-semibold mb-4 text-white">Nombre de Visites</h2>
+            <div style={{ width: '300px', height: '300px' }}> {/* Taille ajustée */}
+              <Pie data={chartDataVisites} options={{
+                responsive: true,
+                plugins: {
+                  title: {
+                    display: true,
+                    text: 'Visites sur la plateforme',
+                    color: '#fff',
+                  },
+                  tooltip: {
+                    backgroundColor: '#333',
+                  },
+                }
+              }} />
             </div>
           </div>
         </div>

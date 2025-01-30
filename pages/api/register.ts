@@ -4,10 +4,10 @@ import { supabase } from '@/lib/supabaseClient';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     if (req.method === 'POST') {
-      const { email, password, name, role } = req.body;
-      console.log('Données reçues pour inscription:', { email, password, name, role });
+      const { email, password, name } = req.body;
+      console.log('Données reçues pour inscription:', { email, password, name });
 
-      if (!email || !password || !name || !role) {
+      if (!email || !password || !name) {
         console.error('Tous les champs sont requis');
         return res.status(400).json({ message: 'Tous les champs sont requis' });
       }
@@ -15,12 +15,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const { data: roleData, error: roleError } = await supabase
         .from('role')
         .select('id')
-        .eq('name', role)
-        .single();
+        .limit(1) 
+        .single(); 
 
       if (roleError || !roleData) {
-        console.error('Le rôle spécifié n\'existe pas');
-        return res.status(400).json({ message: 'Le rôle spécifié n\'existe pas' });
+        console.error('Le rôle par défaut n\'existe pas');
+        return res.status(400).json({ message: 'Le rôle par défaut n\'existe pas' });
       }
 
       const { data, error } = await supabase.auth.signUp({

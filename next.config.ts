@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    appDir: true, // Assurez-vous que cette ligne est bien présente
+    appDir: true, 
   },
 };
 

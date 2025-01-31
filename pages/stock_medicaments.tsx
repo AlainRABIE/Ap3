@@ -4,6 +4,7 @@ import "../src/app/globals.css";
 import MenubarRe from "../components/ui/MenuBarRe";
 import { User } from "@supabase/supabase-js";
 import { getUserRole } from "./api/role";
+import Modal from "../components/ui/modal"; 
 
 type StockMedicament = {
   id_stock: number;
@@ -53,18 +54,13 @@ const StockMedicamentsPage = () => {
       setIsAdmin(false);
     }
   };
+
   const fetchStockMedicaments = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("stock_medicaments")
-        .select(`
-          id_stock, 
-          medicament_id, 
-          quantite, 
-          date_ajout, 
-          date_expiration
-        `);
+        .select(`id_stock, medicament_id, quantite, date_ajout, date_expiration`);
 
       if (error) throw new Error(error.message);
 
@@ -77,6 +73,7 @@ const StockMedicamentsPage = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
@@ -109,35 +106,6 @@ const StockMedicamentsPage = () => {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
-
-  useEffect(() => {
-    const fetchStockMedicaments = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("stock_medicaments")
-          .select(`
-            id_stock, 
-            medicament_id, 
-            quantite, 
-            date_ajout, 
-            date_expiration
-          `);
-
-        if (error) throw new Error(error.message);
-
-        if (Array.isArray(data)) {
-          setStockMedicaments(data);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des stocks:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStockMedicaments();
   }, []);
 
   useEffect(() => {
@@ -186,38 +154,48 @@ const StockMedicamentsPage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    const sanitizedFormData = {
+      ...formData,
+      date_expiration: formData.date_expiration || null,
+    };
 
     try {
       if (isEditing && selectedStock) {
         const { error } = await supabase
           .from("stock_medicaments")
-          .update(formData)
+          .update(sanitizedFormData)
           .eq("id_stock", selectedStock.id_stock);
 
         if (error) throw new Error(error.message);
 
         setStockMedicaments(
           stockMedicaments.map((stock) =>
-            stock.id_stock === selectedStock.id_stock ? { ...stock, ...formData } : stock
+            stock.id_stock === selectedStock.id_stock ? { ...stock, ...sanitizedFormData } : stock
           )
         );
       } else {
         const { error } = await supabase
           .from("stock_medicaments")
-          .insert([formData]);
+          .insert([sanitizedFormData]);
 
         if (error) throw new Error(error.message);
 
-        setStockMedicaments([...stockMedicaments, formData]);
+        setStockMedicaments([...stockMedicaments, sanitizedFormData]);
       }
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du stock:", error);
+      console.error("Error in handleSubmit:", error);
     } finally {
       setIsEditing(false);
       setSelectedStock(null);
       setShowModal(false);
     }
   };
+
+  const availableMedicaments = medicaments.filter(
+    (medicament) =>
+      !stockMedicaments.some((stock) => stock.medicament_id === medicament.id)
+  );
 
   return (
     <div className="relative flex h-screen bg-gray-800">
@@ -264,56 +242,22 @@ const StockMedicamentsPage = () => {
                   </div>
                 </li>
               ))}
-            </ul>            
-            {isEditing && selectedStock && (
-              <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
-                <h2 className="text-lg font-bold text-white mb-4">Modifier le Stock</h2>
-                <input
-                  type="number"
-                  placeholder="ID du médicament"
+            </ul>
+            <Modal show={showModal} onClose={() => setShowModal(false)}>
+              <h2 className="text-lg font-bold mb-4">Ajouter un Stock</h2>
+              <form onSubmit={handleSubmit}>
+                <select
                   value={formData.medicament_id}
                   onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
                   className="mb-2 p-2 rounded"
-                />
-                <input
-                  type="number"
-                  placeholder="Quantité"
-                  value={formData.quantite}
-                  onChange={(e) => setFormData({ ...formData, quantite: Number(e.target.value) })}
-                  className="mb-2 p-2 rounded"
-                />
-                <input
-                  type="date"
-                  placeholder="Date d'expiration"
-                  value={formData.date_expiration}
-                  onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
-                  className="mb-2 p-2 rounded"
-                />
-                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
-                  Enregistrer
-                </button>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-500 text-white rounded ml-2"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setSelectedStock(null);
-                  }}
                 >
-                  Annuler
-                </button>
-              </form>
-            )}
-            {showModal && (
-              <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
-                <h2 className="text-lg font-bold text-white mb-4">Ajouter un Stock</h2>
-                <input
-                  type="number"
-                  placeholder="ID du médicament"
-                  value={formData.medicament_id}
-                  onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
-                  className="mb-2 p-2 rounded"
-                />
+                  <option value="">Sélectionner un médicament</option>
+                  {availableMedicaments.map((medicament) => (
+                    <option key={medicament.id} value={medicament.id}>
+                      {medicament.name}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="number"
                   placeholder="Quantité"
@@ -339,7 +283,7 @@ const StockMedicamentsPage = () => {
                   Annuler
                 </button>
               </form>
-            )}
+            </Modal>
           </div>
         )}
       </div>

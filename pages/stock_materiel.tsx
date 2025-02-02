@@ -10,6 +10,7 @@ type StockMateriel = {
   materiel_id: number;
   quantite: number;
   date_ajout: string;
+  nom?: string; // Nom du matériel
 };
 
 const StockMaterielsPage = () => {
@@ -32,7 +33,7 @@ const StockMaterielsPage = () => {
     const fetchStockMateriels = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data: stockData, error: stockError } = await supabase
           .from("stock_materiel")
           .select(`
             id_stock, 
@@ -41,10 +42,23 @@ const StockMaterielsPage = () => {
             date_ajout
           `);
 
-        if (error) throw new Error(error.message);
+        if (stockError) throw new Error(stockError.message);
 
-        if (Array.isArray(data)) {
-          setStockMateriels(data);
+        const { data: materielsData, error: materielsError } = await supabase
+          .from("materiels")
+          .select("id_materiel, nom");
+
+        if (materielsError) throw new Error(materielsError.message);
+
+        // Associer les noms des matériels aux stocks
+        if (Array.isArray(stockData) && Array.isArray(materielsData)) {
+          const materielsMap = new Map(materielsData.map((item) => [item.id_materiel, item.nom]));
+          const combinedData = stockData.map((stock) => ({
+            ...stock,
+            nom: materielsMap.get(stock.materiel_id),
+          }));
+
+          setStockMateriels(combinedData);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des stocks:", error);
@@ -52,7 +66,6 @@ const StockMaterielsPage = () => {
         setLoading(false);
       }
     };
-
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -148,8 +161,10 @@ const StockMaterielsPage = () => {
       if (error) throw new Error(error.message);
 
       setStockMateriels(stockMateriels.filter((stock) => stock.id_stock !== id_stock));
+      alert("Matériel supprimé avec succès !");
     } catch (error) {
       console.error("Erreur lors de la suppression du stock:", error);
+      alert("Erreur lors de la suppression du stock, veuillez réessayer.");
     }
   };
 
@@ -164,8 +179,7 @@ const StockMaterielsPage = () => {
     try {
       const { data, error } = await supabase
         .from("stock_materiel")
-        .upsert([{
-          id_stock: selectedStock?.id_stock,
+        .insert([{
           materiel_id: formData.materiel_id,
           quantite: formData.quantite,
           date_ajout: new Date().toISOString(),
@@ -180,21 +194,31 @@ const StockMaterielsPage = () => {
         const newData = data[0];
         setStockMateriels((prevStockMateriels) => [
           ...prevStockMateriels.filter((stock) => stock.id_stock !== newData.id_stock),
-          { 
-            ...newData, 
-            id_stock: newData.id_stock || 0 
+          {
+            ...newData,
+            id_stock: newData.id_stock || 0
           }
         ]);
       }
 
-      alert("Matériel modifié avec succès !");
+      alert(isEditing ? "Matériel modifié avec succès !" : "Matériel ajouté avec succès !");
     } catch (error) {
-      console.error("Erreur lors de la modification du matériel:", error);
-      alert("Erreur lors de la modification du matériel, veuillez réessayer.");
+      console.error("Erreur lors de la soumission du matériel:", error);
+      alert("Erreur lors de la soumission du matériel, veuillez réessayer.");
     } finally {
       setShowModal(false);
       setFormData({ materiel_id: 0, quantite: 0 });
+      setSelectedStock(null);
+      setIsEditing(false);
     }
+  };
+
+
+  const handleAdd = () => {
+    setFormData({ materiel_id: 0, quantite: 0 });
+    setIsEditing(false);
+    setSelectedStock(null);
+    setShowModal(true);
   };
 
   return (
@@ -213,7 +237,7 @@ const StockMaterielsPage = () => {
             {isAdmin && (
               <button
                 className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={() => setShowModal(true)}
+                onClick={handleAdd}
               >
                 Ajouter un matériel
               </button>
@@ -222,8 +246,8 @@ const StockMaterielsPage = () => {
               {stockMateriels.map((stock) => (
                 <li key={stock.id_stock} className="text-white mb-4">
                   <div className="bg-gray-700 p-4 rounded-lg">
-                    <h2 className="text-lg font-bold">{stock.materiel_id}</h2>
-                    <p><strong>Quantité:</strong> {stock.quantite}</p>
+                  <h2 className="text-lg font-bold">{stock.nom || "Nom inconnu"}</h2>
+                  <p><strong>Quantité:</strong> {stock.quantite}</p>
                     <p><strong>Date d'ajout:</strong> {stock.date_ajout}</p>
                     {isAdmin && (
                       <div className="mt-4">
@@ -248,11 +272,12 @@ const StockMaterielsPage = () => {
           </div>
         )}
       </div>
-
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-lg">
-            <h2 className="text-xl font-bold mb-4">Modifier le Matériel</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {isEditing ? "Modifier le Matériel" : "Ajouter un Matériel"}
+            </h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="materiel_id" className="block text-sm font-medium text-gray-700">
@@ -298,7 +323,7 @@ const StockMaterielsPage = () => {
                   type="submit"
                   className="px-4 py-2 bg-blue-500 text-white rounded"
                 >
-                  Modifier
+                  {isEditing ? "Modifier" : "Ajouter"}
                 </button>
               </div>
             </form>

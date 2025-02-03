@@ -10,7 +10,8 @@ type StockMateriel = {
   materiel_id: number;
   quantite: number;
   date_ajout: string;
-  nom?: string; // Nom du matériel
+  nom?: string; 
+  etat?: string; 
 };
 
 const StockMaterielsPage = () => {
@@ -66,6 +67,7 @@ const StockMaterielsPage = () => {
         setLoading(false);
       }
     };
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -141,6 +143,11 @@ const StockMaterielsPage = () => {
     fetchMateriels();
   }, []);
 
+  const getAvailableMateriels = () => {
+    const addedMaterielIds = stockMateriels.map(stock => stock.materiel_id);
+    return materiels.filter(materiel => !addedMaterielIds.includes(materiel.id));
+  };
+
   const handleEdit = (stock: StockMateriel) => {
     setSelectedStock(stock);
     setFormData({
@@ -177,14 +184,30 @@ const StockMaterielsPage = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("stock_materiel")
-        .insert([{
-          materiel_id: formData.materiel_id,
-          quantite: formData.quantite,
-          date_ajout: new Date().toISOString(),
-        }])
-        .select();
+      let data, error;
+
+      if (isEditing && selectedStock) {
+        // Mise à jour du matériel existant
+        ({ data, error } = await supabase
+          .from("stock_materiel")
+          .update({
+            materiel_id: formData.materiel_id,
+            quantite: formData.quantite,
+            date_ajout: new Date().toISOString(), // Mettre à jour la date si nécessaire
+          })
+          .eq("id_stock", selectedStock.id_stock)
+          .select());
+      } else {
+        // Ajout d'un nouveau matériel
+        ({ data, error } = await supabase
+          .from("stock_materiel")
+          .insert([{
+            materiel_id: formData.materiel_id,
+            quantite: formData.quantite,
+            date_ajout: new Date().toISOString(),
+          }])
+          .select());
+      }
 
       if (error) {
         throw new Error(error.message);
@@ -196,7 +219,8 @@ const StockMaterielsPage = () => {
           ...prevStockMateriels.filter((stock) => stock.id_stock !== newData.id_stock),
           {
             ...newData,
-            id_stock: newData.id_stock || 0
+            id_stock: newData.id_stock || 0,
+            nom: materiels.find(m => m.id === newData.materiel_id)?.name || "Nom inconnu"
           }
         ]);
       }
@@ -213,14 +237,12 @@ const StockMaterielsPage = () => {
     }
   };
 
-
   const handleAdd = () => {
     setFormData({ materiel_id: 0, quantite: 0 });
     setIsEditing(false);
     setSelectedStock(null);
     setShowModal(true);
   };
-
   return (
     <div className="relative flex h-screen bg-gray-800">
       <div className="animated-background"></div>
@@ -246,8 +268,8 @@ const StockMaterielsPage = () => {
               {stockMateriels.map((stock) => (
                 <li key={stock.id_stock} className="text-white mb-4">
                   <div className="bg-gray-700 p-4 rounded-lg">
-                  <h2 className="text-lg font-bold">{stock.nom || "Nom inconnu"}</h2>
-                  <p><strong>Quantité:</strong> {stock.quantite}</p>
+                    <h2 className="text-lg font-bold">{stock.nom || "Nom inconnu"}</h2>
+                    <p><strong>Quantité:</strong> {stock.quantite}</p>
                     <p><strong>Date d'ajout:</strong> {stock.date_ajout}</p>
                     {isAdmin && (
                       <div className="mt-4">
@@ -290,7 +312,7 @@ const StockMaterielsPage = () => {
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value={0}>Sélectionner un matériel</option>
-                  {materiels.map((materiel) => (
+                  {getAvailableMateriels().map((materiel) => (
                     <option key={materiel.id} value={materiel.id}>
                       {materiel.name}
                     </option>
@@ -314,8 +336,8 @@ const StockMaterielsPage = () => {
               <div className="flex justify-end">
                 <button
                   type="button"
+                  className="mr-2 px-4 py-2 bg-gray-500 text-white rounded"
                   onClick={() => setShowModal(false)}
-                  className="mr-2 px-4 py-2 bg-gray-400 text-white rounded"
                 >
                   Annuler
                 </button>

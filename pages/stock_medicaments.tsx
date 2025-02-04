@@ -4,7 +4,7 @@ import "../src/app/globals.css";
 import MenubarRe from "../components/ui/MenuBarRe";
 import { User } from "@supabase/supabase-js";
 import { getUserRole } from "./api/role";
-import Modal from "../components/ui/modal"; 
+import Modal from "../components/ui/modal";
 
 type StockMedicament = {
   id_stock: number;
@@ -154,7 +154,7 @@ const StockMedicamentsPage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     const sanitizedFormData = {
       ...formData,
       date_expiration: formData.date_expiration || null,
@@ -206,7 +206,7 @@ const StockMedicamentsPage = () => {
 
       <div className="content">
         {loading ? (
-          <p>Loading...</p>
+          <p>chargement des médicaments...</p>
         ) : (
           <div>
             <h1 className="text-white text-xl mb-4">Stock des Médicaments</h1>
@@ -219,8 +219,9 @@ const StockMedicamentsPage = () => {
               {stockMedicaments.map((stock) => (
                 <li key={stock.id_stock} className="text-white mb-4">
                   <div className="bg-gray-700 p-4 rounded-lg">
-                    <h2 className="text-lg font-bold">{stock.medicament_id}</h2>
-                    <p><strong>Quantité:</strong> {stock.quantite}</p>
+                    <h2 className="text-lg font-bold">
+                      {medicaments.find(med => med.id === stock.medicament_id)?.name || "Médicament non trouvé"}
+                    </h2>                    <p><strong>Quantité:</strong> {stock.quantite}</p>
                     <p><strong>Date d'ajout:</strong> {stock.date_ajout}</p>
                     <p><strong>Date d'expiration:</strong> {stock.date_expiration || "N/A"}</p>
                     {isAdmin && (
@@ -244,46 +245,64 @@ const StockMedicamentsPage = () => {
               ))}
             </ul>
             <Modal show={showModal} onClose={() => setShowModal(false)}>
-              <h2 className="text-lg font-bold mb-4">Ajouter un Stock</h2>
-              <form onSubmit={handleSubmit}>
-                <select
-                  value={formData.medicament_id}
-                  onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
-                  className="mb-2 p-2 rounded"
-                >
-                  <option value="">Sélectionner un médicament</option>
-                  {availableMedicaments.map((medicament) => (
-                    <option key={medicament.id} value={medicament.id}>
-                      {medicament.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  placeholder="Quantité"
-                  value={formData.quantite}
-                  onChange={(e) => setFormData({ ...formData, quantite: Number(e.target.value) })}
-                  className="mb-2 p-2 rounded"
-                />
-                <input
-                  type="date"
-                  placeholder="Date d'expiration"
-                  value={formData.date_expiration}
-                  onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
-                  className="mb-2 p-2 rounded"
-                />
-                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
-                  Ajouter
-                </button>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-500 text-white rounded ml-2"
-                  onClick={() => setShowModal(false)}
-                >
-                  Annuler
-                </button>
-              </form>
+              <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
+                <h2 className="text-lg font-bold mb-4 text-black">Ajouter un Stock</h2>
+                <form onSubmit={handleSubmit} className="flex flex-col">
+                  <select
+                    value={formData.medicament_id}
+                    onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                  >
+                    <option value="">Sélectionner un médicament</option>
+                    {availableMedicaments.map((medicament) => (
+                      <option key={medicament.id} value={medicament.id}>
+                        {medicament.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    placeholder="Quantité"
+                    value={formData.quantite}
+                    min="0"
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 0) {
+                        setFormData({ ...formData, quantite: value });
+                      }
+                    }}
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                  />
+
+                  <input
+                    type="date"
+                    placeholder="Date d'expiration"
+                    value={formData.date_expiration}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                  />
+
+                  <div className="flex justify-end mt-2">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-400"
+                      disabled={
+                        formData.quantite < 0 ||
+                        (formData.date_expiration !== "" &&
+                          formData.date_expiration < new Date().toISOString().split("T")[0])
+                      }
+                    >
+                      {isEditing ? "Modifier" : "Ajouter"}
+                    </button>
+
+                  </div>
+                </form>
+
+              </div>
             </Modal>
+
           </div>
         )}
       </div>

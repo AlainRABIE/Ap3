@@ -15,7 +15,7 @@ type CommandeMedicament = {
   quantite: number;
   date_commande: string;
   etat: string;
-  medicament_nom: string; // Ajout du nom du médicament
+  medicament_nom: string; 
 };
 
 export default function CommandeMedicaments() {

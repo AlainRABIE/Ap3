@@ -45,7 +45,6 @@ const Sidebar = () => {
 
   return (
     <div className="flex flex-col w-64 h-full bg-gray-900 text-gray-300 shadow-lg">
-      {/* Sidebar Header */}
       <div className="flex items-center justify-center py-4 bg-gray-800 border-b border-gray-700">
         <h1 className="text-lg font-semibold">Application</h1>
       </div>
@@ -81,27 +80,16 @@ const Sidebar = () => {
               </MenubarTrigger>
               <MenubarContent className="bg-gray-900 text-gray-300">
                 <MenubarItem>
-                  <Link href="/commande" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                    Liste des Commandes
+                  <Link href="/commande_medicaments" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Commande de médicaments
                   </Link>
                 </MenubarItem>
                 <MenubarItem>
-                  <Link href="/commande-en-cours" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                    Commande en cours de traitement
-                  </Link>
-                </MenubarItem>
-                <MenubarItem>
-                  <Link href="/historique-commandes" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                    Historique de commande
-                  </Link>
-                </MenubarItem>
-                {isAdmin && (
-                  <MenubarItem>
-                    <Link href="/user" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                      Liste d'utilisateur
+                  <Link href="/commande_materiel" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Commande de Matériel                  
                     </Link>
-                  </MenubarItem>
-                )}
+                </MenubarItem>
+               
               </MenubarContent>
             </MenubarMenu>
 
@@ -111,8 +99,11 @@ const Sidebar = () => {
               </MenubarTrigger>
               <MenubarContent className="bg-gray-900 text-gray-300">
                 <MenubarItem>
-                  <Link href="/fournisseur" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
-                    Fournisseurs
+                  <Link href="/fournisseur_materiel" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Fournisseurs De Matériel
+                  </Link>
+                  <Link href="/fournisseur_medicaments" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                    Fournisseurs De Médicaments
                   </Link>
                 </MenubarItem>
               </MenubarContent>
@@ -126,7 +117,14 @@ const Sidebar = () => {
                 <MenubarItem>
                   <Link href="/settings" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
                     Paramètres
-                  </Link>
+                  </Link> 
+                  {isAdmin && (
+                  <MenubarItem>
+                    <Link href="/user" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
+                      Liste d'utilisateur
+                    </Link>
+                  </MenubarItem>
+                )}
                   <Link href="/profil" className="block py-2 px-4 text-gray-300 hover:bg-gray-700">
                     Profil
                   </Link>

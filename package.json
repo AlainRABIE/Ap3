@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.47.12",
     "@types/express": "^5.0.0",
     "@types/js-cookie": "^3.0.6",
+    "animate.css": "^4.1.1",
     "chart.js": "^4.4.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

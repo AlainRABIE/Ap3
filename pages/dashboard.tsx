@@ -168,7 +168,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Graphique des visites */}
           
           <div className="bg-gray-700 p-6 rounded-lg">
           <h2 className="text-2xl font-semibold mb-4 text-white">Nombre de visite du site</h2>

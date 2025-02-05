@@ -77,7 +77,7 @@ const UserPage = () => {
   };
 
   return (
-    <div className="relative flex h-screen bg-gray-800">
+    <div className="relative flex h-screen bg-black bg-opacity-40 backdrop-blur-md">
       <div className="animated-background"></div>
       <div className="waves"></div>
       <MenubarRe />

@@ -25,7 +25,7 @@
 
 //   if (isOffline) {
 //     return (
-//       <div className="flex items-center justify-center h-screen bg-gray-800 text-white text-center">
+//       <div className="flex items-center justify-center h-screen bg-black bg-opacity-40 backdrop-blur-md text-white text-center">
 //         <div>
 //           <h1 className="text-4xl font-bold mb-4">Pas de connexion Internet</h1>
 //           <p className="text-lg mb-6">
@@ -43,7 +43,7 @@
 //   }
 
 //   return (
-//     <div className="flex items-center justify-center h-screen bg-gray-800 text-white text-center">
+//     <div className="flex items-center justify-center h-screen bg-black bg-opacity-40 backdrop-blur-md text-white text-center">
 //       <h1 className="text-4xl font-bold">Bienvenue ! Vous êtes à nouveau en ligne.</h1>
 //     </div>
 //   );

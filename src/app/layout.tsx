@@ -1,17 +1,22 @@
-import { Menubar } from "../../components/ui/Menubar";
-import "./globals.css";
+import React, { ReactNode } from 'react';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+type LayoutProps = {
+  children: ReactNode;
+};
+
+const Layout = ({ children }: LayoutProps) => {
   return (
     <html lang="en">
-      <body className="relative min-h-screen flex flex-col">
-        <div className="flex-grow">{children}</div>
-        <Menubar /> {/* Menubar en bas */}
+      <head>
+        <title>Mon site Web</title>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body>
+        <main>{children}</main>
       </body>
     </html>
   );
-}
+};
+
+export default Layout;

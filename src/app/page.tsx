@@ -5,9 +5,8 @@ import CustomMenubar from "../../components/ui/MenuBarRe";
 
 export default function Page() {
   return (
-    <div className="relative flex h-screen bg-gray-800">
+    <div className="relative flex h-screen bg-transparance-800">
       <div className="animated-background"></div>
-      <div className="waves"></div>
       <CustomMenubar />
       <main className="main-content flex-1 p-8 overflow-auto">
         <div className="space-y-12 mt-8">

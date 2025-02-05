@@ -4,8 +4,9 @@
 
 @layer base {
   :root {
-    --background-main: #121212;  /* Fond noir mat */
     --text-main: #ffffff;
+    --background: #ffffff;
+    --foreground: #000000;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -19,6 +20,7 @@
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
+    --text-main: #ffffff;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -34,34 +36,34 @@
   * {
     @apply border-border;
     box-sizing: border-box;
+    animation: none !important;
+    transition: none !important;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply m-0 p-0 overflow-hidden;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
   }
 }
 
-body {
-  background-color: var(--background-main); /* Fond noir mat */
-  color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
-}
-
-.flex.h-screen.bg-black {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  object-fit: cover;
+  z-index: -1;
 }
 
 main {
-  background-color: var(--background-main);
+  background-color: transparent;
   color: var(--text-main);
   flex: 1;
   padding: 1rem;
@@ -69,38 +71,24 @@ main {
   border-radius: 0;
   margin: 0;
   height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
-.animated-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+ul.list-none li {
+  transition: none !important;
+}
+
+h1, h2 {
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+p, li {
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Ensure full page coverage */
+#__next, #root {
   height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent);
-  background-size: 56px 56px;
-  animation: moveWaves 15s linear infinite;
-  z-index: -1;
-}
-
-@keyframes moveWaves {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 56px 56px;
-  }
-}
-
-.waves {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent);
-  background-size: 56px 56px;
-  opacity: 0.1;
-  animation: moveWaves 25s linear infinite;
-  z-index: -1;
 }

@@ -136,8 +136,8 @@ export default function CommandeMedicaments() {
   };
 
   return (
-    <div className="relative flex h-screen bg-black bg-opacity-40 backdrop-blur-md">
-      <div className="animated-background"></div>
+<div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
+<div className="animated-background"></div>
       <div className="waves"></div>
       <MenubarRe />
       

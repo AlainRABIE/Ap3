@@ -57,22 +57,10 @@ const Sidebar = () => {
     <div
       className={`flex flex-col w-64 h-full ${isDarkMode ? "bg-black text-white" : "bg-white text-black"} bg-opacity-40 backdrop-blur-md shadow-lg`}
     >
-      {/* Vidéo en arrière-plan */}
-      <video
-        src={isDarkMode ? "./video/black.mp4" : "/videos/video-clair.mp4"}
-        autoPlay
-        loop
-        muted
-        className="w-full h-full object-cover fixed top-0 left-0 z-[-1]"
-      ></video>
-
       <div className="flex items-center justify-center py-4 backdrop-blur-md border-gray-700">
         <h1 className="text-lg font-semibold">Application</h1>
       </div>
-
       <div className="flex-grow p-4 main-content">
-        {/* Vidéo conditionnelle en fonction du mode sombre ou clair */}
-        <div className="video-container mb-4">
           {user && (
             <Menubar className="flex flex-col space-y-2">
               <Link
@@ -268,7 +256,6 @@ const Sidebar = () => {
               </MenubarMenu>
             </Menubar>
           )}
-        </div>
       </div>
 
       <div className="fixed bottom-8 right-8 flex items-center justify-center">

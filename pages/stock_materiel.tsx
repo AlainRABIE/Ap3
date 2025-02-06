@@ -10,8 +10,8 @@ type StockMateriel = {
   materiel_id: number;
   quantite: number;
   date_ajout: string;
-  nom?: string; 
-  etat?: string; 
+  nom?: string;
+  etat?: string;
 };
 
 const StockMaterielsPage = () => {
@@ -244,7 +244,7 @@ const StockMaterielsPage = () => {
     setShowModal(true);
   };
   return (
-    <div className="relative flex h-screen bg-black bg-opacity-40 backdrop-blur-md-opacity-40 backdrop-blur-md">
+    <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <div className="animated-background"></div>
       <div className="waves"></div>
 

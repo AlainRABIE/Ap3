@@ -58,28 +58,27 @@ const Sidebar = () => {
       className={`flex flex-col w-64 h-full ${isDarkMode ? "bg-black text-white" : "bg-white text-black"} bg-opacity-40 backdrop-blur-md shadow-lg`}
     >
       <div className="flex items-center justify-center py-4 backdrop-blur-md border-gray-700">
-        <h1 className="text-lg font-semibold">Application</h1>
       </div>
       <div className="flex-grow p-4 main-content">
           {user && (
             <Menubar className="flex flex-col space-y-2">
               <Link
                 href="/"
-                className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded"
+                className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded"
               >
                 Accueil
               </Link>
 
               {/* Menu Stock */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   Stock
                 </MenubarTrigger>
                 <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
                   <MenubarItem>
                     <Link
                       href="/stock_medicaments"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Stock Médicaments
                     </Link>
@@ -87,7 +86,7 @@ const Sidebar = () => {
                   <MenubarItem>
                     <Link
                       href="/stock_materiel"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Stock Matériel
                     </Link>
@@ -97,14 +96,14 @@ const Sidebar = () => {
 
               {/* Menu Commande */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   Commande
                 </MenubarTrigger>
                 <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
                   <MenubarItem>
                     <Link
                       href="/commande_medicaments"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Commande de médicaments
                     </Link>
@@ -112,7 +111,7 @@ const Sidebar = () => {
                   <MenubarItem>
                     <Link
                       href="/commande_materiel"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Commande de Matériel
                     </Link>
@@ -122,20 +121,20 @@ const Sidebar = () => {
 
               {/* Menu Fournisseurs */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   Fournisseurs
                 </MenubarTrigger>
                 <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
                   <MenubarItem>
                     <Link
                       href="/fournisseur_materiel"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Fournisseurs De Matériel
                     </Link>
                     <Link
                       href="/fournisseur_medicaments"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Fournisseurs De Médicaments
                     </Link>
@@ -145,14 +144,14 @@ const Sidebar = () => {
 
               {/* Menu Paramètres */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   <FiSettings className="inline-block mr-2" /> Paramètres
                 </MenubarTrigger>
                 <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
                   <MenubarItem>
                     <Link
                       href="/settings"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Paramètres
                     </Link>
@@ -161,7 +160,7 @@ const Sidebar = () => {
                     <MenubarItem>
                       <Link
                         href="/user"
-                        className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                        className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                       >
                         Liste d'utilisateur
                       </Link>
@@ -169,7 +168,7 @@ const Sidebar = () => {
                   )}
                   <Link
                     href="/profil"
-                    className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                   >
                     Profil
                   </Link>
@@ -178,14 +177,14 @@ const Sidebar = () => {
 
               {/* Menu Dashboard */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   Dashboard
                 </MenubarTrigger>
-                <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
+                <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-400">
                   <MenubarItem>
                     <Link
                       href="/dashboard"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Dashboard
                     </Link>
@@ -195,14 +194,14 @@ const Sidebar = () => {
 
               {/* Menu Déconnexion */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   Déconnexion
                 </MenubarTrigger>
-                <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
+                <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-400">
                   <MenubarItem>
                     <button
                       onClick={logout}
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Déconnexion
                     </button>
@@ -212,14 +211,14 @@ const Sidebar = () => {
 
               {/* Menu Notifications */}
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   <FiBell className="inline-block mr-2" /> Notifications
                 </MenubarTrigger>
-                <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
+                <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-400">
                   <MenubarItem>
                     <Link
                       href="/notifications"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Voir les Notifications
                     </Link>
@@ -232,14 +231,14 @@ const Sidebar = () => {
           {!user && (
             <Menubar>
               <MenubarMenu>
-                <MenubarTrigger className="block py-2 px-4 text-gray-300 hover:bg-gray-700 rounded">
+                <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded">
                   Connexion
                 </MenubarTrigger>
                 <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
                   <MenubarItem>
                     <Link
                       href="/login"
-                      className="block py-2 px-4 text-gray-300 hover:bg-gray-700"
+                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700"
                     >
                       Connexion
                     </Link>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
 import { supabase } from "@/lib/supabaseClient";
 import MenubarRe from "../components/ui/MenuBarRe";
 import { ShoppingCart, X } from "lucide-react"; // Icône pour la croix
@@ -90,14 +90,12 @@ const CataloguePage = () => {
       console.log(data); // Vérifier la structure des données dans la console
 
       // Formatage des données reçues
-      // Formatage des données reçues
       const formattedData = data.map(item => ({
         materiel_id: item.materiel_id,
         quantite: item.quantite,
-        // Accéder correctement au nom dans le tableau "materiels" (en prenant le nom directement si disponible)
-        nom: item.materiels ? item.materiels[0]?.nom : "Nom non disponible", // S'assurer de vérifier que materiels[0] existe
+        // Vérification pour accéder correctement au nom dans le tableau "materiels"
+        nom: item.materiels && item.materiels.length > 0 ? item.materiels[0].nom : "Nom non disponible", 
       }));
-
 
       setStockMaterials(formattedData);
     }
@@ -200,7 +198,7 @@ const CataloguePage = () => {
                   {cart.map((item) => (
                     <div key={item.medicamentId} className="border-b py-2 flex justify-between items-center">
                       <p>{item.name} x {item.quantity}</p>
-                      <button
+                      <button 
                         onClick={() => removeFromCart(item.medicamentId)}
                         className="text-red-500 hover:text-red-700"
                       >
@@ -234,7 +232,7 @@ const CataloguePage = () => {
                     onChange={(e) => handleQuantityChange(material.materiel_id, e.target.value)}
                     className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
                   />
-                  <button
+                  <button 
                     onClick={() => addToCart({
                       medicamentId: material.materiel_id,
                       name: material.nom,

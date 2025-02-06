@@ -6,21 +6,21 @@ import { getUserRole } from "./api/role";
 
 interface MaterialDetails {
   id: number;
-  name: string;
+  nom: string;
   description?: string;
 }
 
 interface CartItem {
   medicamentId: number;
   quantity: number;
-  name: string;
+  nom: string;
 }
 
 interface Material {
   materiel_id: number;
   quantite: number;
   materiels: MaterialDetails;
-  name: string;
+  nom: string;
   description?: string;
 }
 
@@ -78,7 +78,7 @@ const CataloguePage = () => {
         quantite,
         materiels(
           id,
-          name,
+          nom,
           description
         )
       `);
@@ -92,7 +92,7 @@ const CataloguePage = () => {
       const formattedData = data.map(item => ({
         materiel_id: item.materiel_id,
         quantite: item.quantite,
-        name: item.materiels[0].name,
+        nom: item.materiels[0].nom,
         description: item.materiels[0].description,
         materiels: item.materiels[0]
       }));
@@ -133,7 +133,7 @@ const CataloguePage = () => {
           const newQuantity = currentStock.quantite - item.quantity;
 
           if (newQuantity < 0) {
-            throw new Error(`Stock insuffisant pour ${item.name}`);
+            throw new Error(`Stock insuffisant pour ${item.nom}`);
           }
 
           const { error } = await supabase
@@ -191,7 +191,7 @@ const CataloguePage = () => {
                   <h2 className="text-lg font-bold">Panier</h2>
                   {cart.map((item) => (
                     <div key={item.medicamentId} className="border-b py-2 flex justify-between items-center">
-                      <p>{item.name} x {item.quantity}</p>
+                      <p>{item.nom} x {item.quantity}</p>
                       <button 
                         onClick={() => removeFromCart(item.medicamentId)}
                         className="text-red-500 hover:text-red-700"
@@ -214,7 +214,7 @@ const CataloguePage = () => {
             {stockMaterials.length > 0 ? (
               stockMaterials.map((material) => (
                 <div key={material.materiel_id} className="bg-white rounded-lg shadow-lg p-6">
-                  <h2 className="text-xl font-bold mb-2">{material.name}</h2>
+                  <h2 className="text-xl font-bold mb-2">{material.nom}</h2>
                   {material.description && (
                     <div className="text-sm text-gray-600 mb-4">
                       {material.description}
@@ -234,7 +234,7 @@ const CataloguePage = () => {
                   <button 
                     onClick={() => addToCart({
                       medicamentId: material.materiel_id,
-                      name: material.name,
+                      nom: material.nom,
                       quantity: quantities[material.materiel_id] || 1
                     })}
                     className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react"; 
 import { supabase } from "@/lib/supabaseClient";
 import MenubarRe from "../components/ui/MenuBarRe";
-import { ShoppingCart, X } from "lucide-react"; // Icône pour la croix
+import { ShoppingCart, X } from "lucide-react";
 import { getUserRole } from "./api/role";
 
-interface Medicament {
+interface MaterialDetails {
   id: number;
   name: string;
-  description: string;
+  description?: string;
 }
 
 interface CartItem {
@@ -19,7 +19,9 @@ interface CartItem {
 interface Material {
   materiel_id: number;
   quantite: number;
-  nom: string;
+  materiels: MaterialDetails;
+  name: string;
+  description?: string;
 }
 
 interface Quantities {
@@ -32,7 +34,6 @@ interface User {
 }
 
 const CataloguePage = () => {
-  const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [quantities, setQuantities] = useState<Quantities>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -69,15 +70,16 @@ const CataloguePage = () => {
     }
   };
 
-  // Fonction de récupération des matériaux
   const fetchStockMaterials = async () => {
     const { data, error } = await supabase
       .from("stock_materiel")
       .select(`
         materiel_id,
         quantite,
-        materiels (
-          nom
+        materiels(
+          id,
+          name,
+          description
         )
       `);
 
@@ -87,14 +89,12 @@ const CataloguePage = () => {
     }
 
     if (data) {
-      console.log(data); // Vérifier la structure des données dans la console
-
-      // Formatage des données reçues
       const formattedData = data.map(item => ({
         materiel_id: item.materiel_id,
         quantite: item.quantite,
-        // Vérification pour accéder correctement au nom dans le tableau "materiels"
-        nom: item.materiels && item.materiels.length > 0 ? item.materiels[0].nom : "Nom non disponible", 
+        name: item.materiels[0].name,
+        description: item.materiels[0].description,
+        materiels: item.materiels[0]
       }));
 
       setStockMaterials(formattedData);
@@ -108,7 +108,6 @@ const CataloguePage = () => {
     }
 
     try {
-      // Créer les entrées dans commande_materiel
       const commandePromises = cart.map(async (item) => {
         const { error } = await supabase
           .from('commande_materiel')
@@ -120,13 +119,11 @@ const CataloguePage = () => {
             status: 'en cours'
           }]);
 
-
         if (error) throw error;
       });
 
       await Promise.all(commandePromises);
 
-      // Mettre à jour les quantités dans stock_materiel
       const updateStockPromises = cart.map(async (item) => {
         const currentStock = stockMaterials.find(
           (material) => material.materiel_id === item.medicamentId
@@ -152,27 +149,24 @@ const CataloguePage = () => {
 
       alert("Commande passée avec succès !");
       setCart([]);
-      fetchStockMaterials(); // Rafraîchir les stocks
+      fetchStockMaterials();
     } catch (error) {
       console.error("Erreur lors de la commande:", error);
       alert(error instanceof Error ? error.message : "Une erreur est survenue lors de la commande.");
     }
   };
 
-  // Fonction d'ajout au panier
   const addToCart = (item: CartItem) => {
     setCart((prevCart) => [...prevCart, item]);
   };
 
-  // Fonction de gestion de la quantité
   const handleQuantityChange = (materielId: number, quantity: string) => {
     setQuantities({
       ...quantities,
-      [materielId]: Math.max(1, Math.min(Number(quantity), 100)), // Limiter la quantité entre 1 et 100
+      [materielId]: Math.max(1, Math.min(Number(quantity), 100)),
     });
   };
 
-  // Fonction de retrait du panier
   const removeFromCart = (medicamentId: number) => {
     setCart((prevCart) => prevCart.filter(item => item.medicamentId !== medicamentId));
   };
@@ -220,7 +214,12 @@ const CataloguePage = () => {
             {stockMaterials.length > 0 ? (
               stockMaterials.map((material) => (
                 <div key={material.materiel_id} className="bg-white rounded-lg shadow-lg p-6">
-                  <h2 className="text-xl font-bold mb-2">{material.nom}</h2>
+                  <h2 className="text-xl font-bold mb-2">{material.name}</h2>
+                  {material.description && (
+                    <div className="text-sm text-gray-600 mb-4">
+                      {material.description}
+                    </div>
+                  )}
                   <div className="text-sm text-gray-700 mb-4">
                     Quantité disponible: {material.quantite}
                   </div>
@@ -235,7 +234,7 @@ const CataloguePage = () => {
                   <button 
                     onClick={() => addToCart({
                       medicamentId: material.materiel_id,
-                      name: material.nom,
+                      name: material.name,
                       quantity: quantities[material.materiel_id] || 1
                     })}
                     className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"

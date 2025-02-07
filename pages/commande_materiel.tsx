@@ -10,7 +10,6 @@ interface Materiel {
   description: string;
 }
 
-
 interface CartItem {
   materielId: number;
   quantity: number;
@@ -31,6 +30,7 @@ const CataloguePage = () => {
   const [quantities, setQuantities] = useState<Quantities>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null); // État pour le rôle
   const [stockMaterials, setStockMaterials] = useState<Materiel[]>([]);
 
   useEffect(() => {
@@ -41,6 +41,7 @@ const CataloguePage = () => {
     initialize();
   }, []);
 
+  // Fonction pour vérifier la session et récupérer le rôle
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
@@ -48,8 +49,21 @@ const CataloguePage = () => {
         id: session.user.id,
         email: session.user.email || "",
       });
+
+      const { data: userData } = await supabase
+        .from('User') // La table où se trouve le rôle
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (userData) {
+        const role = userData.role; // Récupérer le rôle
+        setUserRole(role); // Mettre à jour l'état du rôle
+      }
     }
   };
+
+  // Fonction pour récupérer les matériaux du stock
   const fetchStockMaterials = async () => {
     const { data, error } = await supabase
       .from("stock_materiel")
@@ -59,19 +73,17 @@ const CataloguePage = () => {
         materiels: materiels ( id_materiel, nom, description )
       `)
       .order("materiel_id", { ascending: true });
-  
+
     console.log("🔍 Résultat Supabase stock_materiel:", data, error);
-  
+
     if (error) {
       console.error("❌ Erreur Supabase:", error);
       return;
     }
-  
+
     if (data && data.length > 0) {
-      // 🔥 Définir le type explicitement pour éviter le "never"
       const formattedData: Materiel[] = data.map(item => {
         const materielInfo = Array.isArray(item.materiels) ? item.materiels[0] : item.materiels;
-  
         return {
           materiel_id: item.materiel_id,
           quantite: item.quantite,
@@ -79,7 +91,7 @@ const CataloguePage = () => {
           description: materielInfo?.description || "Pas de description"
         };
       });
-  
+
       console.log("✅ Matériaux formatés SANS DOUBLONS:", formattedData);
       setStockMaterials(formattedData);
     } else {
@@ -87,48 +99,48 @@ const CataloguePage = () => {
       setStockMaterials([]);
     }
   };
-  
+
+  // Fonction pour passer la commande
   const handleOrder = async () => {
     if (cart.length === 0) {
       alert("Votre panier est vide.");
       return;
     }
-  
+
     try {
-      // Insertion de la commande sans l'utilisateur
       const commandePromises = cart.map(async (item) => {
         await supabase.from('commande_materiel').insert({
-          id_stock_materiel: item.materielId,  // Assure-toi que `medicamentId` est bien `id_stock_materiel`
+          id_stock_materiel: item.materielId,  
           quantite: item.quantity,
           date_commande: new Date().toISOString(),
           etat: 'en attente'
         });
       });
-  
+
       await Promise.all(commandePromises);
-  
+
       // Mise à jour du stock
       const updateStockPromises = cart.map(async (item) => {
         const currentStock = stockMaterials.find(
           (material) => material.materiel_id === item.materielId
         );
-  
+
         if (currentStock) {
           const newQuantity = currentStock.quantite - item.quantity;
-  
+
           if (newQuantity < 0) {
             throw new Error(`Stock insuffisant pour ${item.nom}`);
           }
-  
+
           await supabase
             .from('stock_materiel')
             .update({ quantite: newQuantity })
             .eq('materiel_id', item.materielId);
         }
       });
-  
+
       await Promise.all(updateStockPromises);
-  
+
       alert("Commande passée avec succès !");
       setCart([]); // Vide le panier après la commande
       fetchStockMaterials(); // Recharge les matériaux
@@ -137,12 +149,13 @@ const CataloguePage = () => {
       alert(error instanceof Error ? error.message : "Une erreur est survenue.");
     }
   };
-  
 
+  // Ajouter un article au panier
   const addToCart = (item: CartItem) => {
     setCart(prevCart => [...prevCart, item]);
   };
 
+  // Modifier la quantité d'un matériel
   const handleQuantityChange = (materielId: number, quantity: string) => {
     setQuantities(prev => ({
       ...prev,
@@ -150,6 +163,7 @@ const CataloguePage = () => {
     }));
   };
 
+  // Retirer un article du panier
   const removeFromCart = (materielId: number) => {
     setCart(prevCart => prevCart.filter(item => item.materielId !== materielId));
   };

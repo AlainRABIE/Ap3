@@ -1,27 +1,20 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import MenubarRe from "../components/ui/MenuBarRe";
 import { ShoppingCart, X } from "lucide-react";
-import { getUserRole } from "./api/role";
 
-interface MaterialDetails {
-  id: number;
-  nom: string;
-  description?: string;
-}
-
-interface CartItem {
-  medicamentId: number;
-  quantity: number;
-  nom: string;
-}
-
-interface Material {
+interface Materiel {
   materiel_id: number;
   quantite: number;
-  materiels: MaterialDetails;
   nom: string;
-  description?: string;
+  description: string;
+}
+
+
+interface CartItem {
+  materielId: number;
+  quantity: number;
+  nom: string;
 }
 
 interface Quantities {
@@ -38,68 +31,64 @@ const CataloguePage = () => {
   const [quantities, setQuantities] = useState<Quantities>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [stockMaterials, setStockMaterials] = useState<Material[]>([]);
+  const [stockMaterials, setStockMaterials] = useState<Materiel[]>([]);
 
   useEffect(() => {
-    checkSession();
-    fetchStockMaterials();
+    const initialize = async () => {
+      await checkSession();
+      await fetchStockMaterials();
+    };
+    initialize();
   }, []);
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      const userObj: User = {
+      setUser({
         id: session.user.id,
         email: session.user.email || "",
-      };
-      setUser(userObj);
-
-      const { data: userData } = await supabase
-        .from("User")
-        .select("id")
-        .eq("email", session.user.email)
-        .single();
-
-      if (userData) {
-        const role = await getUserRole(userData.id);
-        setUserRole(role);
-        setIsAdmin(role === "administrateur");
-      }
+      });
     }
   };
-
   const fetchStockMaterials = async () => {
     const { data, error } = await supabase
       .from("stock_materiel")
       .select(`
         materiel_id,
         quantite,
-        materiels(
-          id,
-          nom,
-          description
-        )
-      `);
-
+        materiels: materiels ( id_materiel, nom, description )
+      `)
+      .order("materiel_id", { ascending: true });
+  
+    console.log("🔍 Résultat Supabase stock_materiel:", data, error);
+  
     if (error) {
-      console.error("Erreur lors de la récupération des matériaux:", error);
+      console.error("❌ Erreur Supabase:", error);
       return;
     }
-
-    if (data) {
-      const formattedData = data.map(item => ({
-        materiel_id: item.materiel_id,
-        quantite: item.quantite,
-        nom: item.materiels[0].nom,
-        description: item.materiels[0].description,
-        materiels: item.materiels[0]
-      }));
-
+  
+    if (data && data.length > 0) {
+      // 🔥 Définir le type explicitement pour éviter le "never"
+      const formattedData: Materiel[] = data.map(item => {
+        const materielInfo = Array.isArray(item.materiels) ? item.materiels[0] : item.materiels;
+  
+        return {
+          materiel_id: item.materiel_id,
+          quantite: item.quantite,
+          nom: materielInfo?.nom || "Nom inconnu",
+          description: materielInfo?.description || "Pas de description"
+        };
+      });
+  
+      console.log("✅ Matériaux formatés SANS DOUBLONS:", formattedData);
       setStockMaterials(formattedData);
+    } else {
+      console.warn("⚠️ Aucune donnée reçue de Supabase.");
+      setStockMaterials([]);
     }
   };
+  
+
 
   const handleOrder = async () => {
     if (!user) {
@@ -109,24 +98,20 @@ const CataloguePage = () => {
 
     try {
       const commandePromises = cart.map(async (item) => {
-        const { error } = await supabase
-          .from('commande_materiel')
-          .insert([{
-            user_id: user.id,
-            materiel_id: item.medicamentId,
-            quantite: item.quantity,
-            date_commande: new Date().toISOString(),
-            status: 'en cours'
-          }]);
-
-        if (error) throw error;
+        await supabase.from('commande_materiel').insert({
+          user_id: user.id,
+          materiel_id: item.materielId,
+          quantite: item.quantity,
+          date_commande: new Date().toISOString(),
+          status: 'en cours'
+        });
       });
 
       await Promise.all(commandePromises);
 
       const updateStockPromises = cart.map(async (item) => {
         const currentStock = stockMaterials.find(
-          (material) => material.materiel_id === item.medicamentId
+          (material) => material.materiel_id === item.materielId
         );
 
         if (currentStock) {
@@ -136,12 +121,10 @@ const CataloguePage = () => {
             throw new Error(`Stock insuffisant pour ${item.nom}`);
           }
 
-          const { error } = await supabase
+          await supabase
             .from('stock_materiel')
             .update({ quantite: newQuantity })
-            .eq('materiel_id', item.medicamentId);
-
-          if (error) throw error;
+            .eq('materiel_id', item.materielId);
         }
       });
 
@@ -152,23 +135,23 @@ const CataloguePage = () => {
       fetchStockMaterials();
     } catch (error) {
       console.error("Erreur lors de la commande:", error);
-      alert(error instanceof Error ? error.message : "Une erreur est survenue lors de la commande.");
+      alert(error instanceof Error ? error.message : "Une erreur est survenue.");
     }
   };
 
   const addToCart = (item: CartItem) => {
-    setCart((prevCart) => [...prevCart, item]);
+    setCart(prevCart => [...prevCart, item]);
   };
 
   const handleQuantityChange = (materielId: number, quantity: string) => {
-    setQuantities({
-      ...quantities,
+    setQuantities(prev => ({
+      ...prev,
       [materielId]: Math.max(1, Math.min(Number(quantity), 100)),
-    });
+    }));
   };
 
-  const removeFromCart = (medicamentId: number) => {
-    setCart((prevCart) => prevCart.filter(item => item.medicamentId !== medicamentId));
+  const removeFromCart = (materielId: number) => {
+    setCart(prevCart => prevCart.filter(item => item.materielId !== materielId));
   };
 
   return (
@@ -181,7 +164,7 @@ const CataloguePage = () => {
             <div className="relative">
               <button
                 onClick={() => setIsCartOpen(!isCartOpen)}
-                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
               >
                 <ShoppingCart className="h-5 w-5" />
                 <span>{cart.length} articles</span>
@@ -190,10 +173,10 @@ const CataloguePage = () => {
                 <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg p-4 rounded-lg">
                   <h2 className="text-lg font-bold">Panier</h2>
                   {cart.map((item) => (
-                    <div key={item.medicamentId} className="border-b py-2 flex justify-between items-center">
+                    <div key={item.materielId} className="border-b py-2 flex justify-between items-center">
                       <p>{item.nom} x {item.quantity}</p>
-                      <button 
-                        onClick={() => removeFromCart(item.medicamentId)}
+                      <button
+                        onClick={() => removeFromCart(item.materielId)}
                         className="text-red-500 hover:text-red-700"
                       >
                         <X className="h-4 w-4" />
@@ -216,9 +199,7 @@ const CataloguePage = () => {
                 <div key={material.materiel_id} className="bg-white rounded-lg shadow-lg p-6">
                   <h2 className="text-xl font-bold mb-2">{material.nom}</h2>
                   {material.description && (
-                    <div className="text-sm text-gray-600 mb-4">
-                      {material.description}
-                    </div>
+                    <div className="text-sm text-gray-600 mb-4">{material.description}</div>
                   )}
                   <div className="text-sm text-gray-700 mb-4">
                     Quantité disponible: {material.quantite}
@@ -231,9 +212,9 @@ const CataloguePage = () => {
                     onChange={(e) => handleQuantityChange(material.materiel_id, e.target.value)}
                     className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
                   />
-                  <button 
+                  <button
                     onClick={() => addToCart({
-                      medicamentId: material.materiel_id,
+                      materielId: material.materiel_id,
                       nom: material.nom,
                       quantity: quantities[material.materiel_id] || 1
                     })}
@@ -245,7 +226,7 @@ const CataloguePage = () => {
                 </div>
               ))
             ) : (
-              <p>Aucun matériel disponible.</p>
+              <p className="text-white">❌ Aucun matériel disponible.</p>
             )}
           </div>
         </div>

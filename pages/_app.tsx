@@ -18,14 +18,6 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <UserProvider>
-      <video
-        src={isDarkMode ? "/videos/black.mp4" : "/videos/video-clair.mp4"}
-        autoPlay
-        loop
-        muted
-        className="fixed top-0 left-0 w-full h-full object-cover z-[-1]"
-      />
-
       <div className="relative z-10">
         <Component {...pageProps} />
       </div>

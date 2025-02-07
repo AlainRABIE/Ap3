@@ -255,48 +255,48 @@ const CommandeMedicaments = () => {
     }
   };
   const handleUpdateState = async (id_commande: number, nouvelEtat: string) => {
-  if (!id_commande) {
-    console.error("ID de commande manquant");
-    alert("Erreur: ID de commande manquant");
-    return;
-  }
-
-  // Vérifie si le nouvel état est valide
-  if (!nouvelEtat) {
-    console.error("Nouvel état manquant");
-    alert("Erreur: Nouvel état manquant");
-    return;
-  }
-
-  try {
-    // Mise à jour de l'état de la commande en utilisant 'id_commande' comme clé
-    const { data, error } = await supabase
-      .from('commande_medicaments')
-      .update({ etat: nouvelEtat })
-      .eq('id_commande', id_commande);  // Utiliser 'id_commande' au lieu de 'id'
-
-    if (error) {
-      console.error("Erreur lors de la mise à jour de l'état:", error);
-      alert(`Erreur lors de la mise à jour de l'état: ${error.message}`);
+    if (!id_commande) {
+      console.error("ID de commande manquant");
+      alert("Erreur: ID de commande manquant");
       return;
     }
 
-    // Si la mise à jour est réussie, affiche les données retournées
-    console.log("Commande mise à jour:", data);
-
-    // Rafraîchir la liste des commandes après mise à jour
-    await fetchCommandes();
-  } catch (error: unknown) {
-    // Vérifie si l'erreur est une instance d'Error
-    if (error instanceof Error) {
-      console.error("Erreur interne lors de la mise à jour de l'état:", error.message);
-      alert(`Erreur interne: ${error.message}`);
-    } else {
-      console.error("Erreur inconnue:", error);
-      alert("Une erreur inconnue est survenue.");
+    // Vérifie si le nouvel état est valide
+    if (!nouvelEtat) {
+      console.error("Nouvel état manquant");
+      alert("Erreur: Nouvel état manquant");
+      return;
     }
-  }
-};
+
+    try {
+      // Mise à jour de l'état de la commande en utilisant 'id_commande' comme clé
+      const { data, error } = await supabase
+        .from('commande_medicaments')
+        .update({ etat: nouvelEtat })
+        .eq('id_commande', id_commande);  // Utiliser 'id_commande' au lieu de 'id'
+
+      if (error) {
+        console.error("Erreur lors de la mise à jour de l'état:", error);
+        alert(`Erreur lors de la mise à jour de l'état: ${error.message}`);
+        return;
+      }
+
+      // Si la mise à jour est réussie, affiche les données retournées
+      console.log("Commande mise à jour:", data);
+
+      // Rafraîchir la liste des commandes après mise à jour
+      await fetchCommandes();
+    } catch (error: unknown) {
+      // Vérifie si l'erreur est une instance d'Error
+      if (error instanceof Error) {
+        console.error("Erreur interne lors de la mise à jour de l'état:", error.message);
+        alert(`Erreur interne: ${error.message}`);
+      } else {
+        console.error("Erreur inconnue:", error);
+        alert("Une erreur inconnue est survenue.");
+      }
+    }
+  };
 
 
 
@@ -312,13 +312,13 @@ const CommandeMedicaments = () => {
                 {commandes.map((commande) => {
                   console.log("Commande ID:", commande.id);  // Vérifier si chaque commande a un ID
                   return (
-                    <div key={commande.id} className="bg-white rounded-lg shadow-lg p-6">
-                      <h2 className="text-xl font-bold mb-2">Commande #{commande.id}</h2>
-                      <p className="text-sm text-gray-700 mb-4">Utilisateur: {commande.id_user}</p>
-                      <p className="text-sm text-gray-700 mb-4">ID Stock Médicament: {commande.id_stock_medicament}</p>
-                      <p className="text-sm text-gray-700 mb-4">Quantité: {commande.quantite}</p>
-                      <p className="text-sm text-gray-700 mb-4">Date de commande: {new Date(commande.date_commande).toLocaleString()}</p>
-                      <p className="text-sm text-gray-700 mb-4">État: {commande.etat}</p>
+                    <div key={commande.id} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
+                      <h2 className="text-xl font-bold mb-2 text-white">Commande #{commande.id}</h2>
+                      <p className="text-sm text-white mb-4">Utilisateur: {commande.id_user}</p>
+                      <p className="text-sm text-white mb-4">ID Stock Médicament: {commande.id_stock_medicament}</p>
+                      <p className="text-sm text-white mb-4">Quantité: {commande.quantite}</p>
+                      <p className="text-sm text-white mb-4">Date de commande: {new Date(commande.date_commande).toLocaleString()}</p>
+                      <p className="text-sm text-white mb-4">État: {commande.etat}</p>
                       {isAdmin && (
                         <div className="flex space-x-2">
                           <button
@@ -336,6 +336,7 @@ const CommandeMedicaments = () => {
                         </div>
                       )}
                     </div>
+
                   );
                 })}
 
@@ -422,25 +423,25 @@ const CommandeMedicaments = () => {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Nouvelle Commande</h2>
+          <div className="bg-transparent border-2 border-white rounded-lg p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4 text-white">Nouvelle Commande</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">ID Stock Médicament</label>
+                <label className="block text-sm font-medium text-white">ID Stock Médicament</label>
                 <input
                   type="text"
                   value={newCommande.id_stock_medicament || ''}
                   onChange={(e) => setNewCommande({ ...newCommande, id_stock_medicament: parseInt(e.target.value) })}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 border border-gray-300 rounded bg-transparent text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Quantité</label>
+                <label className="block text-sm font-medium text-white">Quantité</label>
                 <input
                   type="number"
                   value={newCommande.quantite || ''}
                   onChange={(e) => setNewCommande({ ...newCommande, quantite: parseInt(e.target.value) })}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 border border-gray-300 rounded bg-transparent text-white"
                 />
               </div>
               <div className="flex justify-end space-x-2 pt-4">
@@ -461,6 +462,7 @@ const CommandeMedicaments = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

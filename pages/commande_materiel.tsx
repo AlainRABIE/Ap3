@@ -31,30 +31,34 @@ const CataloguePage = () => {
   const [quantities, setQuantities] = useState<Quantities>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null); // État pour le rôle
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [stockMaterials, setStockMaterials] = useState<Materiel[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);  // Ajouter un état pour les commandes
 
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
       await fetchStockMaterials();
+      if (isAdmin) {
+        await fetchOrders();  // Si l'utilisateur est Admin, on récupère les commandes
+      }
     };
     initialize();
-  
+
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser({
           id: session.user.id,
           email: session.user.email || "",
         });
-        
+
         const { data: userData } = await supabase
           .from('User')
           .select('id')
           .eq('email', session.user.email)
           .single();
-  
+
         if (userData) {
           const role = await getUserRole(userData.id);
           setUserRole(role);
@@ -62,11 +66,26 @@ const CataloguePage = () => {
         }
       }
     });
-  
+
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [isAdmin]);
+
+  // Fonction pour récupérer les commandes si l'utilisateur est Admin
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('commande_materiel')
+      .select('id_stock_materiel, quantite, date_commande, etat')
+      .order('date_commande', { ascending: false });
+
+    if (error) {
+      console.error("❌ Erreur lors de la récupération des commandes:", error);
+      return;
+    }
+
+    setOrders(data || []);
+  };
 
   // Fonction pour vérifier la session et récupérer le rôle
   const checkSession = async () => {
@@ -76,13 +95,13 @@ const CataloguePage = () => {
         id: session.user.id,
         email: session.user.email || "",
       });
-  
+
       const { data: userData } = await supabase
         .from('User')
         .select('id')
         .eq('email', session.user.email)
         .single();
-  
+
       if (userData) {
         const role = await getUserRole(userData.id);
         setUserRole(role);
@@ -138,7 +157,7 @@ const CataloguePage = () => {
     try {
       const commandePromises = cart.map(async (item) => {
         await supabase.from('commande_materiel').insert({
-          id_stock_materiel: item.materielId,  
+          id_stock_materiel: item.materielId,
           quantite: item.quantity,
           date_commande: new Date().toISOString(),
           etat: 'en attente'
@@ -196,81 +215,77 @@ const CataloguePage = () => {
     setCart(prevCart => prevCart.filter(item => item.materielId !== materielId));
   };
 
+  // Masquer ou afficher les sections selon le rôle
+  const renderAdminView = () => {
+    return (
+      <div className="bg-transparent border border-white rounded-lg shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 text-white">Commandes</h2>
+        {orders.length > 0 ? (
+          <div>
+            {orders.map((order, index) => (
+              <div key={index} className="border-b py-4">
+                <p className="text-white"><strong>Quantité:</strong> {order.quantite}</p>
+                <p className="text-white"><strong>Date:</strong> {new Date(order.date_commande).toLocaleDateString()}</p>
+                <p className="text-white"><strong>État:</strong> {order.etat}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-white">Aucune commande en attente.</p>
+        )}
+      </div>
+    );
+  };
+
+
+  const renderCatalogue = () => {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {stockMaterials.length > 0 ? (
+          stockMaterials.map((material) => (
+            <div key={material.materiel_id} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-2 text-white">{material.nom}</h2>
+              {material.description && (
+                <div className="text-sm text-gray-300 mb-4">{material.description}</div>
+              )}
+              <div className="text-sm text-gray-300 mb-4">
+                Quantité disponible: {material.quantite}
+              </div>
+              <input
+                type="number"
+                min="1"
+                max={material.quantite}
+                value={quantities[material.materiel_id] || 1}
+                onChange={(e) => handleQuantityChange(material.materiel_id, e.target.value)}
+                className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
+              />
+              <button
+                onClick={() => addToCart({
+                  materielId: material.materiel_id,
+                  nom: material.nom,
+                  quantity: quantities[material.materiel_id] || 1
+                })}
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
+                disabled={material.quantite === 0}
+              >
+                {material.quantite === 0 ? "Rupture de stock" : "Ajouter au panier"}
+              </button>
+            </div>
+          ))
+        ) : (
+          <p className="text-white">❌ Aucun matériel disponible.</p>
+        )}
+      </div>
+    );
+  };
+
+
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <MenubarRe />
       <main className="flex-1 p-8 overflow-auto">
         <div className="w-full max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-white">Catalogue des Matériels</h1>
-            <div className="relative">
-              <button
-                onClick={() => setIsCartOpen(!isCartOpen)}
-                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span>{cart.length} articles</span>
-              </button>
-              {isCartOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg p-4 rounded-lg">
-                  <h2 className="text-lg font-bold">Panier</h2>
-                  {cart.map((item) => (
-                    <div key={item.materielId} className="border-b py-2 flex justify-between items-center">
-                      <p>{item.nom} x {item.quantity}</p>
-                      <button
-                        onClick={() => removeFromCart(item.materielId)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={handleOrder}
-                    className="w-full bg-green-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-green-600"
-                  >
-                    Commander
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {stockMaterials.length > 0 ? (
-              stockMaterials.map((material) => (
-                <div key={material.materiel_id} className="bg-white rounded-lg shadow-lg p-6">
-                  <h2 className="text-xl font-bold mb-2">{material.nom}</h2>
-                  {material.description && (
-                    <div className="text-sm text-gray-600 mb-4">{material.description}</div>
-                  )}
-                  <div className="text-sm text-gray-700 mb-4">
-                    Quantité disponible: {material.quantite}
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    max={material.quantite}
-                    value={quantities[material.materiel_id] || 1}
-                    onChange={(e) => handleQuantityChange(material.materiel_id, e.target.value)}
-                    className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                  <button
-                    onClick={() => addToCart({
-                      materielId: material.materiel_id,
-                      nom: material.nom,
-                      quantity: quantities[material.materiel_id] || 1
-                    })}
-                    className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
-                    disabled={material.quantite === 0}
-                  >
-                    {material.quantite === 0 ? "Rupture de stock" : "Ajouter au panier"}
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p className="text-white">❌ Aucun matériel disponible.</p>
-            )}
-          </div>
+          {isAdmin ? renderAdminView() : renderCatalogue()}
         </div>
       </main>
     </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import MenubarRe from "../components/ui/MenuBarRe";
 import { ShoppingCart, X } from "lucide-react";
+import { getUserRole } from './api/role';
 
 interface Materiel {
   materiel_id: number;
@@ -32,6 +33,7 @@ const CataloguePage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null); // État pour le rôle
   const [stockMaterials, setStockMaterials] = useState<Materiel[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -39,6 +41,31 @@ const CataloguePage = () => {
       await fetchStockMaterials();
     };
     initialize();
+  
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || "",
+        });
+        
+        const { data: userData } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+  
+        if (userData) {
+          const role = await getUserRole(userData.id);
+          setUserRole(role);
+          setIsAdmin(role === "administrateur");
+        }
+      }
+    });
+  
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   // Fonction pour vérifier la session et récupérer le rôle
@@ -49,16 +76,17 @@ const CataloguePage = () => {
         id: session.user.id,
         email: session.user.email || "",
       });
-
+  
       const { data: userData } = await supabase
-        .from('User') // La table où se trouve le rôle
-        .select('role')
-        .eq('id', session.user.id)
+        .from('User')
+        .select('id')
+        .eq('email', session.user.email)
         .single();
-
+  
       if (userData) {
-        const role = userData.role; // Récupérer le rôle
-        setUserRole(role); // Mettre à jour l'état du rôle
+        const role = await getUserRole(userData.id);
+        setUserRole(role);
+        setIsAdmin(role === "administrateur");
       }
     }
   };

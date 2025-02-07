@@ -88,56 +88,56 @@ const CataloguePage = () => {
     }
   };
   
-
-
   const handleOrder = async () => {
-    if (!user) {
-      alert("Vous devez être connecté pour passer une commande.");
+    if (cart.length === 0) {
+      alert("Votre panier est vide.");
       return;
     }
-
+  
     try {
+      // Insertion de la commande sans l'utilisateur
       const commandePromises = cart.map(async (item) => {
         await supabase.from('commande_materiel').insert({
-          user_id: user.id,
-          materiel_id: item.materielId,
+          id_stock_materiel: item.materielId,  // Assure-toi que `medicamentId` est bien `id_stock_materiel`
           quantite: item.quantity,
           date_commande: new Date().toISOString(),
-          status: 'en cours'
+          etat: 'en attente'
         });
       });
-
+  
       await Promise.all(commandePromises);
-
+  
+      // Mise à jour du stock
       const updateStockPromises = cart.map(async (item) => {
         const currentStock = stockMaterials.find(
           (material) => material.materiel_id === item.materielId
         );
-
+  
         if (currentStock) {
           const newQuantity = currentStock.quantite - item.quantity;
-
+  
           if (newQuantity < 0) {
             throw new Error(`Stock insuffisant pour ${item.nom}`);
           }
-
+  
           await supabase
             .from('stock_materiel')
             .update({ quantite: newQuantity })
             .eq('materiel_id', item.materielId);
         }
       });
-
+  
       await Promise.all(updateStockPromises);
-
+  
       alert("Commande passée avec succès !");
-      setCart([]);
-      fetchStockMaterials();
+      setCart([]); // Vide le panier après la commande
+      fetchStockMaterials(); // Recharge les matériaux
     } catch (error) {
       console.error("Erreur lors de la commande:", error);
       alert(error instanceof Error ? error.message : "Une erreur est survenue.");
     }
   };
+  
 
   const addToCart = (item: CartItem) => {
     setCart(prevCart => [...prevCart, item]);

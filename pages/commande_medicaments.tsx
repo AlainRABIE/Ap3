@@ -29,7 +29,7 @@ interface Quantities {
 }
 
 interface Commande {
-  id: number;
+  id_commande: number; // Au lieu de id
   id_user: string;
   id_stock_medicament: number;
   quantite: number;
@@ -260,37 +260,67 @@ const CommandeMedicaments = () => {
       alert("Erreur: ID de commande manquant");
       return;
     }
-
-    // Vérifie si le nouvel état est valide
-    if (!nouvelEtat) {
-      console.error("Nouvel état manquant");
-      alert("Erreur: Nouvel état manquant");
-      return;
-    }
-
+  
     try {
-      // Mise à jour de l'état de la commande en utilisant 'id_commande' comme clé
-      const { data, error } = await supabase
-        .from('commande_medicaments')
-        .update({ etat: nouvelEtat })
-        .eq('id_commande', id_commande);  // Utiliser 'id_commande' au lieu de 'id'
-
-      if (error) {
-        console.error("Erreur lors de la mise à jour de l'état:", error);
-        alert(`Erreur lors de la mise à jour de l'état: ${error.message}`);
-        return;
+      // Récupérer d'abord les informations de la commande
+      const { data: commandeData, error: commandeError } = await supabase
+        .from('commande_médicaments')
+        .select('*')
+        .eq('id_commande', id_commande)
+        .single();
+  
+      if (commandeError) {
+        throw new Error("Erreur lors de la récupération de la commande");
       }
-
-      // Si la mise à jour est réussie, affiche les données retournées
+  
+      // Mise à jour de l'état de la commande
+      const { data, error } = await supabase
+        .from('commande_médicaments')
+        .update({ etat: nouvelEtat })
+        .eq('id_commande', id_commande)
+        .select();
+  
+      if (error) {
+        throw new Error(`Erreur lors de la mise à jour de l'état: ${error.message}`);
+      }
+  
+      // Si la commande est acceptée, mettre à jour le stock
+      if (nouvelEtat === 'acceptée') {
+        // Récupérer le stock actuel
+        const { data: stockData, error: stockError } = await supabase
+          .from('stock_medicaments')
+          .select('quantite')
+          .eq('id_stock', commandeData.id_stock_medicament)
+          .single();
+  
+        if (stockError) {
+          throw new Error("Erreur lors de la récupération du stock");
+        }
+  
+        const newQuantity = stockData.quantite - commandeData.quantite;
+  
+        if (newQuantity < 0) {
+          throw new Error("Stock insuffisant pour cette commande");
+        }
+  
+        const { error: updateError } = await supabase
+          .from('stock_medicaments')
+          .update({ quantite: newQuantity })
+          .eq('id_stock', commandeData.id_stock_medicament);
+  
+        if (updateError) {
+          throw new Error("Erreur lors de la mise à jour du stock");
+        }
+      }
+  
       console.log("Commande mise à jour:", data);
-
-      // Rafraîchir la liste des commandes après mise à jour
-      await fetchCommandes();
+      await fetchCommandes(); // Rafraîchir la liste des commandes
+      await fetchStockMedicaments(); // Rafraîchir le stock
+  
     } catch (error: unknown) {
-      // Vérifie si l'erreur est une instance d'Error
       if (error instanceof Error) {
-        console.error("Erreur interne lors de la mise à jour de l'état:", error.message);
-        alert(`Erreur interne: ${error.message}`);
+        console.error("Erreur interne:", error.message);
+        alert(`Erreur: ${error.message}`);
       } else {
         console.error("Erreur inconnue:", error);
         alert("Une erreur inconnue est survenue.");
@@ -310,10 +340,10 @@ const CommandeMedicaments = () => {
               <h1 className="text-2xl font-bold text-white">Liste des Commandes</h1>
               <div className="grid grid-cols-1 gap-6 mt-4">
                 {commandes.map((commande) => {
-                  console.log("Commande ID:", commande.id);  // Vérifier si chaque commande a un ID
+                  console.log("Commande ID:", commande.id_commande);  // Vérifier si chaque commande a un ID
                   return (
-                    <div key={commande.id} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
-                      <h2 className="text-xl font-bold mb-2 text-white">Commande #{commande.id}</h2>
+                    <div key={commande.id_commande} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
+                      <h2 className="text-xl font-bold mb-2 text-white">Commande #{commande.id_commande}</h2>
                       <p className="text-sm text-white mb-4">Utilisateur: {commande.id_user}</p>
                       <p className="text-sm text-white mb-4">ID Stock Médicament: {commande.id_stock_medicament}</p>
                       <p className="text-sm text-white mb-4">Quantité: {commande.quantite}</p>
@@ -323,13 +353,13 @@ const CommandeMedicaments = () => {
                         <div className="flex space-x-2">
                           <button
                             className="bg-green-500 text-white px-3 py-1 rounded"
-                            onClick={() => handleUpdateState(commande.id, 'acceptée')}
+                            onClick={() => handleUpdateState(commande.id_commande, 'acceptée')}
                           >
                             Accepter
                           </button>
                           <button
                             className="bg-red-500 text-white px-3 py-1 rounded"
-                            onClick={() => handleUpdateState(commande.id, 'refusée')}
+                            onClick={() => handleUpdateState(commande.id_commande, 'refusée')}
                           >
                             Refuser
                           </button>

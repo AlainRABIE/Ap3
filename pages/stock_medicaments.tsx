@@ -1,40 +1,38 @@
-import React, { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import "../src/app/globals.css";
-import MenubarRe from "../components/ui/MenuBarRe";
-import { User } from "@supabase/supabase-js";
-import { getUserRole } from "./api/role";
-import Modal from "../components/ui/modal";
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import MenubarRe from '../components/ui/MenuBarRe';
+import { User } from '@supabase/supabase-js';
+import { getUserRole } from './api/role';
+import Modal from '../components/ui/modal';
 
-type StockMedicament = {
-  id_stock: number;
-  medicament_id: number;
-  quantite: number;
-  date_ajout: string;
-  date_expiration: string | null;
+type Medicament = {
+  id: number;
+  name: string | null;
+  posologie: string | null;
+  description: string | null;
+  quantite: number | null;
 };
 
-const StockMedicamentsPage = () => {
-  const [stockMedicaments, setStockMedicaments] = useState<StockMedicament[]>([]);
+const MedicamentsPage = () => {
+  const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedStock, setSelectedStock] = useState<StockMedicament | null>(null);
+  const [selectedMedicament, setSelectedMedicament] = useState<Medicament | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [formData, setFormData] = useState({
-    id_stock: 0,
-    medicament_id: 0,
-    quantite: 0,
-    date_ajout: new Date().toISOString(),
-    date_expiration: "",
+  const [formData, setFormData] = useState<Omit<Medicament, 'id'>>({
+    name: '',
+    posologie: '',
+    description: '',
+    quantite: null, // Ajoutez quantite ici
   });
-  const [medicaments, setMedicaments] = useState<{ id: number; name: string }[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
-
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (session?.user) {
       setUser(session.user);
       const { data: userData } = await supabase
@@ -42,11 +40,10 @@ const StockMedicamentsPage = () => {
         .select('id')
         .eq('email', session.user.email)
         .single();
-
       if (userData) {
         const role = await getUserRole(userData.id);
         setUserRole(role);
-        setIsAdmin(role === "administrateur");
+        setIsAdmin(role === 'administrateur');
       }
     } else {
       setUser(null);
@@ -55,20 +52,14 @@ const StockMedicamentsPage = () => {
     }
   };
 
-  const fetchStockMedicaments = async () => {
+  const fetchMedicaments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("stock_medicaments")
-        .select(`id_stock, medicament_id, quantite, date_ajout, date_expiration`);
-
+      const { data, error } = await supabase.from('medicaments').select('*');
       if (error) throw new Error(error.message);
-
-      if (Array.isArray(data)) {
-        setStockMedicaments(data);
-      }
+      if (Array.isArray(data)) setMedicaments(data);
     } catch (error) {
-      console.error("Erreur lors de la récupération des stocks:", error);
+      console.error('Erreur lors de la récupération des médicaments:', error);
     } finally {
       setLoading(false);
     }
@@ -77,11 +68,9 @@ const StockMedicamentsPage = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchStockMedicaments();
+      await fetchMedicaments();
     };
-
     initialize();
-
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
@@ -90,11 +79,10 @@ const StockMedicamentsPage = () => {
           .select('id')
           .eq('email', session.user.email)
           .single();
-
         if (userData) {
           const role = await getUserRole(userData.id);
           setUserRole(role);
-          setIsAdmin(role === "administrateur");
+          setIsAdmin(role === 'administrateur');
         }
       } else {
         setUser(null);
@@ -102,114 +90,81 @@ const StockMedicamentsPage = () => {
         setIsAdmin(false);
       }
     });
-
     return () => {
       authListener?.subscription?.unsubscribe();
     };
   }, []);
 
-  useEffect(() => {
-    const fetchMedicaments = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("medicaments")
-          .select("id, name");
-
-        if (error) throw new Error(error.message);
-
-        if (Array.isArray(data)) {
-          setMedicaments(data);
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des médicaments:", error);
-      }
-    };
-
-    fetchMedicaments();
-  }, []);
-
-  const handleEdit = (stock: StockMedicament) => {
-    setSelectedStock(stock);
-    setFormData({
-      ...stock,
-      date_expiration: stock.date_expiration || "",
-    });
+  const handleEdit = (medicament: Medicament) => {
+    setSelectedMedicament(medicament);
+    setFormData({ ...medicament });
     setIsEditing(true);
+    setShowModal(true);
   };
 
-  const handleDelete = async (id_stock: number) => {
+  const handleDelete = async (id: number) => {
     try {
-      const { error } = await supabase
-        .from("stock_medicaments")
-        .delete()
-        .eq("id_stock", id_stock);
-
+      const { error } = await supabase.from('medicaments').delete().eq('id', id);
       if (error) throw new Error(error.message);
-
-      setStockMedicaments(stockMedicaments.filter((stock) => stock.id_stock !== id_stock));
+      setMedicaments(medicaments.filter((medicament) => medicament.id !== id));
     } catch (error) {
-      console.error("Erreur lors de la suppression du stock:", error);
+      console.error('Erreur lors de la suppression du médicament:', error);
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    const sanitizedFormData = {
-      ...formData,
-      date_expiration: formData.date_expiration || null,
-    };
+    // Validation pour vérifier que la quantité est >= 0
+    if (formData.quantite !== null && formData.quantite < 0) {
+      alert("La quantité ne peut pas être inférieure à 0.");
+      return;
+    }
 
     try {
-      if (isEditing && selectedStock) {
+      const dataToSubmit = {
+        name: formData.name || null,
+        posologie: formData.posologie || null,
+        description: formData.description || null,
+        quantite: formData.quantite || null, // Ajout de la quantité ici
+      };
+
+      if (isEditing && selectedMedicament) {
         const { error } = await supabase
-          .from("stock_medicaments")
-          .update(sanitizedFormData)
-          .eq("id_stock", selectedStock.id_stock);
-
+          .from('medicaments')
+          .update(dataToSubmit)
+          .eq('id', selectedMedicament.id);
         if (error) throw new Error(error.message);
-
-        setStockMedicaments(
-          stockMedicaments.map((stock) =>
-            stock.id_stock === selectedStock.id_stock ? { ...stock, ...sanitizedFormData } : stock
+        setMedicaments(
+          medicaments.map((medicament) =>
+            medicament.id === selectedMedicament.id ? { ...medicament, ...dataToSubmit } : medicament
           )
         );
       } else {
-        const { error } = await supabase
-          .from("stock_medicaments")
-          .insert([sanitizedFormData]);
-
+        const { data, error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
-
-        setStockMedicaments([...stockMedicaments, sanitizedFormData]);
+        if (data) setMedicaments([...medicaments, ...data]);
       }
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
+      console.error('Erreur lors de la soumission du formulaire:', error);
     } finally {
       setIsEditing(false);
-      setSelectedStock(null);
+      setSelectedMedicament(null);
       setShowModal(false);
     }
   };
-
-  const availableMedicaments = medicaments.filter(
-    (medicament) =>
-      !stockMedicaments.some((stock) => stock.medicament_id === medicament.id)
-  );
 
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <div className="animated-background"></div>
       <div className="waves"></div>
-
       <MenubarRe />
-
       <div className="content">
         {loading ? (
           <p>Chargement des médicaments...</p>
         ) : (
           <div>
-            <h1 className="text-white text-xl mb-4">Stock des Médicaments</h1>
+            <h1 className="text-white text-xl mb-4">Liste des Médicaments</h1>
             {isAdmin && (
               <button
                 className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
@@ -221,95 +176,81 @@ const StockMedicamentsPage = () => {
             <table className="table-auto w-full text-white">
               <thead>
                 <tr>
-                  <th className="px-4 py-2">Médicament</th>
-                  <th className="px-4 py-2">Quantité</th>
-                  <th className="px-4 py-2">Date d'ajout</th>
-                  <th className="px-4 py-2">Date d'expiration</th>
-                  <th className="px-4 py-2">Actions</th>
+                  <th className="px-4 py-2">Nom</th>
+                  <th className="px-4 py-2">Posologie</th>
+                  <th className="px-4 py-2">Description</th>
+                  <th className="px-4 py-2">Quantité</th> {/* Ajout de la colonne Quantité */}
+                  {isAdmin && <th className="px-4 py-2">Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {stockMedicaments.map((stock) => (
-                  <tr key={stock.id_stock} className="bg-gray-700">
-                    <td className="px-4 py-2">
-                      {medicaments.find((med) => med.id === stock.medicament_id)?.name || "Médicament non trouvé"}
-                    </td>
-                    <td className="px-4 py-2">{stock.quantite}</td>
-                    <td className="px-4 py-2">{stock.date_ajout}</td>
-                    <td className="px-4 py-2">{stock.date_expiration || "N/A"}</td>
-                    <td className="px-4 py-2">
-                      {isAdmin && (
+                {medicaments.map((medicament) => (
+                  <tr key={medicament.id} className="bg-gray-700">
+                    <td className="px-4 py-2">{medicament.name}</td>
+                    <td className="px-4 py-2">{medicament.posologie}</td>
+                    <td className="px-4 py-2">{medicament.description}</td>
+                    <td className="px-4 py-2">{medicament.quantite}</td> {/* Affichage de la quantité */}
+                    {isAdmin && (
+                      <td className="px-4 py-2">
                         <div className="flex justify-around">
                           <button
-                            className="px-4 py-2 bg-red-500 text-white rounded"
-                            onClick={() => handleDelete(stock.id_stock)}
-                          >
-                            Supprimer
-                          </button>
-                          <button
                             className="px-4 py-2 bg-yellow-500 text-white rounded"
-                            onClick={() => handleEdit(stock)}
+                            onClick={() => handleEdit(medicament)}
                           >
                             Modifier
                           </button>
+                          <button
+                            className="px-4 py-2 bg-red-500 text-white rounded"
+                            onClick={() => handleDelete(medicament.id)}
+                          >
+                            Supprimer
+                          </button>
                         </div>
-                      )}
-                    </td>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
+
             <Modal show={showModal} onClose={() => setShowModal(false)}>
               <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
-                <h2 className="text-lg font-bold mb-4 text-black">Ajouter un Stock</h2>
+                <h2 className="text-lg font-bold mb-4 text-black">
+                  {isEditing ? 'Modifier' : 'Ajouter'} un Médicament
+                </h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
-                  <select
-                    value={formData.medicament_id}
-                    onChange={(e) => setFormData({ ...formData, medicament_id: Number(e.target.value) })}
+                  <input
+                    type="text"
+                    placeholder="Nom"
+                    value={formData.name || ""}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
-                  >
-                    <option value="">Sélectionner un médicament</option>
-                    {availableMedicaments.map((medicament) => (
-                      <option key={medicament.id} value={medicament.id}>
-                        {medicament.name}
-                      </option>
-                    ))}
-                  </select>
-
+                  />
+                  <input
+                    type="text"
+                    placeholder="Posologie"
+                    value={formData.posologie || ""}
+                    onChange={(e) => setFormData({ ...formData, posologie: e.target.value })}
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Description"
+                    value={formData.description || ""}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                  />
                   <input
                     type="number"
                     placeholder="Quantité"
-                    value={formData.quantite}
-                    min="0"
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      if (value >= 0) {
-                        setFormData({ ...formData, quantite: value });
-                      }
-                    }}
+                    value={formData.quantite || ""}
+                    onChange={(e) => setFormData({ ...formData, quantite: parseInt(e.target.value) })}
+                    min="0" // Ajout de la validation min="0" sur le champ
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
                   />
-
-                  <input
-                    type="date"
-                    placeholder="Date d'expiration"
-                    value={formData.date_expiration}
-                    min={new Date().toISOString().split("T")[0]}
-                    onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                  />
-
                   <div className="flex justify-end mt-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-400"
-                      disabled={
-                        formData.quantite < 0 ||
-                        (formData.date_expiration !== "" &&
-                          formData.date_expiration < new Date().toISOString().split("T")[0])
-                      }
-                    >
-                      {isEditing ? "Modifier" : "Ajouter"}
+                    <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
+                      {isEditing ? 'Modifier' : 'Ajouter'}
                     </button>
                   </div>
                 </form>
@@ -322,4 +263,4 @@ const StockMedicamentsPage = () => {
   );
 };
 
-export default StockMedicamentsPage;
+export default MedicamentsPage;

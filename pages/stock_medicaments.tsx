@@ -198,52 +198,67 @@ const StockMedicamentsPage = () => {
   );
 
   return (
-<div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
-<div className="animated-background"></div>
+    <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
+      <div className="animated-background"></div>
       <div className="waves"></div>
 
       <MenubarRe />
 
       <div className="content">
         {loading ? (
-          <p>chargement des médicaments...</p>
+          <p>Chargement des médicaments...</p>
         ) : (
           <div>
             <h1 className="text-white text-xl mb-4">Stock des Médicaments</h1>
             {isAdmin && (
-              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded" onClick={() => setShowModal(true)}>
+              <button
+                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={() => setShowModal(true)}
+              >
                 Ajouter un médicament
               </button>
             )}
-            <ul>
-              {stockMedicaments.map((stock) => (
-                <li key={stock.id_stock} className="text-white mb-4">
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <h2 className="text-lg font-bold">
-                      {medicaments.find(med => med.id === stock.medicament_id)?.name || "Médicament non trouvé"}
-                    </h2>                    <p><strong>Quantité:</strong> {stock.quantite}</p>
-                    <p><strong>Date d'ajout:</strong> {stock.date_ajout}</p>
-                    <p><strong>Date d'expiration:</strong> {stock.date_expiration || "N/A"}</p>
-                    {isAdmin && (
-                      <div className="mt-4">
-                        <button
-                          className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
-                          onClick={() => handleDelete(stock.id_stock)}
-                        >
-                          Supprimer
-                        </button>
-                        <button
-                          className="px-4 py-2 bg-yellow-500 text-white rounded"
-                          onClick={() => handleEdit(stock)}
-                        >
-                          Modifier
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <table className="table-auto w-full text-white">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Médicament</th>
+                  <th className="px-4 py-2">Quantité</th>
+                  <th className="px-4 py-2">Date d'ajout</th>
+                  <th className="px-4 py-2">Date d'expiration</th>
+                  <th className="px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stockMedicaments.map((stock) => (
+                  <tr key={stock.id_stock} className="bg-gray-700">
+                    <td className="px-4 py-2">
+                      {medicaments.find((med) => med.id === stock.medicament_id)?.name || "Médicament non trouvé"}
+                    </td>
+                    <td className="px-4 py-2">{stock.quantite}</td>
+                    <td className="px-4 py-2">{stock.date_ajout}</td>
+                    <td className="px-4 py-2">{stock.date_expiration || "N/A"}</td>
+                    <td className="px-4 py-2">
+                      {isAdmin && (
+                        <div className="flex justify-around">
+                          <button
+                            className="px-4 py-2 bg-red-500 text-white rounded"
+                            onClick={() => handleDelete(stock.id_stock)}
+                          >
+                            Supprimer
+                          </button>
+                          <button
+                            className="px-4 py-2 bg-yellow-500 text-white rounded"
+                            onClick={() => handleEdit(stock)}
+                          >
+                            Modifier
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             <Modal show={showModal} onClose={() => setShowModal(false)}>
               <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
                 <h2 className="text-lg font-bold mb-4 text-black">Ajouter un Stock</h2>
@@ -296,13 +311,10 @@ const StockMedicamentsPage = () => {
                     >
                       {isEditing ? "Modifier" : "Ajouter"}
                     </button>
-
                   </div>
                 </form>
-
               </div>
             </Modal>
-
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import MenubarRe from "../components/ui/MenuBarRe";
-import { ShoppingCart, X } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import Menubar from "../components/ui/MenuBarRe";  // Assurez-vous que ce chemin est correct.
+import { ShoppingCart, X } from 'lucide-react';
 import { getUserRole } from './api/role';
 
 interface Materiel {
@@ -34,14 +34,14 @@ const CataloguePage = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [stockMaterials, setStockMaterials] = useState<Materiel[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [orders, setOrders] = useState<any[]>([]);  // Ajouter un état pour les commandes
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
       await fetchStockMaterials();
       if (isAdmin) {
-        await fetchOrders();  // Si l'utilisateur est Admin, on récupère les commandes
+        await fetchOrders();
       }
     };
     initialize();
@@ -72,7 +72,6 @@ const CataloguePage = () => {
     };
   }, [isAdmin]);
 
-  // Fonction pour récupérer les commandes si l'utilisateur est Admin
   const fetchOrders = async () => {
     const { data, error } = await supabase
       .from('commande_materiel')
@@ -87,7 +86,6 @@ const CataloguePage = () => {
     setOrders(data || []);
   };
 
-  // Fonction pour vérifier la session et récupérer le rôle
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
@@ -110,18 +108,11 @@ const CataloguePage = () => {
     }
   };
 
-  // Fonction pour récupérer les matériaux du stock
   const fetchStockMaterials = async () => {
     const { data, error } = await supabase
       .from("stock_materiel")
-      .select(`
-        materiel_id,
-        quantite,
-        materiels: materiels ( id_materiel, nom, description )
-      `)
+      .select("materiel_id, quantite, materiels (id_materiel, nom, description)")
       .order("materiel_id", { ascending: true });
-
-    console.log("🔍 Résultat Supabase stock_materiel:", data, error);
 
     if (error) {
       console.error("❌ Erreur Supabase:", error);
@@ -138,16 +129,10 @@ const CataloguePage = () => {
           description: materielInfo?.description || "Pas de description"
         };
       });
-
-      console.log("✅ Matériaux formatés SANS DOUBLONS:", formattedData);
       setStockMaterials(formattedData);
-    } else {
-      console.warn("⚠️ Aucune donnée reçue de Supabase.");
-      setStockMaterials([]);
     }
   };
 
-  // Fonction pour passer la commande
   const handleOrder = async () => {
     if (cart.length === 0) {
       alert("Votre panier est vide.");
@@ -155,18 +140,28 @@ const CataloguePage = () => {
     }
 
     try {
+      const { data: userData } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', user?.email)
+        .single();
+
+      if (!userData) {
+        alert("Utilisateur non trouvé.");
+        return;
+      }
+
       const commandePromises = cart.map(async (item) => {
         await supabase.from('commande_materiel').insert({
+          id_user: userData.id,
           id_stock_materiel: item.materielId,
           quantite: item.quantity,
-          date_commande: new Date().toISOString(),
-          etat: 'en attente'
+          etat: 'en attente',
         });
       });
 
       await Promise.all(commandePromises);
 
-      // Mise à jour du stock
       const updateStockPromises = cart.map(async (item) => {
         const currentStock = stockMaterials.find(
           (material) => material.materiel_id === item.materielId
@@ -189,20 +184,18 @@ const CataloguePage = () => {
       await Promise.all(updateStockPromises);
 
       alert("Commande passée avec succès !");
-      setCart([]); // Vide le panier après la commande
-      fetchStockMaterials(); // Recharge les matériaux
+      setCart([]);
+      fetchStockMaterials();
     } catch (error) {
       console.error("Erreur lors de la commande:", error);
       alert(error instanceof Error ? error.message : "Une erreur est survenue.");
     }
   };
 
-  // Ajouter un article au panier
   const addToCart = (item: CartItem) => {
     setCart(prevCart => [...prevCart, item]);
   };
 
-  // Modifier la quantité d'un matériel
   const handleQuantityChange = (materielId: number, quantity: string) => {
     setQuantities(prev => ({
       ...prev,
@@ -210,12 +203,10 @@ const CataloguePage = () => {
     }));
   };
 
-  // Retirer un article du panier
   const removeFromCart = (materielId: number) => {
     setCart(prevCart => prevCart.filter(item => item.materielId !== materielId));
   };
 
-  // Masquer ou afficher les sections selon le rôle
   const renderAdminView = () => {
     return (
       <div className="bg-transparent border border-white rounded-lg shadow-lg p-6">
@@ -236,7 +227,6 @@ const CataloguePage = () => {
       </div>
     );
   };
-
 
   const renderCatalogue = () => {
     return (
@@ -279,15 +269,64 @@ const CataloguePage = () => {
     );
   };
 
-
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
-      <MenubarRe />
+      <Menubar />
       <main className="flex-1 p-8 overflow-auto">
         <div className="w-full max-w-7xl mx-auto">
           {isAdmin ? renderAdminView() : renderCatalogue()}
         </div>
       </main>
+
+      <div className="fixed top-4 right-4 z-10">
+        <button
+          className="relative p-3 bg-blue-500 rounded-full"
+          onClick={() => setIsCartOpen(!isCartOpen)}
+        >
+          <ShoppingCart className="text-white" size={24} />
+          {cart.length > 0 && (
+            <span className="absolute top-0 right-0 text-white bg-red-600 rounded-full text-xs w-5 h-5 flex items-center justify-center">{cart.length}</span>
+          )}
+        </button>
+
+        <div
+          className={`fixed top-0 right-0 w-96 bg-white shadow-xl transition-transform duration-500 ease-in-out ${isCartOpen ? 'transform translate-x-0' : 'transform translate-x-full'}`}
+        >
+          <div className="p-4 flex justify-between items-center">
+            <h2 className="text-lg font-bold">Mon Panier</h2>
+            <button onClick={() => setIsCartOpen(false)}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-4">
+            {cart.length > 0 ? (
+              <div>
+                {cart.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center mb-4">
+                    <p>{item.nom}</p>
+                    <span>{item.quantity} x {item.nom}</span>
+                    <button
+                      className="text-red-600"
+                      onClick={() => removeFromCart(item.materielId)}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={handleOrder}
+                  className="w-full bg-green-500 text-white py-2 rounded-lg mt-4"
+                >
+                  Passer la commande
+                </button>
+              </div>
+            ) : (
+              <p>Votre panier est vide.</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

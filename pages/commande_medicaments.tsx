@@ -1,98 +1,59 @@
 import React, { useState, useEffect } from "react";
-import { createClient, User } from '@supabase/supabase-js';
-import MenubarRe from '../components/ui/MenuBarRe';
+import { supabase } from "@/lib/supabaseClient";
+import MenubarRe from "../components/ui/MenuBarRe";
 import { ShoppingCart, X } from "lucide-react";
-import { getUserRole } from './api/role';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { getUserRole } from "./api/role";
 
 interface Medicament {
+  id: number;
+  name: string;
+  description: string;
+  posologie: string;
+  maladies_non_compatibles: string;
+}
+
+interface StockMedicament {
   id_stock: number;
   medicament_id: number;
   quantite: number;
-  nom: string;
-  description: string;
+  date_ajout: string;
+  date_expiration: string;
+  medicament: Medicament;
 }
 
 interface CartItem {
-  id_stock: number;
-  medicament_id: number;
+  medicamentId: number;
   quantity: number;
-  nom: string;
+  name: string;
 }
 
-interface Quantities {
-  [key: number]: number;
+interface User {
+  id: string;
+  email: string;
 }
 
-interface Commande {
-  id_commande: number; // Au lieu de id
-  id_user: string;
-  id_stock_medicament: number;
-  quantite: number;
-  date_commande: string;
-  etat: string;
-}
-
-const CommandeMedicaments = () => {
+const CataloguePage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [quantities, setQuantities] = useState<Quantities>({});
+  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [medicaments, setMedicaments] = useState<StockMedicament[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [stockMedicaments, setStockMedicaments] = useState<Medicament[]>([]);
-  const [commandes, setCommandes] = useState<Commande[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [newCommande, setNewCommande] = useState<Partial<Commande>>({
-    quantite: 0,
-    etat: 'en attente'
-  });
 
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchStockMedicaments();
-      await fetchCommandes();
+      await fetchMedicaments();
     };
     initialize();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: userData } = await supabase
-          .from('User')
-          .select('id')
-          .eq('email', session.user.email)
-          .single();
-
-        if (userData) {
-          const role = await getUserRole(userData.id);
-          setUserRole(role);
-          setIsAdmin(role === "administrateur");
-          await fetchCommandes();
-        }
-      }
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
   }, []);
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
-      const { data: userData } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', session.user.email)
-        .single();
-
+      setUser({ id: session.user.id, email: session.user.email || "" });
+      const { data: userData } = await supabase.from("User").select("id").eq("email", session.user.email).single();
       if (userData) {
         const role = await getUserRole(userData.id);
         setUserRole(role);
@@ -101,400 +62,173 @@ const CommandeMedicaments = () => {
     }
   };
 
-  const fetchStockMedicaments = async () => {
+  const fetchMedicaments = async () => {
     const { data, error } = await supabase
       .from("stock_medicaments")
       .select(`
         id_stock,
         medicament_id,
         quantite,
-        medicaments ( id, name, description )
+        date_ajout,
+        date_expiration,
+        medicaments (
+          id,
+          name,
+          description,
+          posologie,
+          maladies_non_compatibles
+        )
       `)
-      .order("id_stock", { ascending: true });
-
+      .order("medicament_id", { ascending: true });
+  
     if (error) {
       console.error("❌ Erreur Supabase:", error);
       return;
     }
-
+  
+    console.log(data);  // Ajouter un console.log pour voir les données récupérées
+  
     if (data && data.length > 0) {
-      const formattedData: Medicament[] = data.map(item => {
-        const medicamentInfo = Array.isArray(item.medicaments) ? item.medicaments[0] : item.medicaments;
+      const formattedData: StockMedicament[] = data.map((item) => {
+        const medicamentData = Array.isArray(item.medicaments) ? item.medicaments[0] : item.medicaments;
+  
         return {
           id_stock: item.id_stock,
           medicament_id: item.medicament_id,
           quantite: item.quantite,
-          nom: medicamentInfo?.name || "Nom inconnu",
-          description: medicamentInfo?.description || "Pas de description"
+          date_ajout: item.date_ajout,
+          date_expiration: item.date_expiration,
+          medicament: {
+            id: medicamentData?.id || null,
+            name: medicamentData?.name || "Nom inconnu",
+            description: medicamentData?.description || "Pas de description",
+            posologie: medicamentData?.posologie || "Non renseigné",
+            maladies_non_compatibles: medicamentData?.maladies_non_compatibles || "Non renseigné",
+          }
         };
       });
-
-      setStockMedicaments(formattedData);
-    } else {
-      setStockMedicaments([]);
+  
+      setMedicaments(formattedData); // Affichage des médicaments dans le state
     }
   };
-
-  const fetchCommandes = async () => {
-    const { data, error } = await supabase
-      .from("commande_médicaments")
-      .select("*")
-      .order("date_commande", { ascending: false });
-
-    if (error) {
-      console.error("❌ Erreur Supabase:", error);
-      return;
-    }
-
-    console.log("Commandes récupérées:", data); // Vérifier les données retournées
-
-    setCommandes(data || []);
-  };
-
-
+  
+  
   const handleOrder = async () => {
     if (cart.length === 0) {
       alert("Votre panier est vide.");
       return;
     }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        throw new Error("Utilisateur non connecté");
-      }
-
-      const userId = session.user.id;
-
-      for (const item of cart) {
-        const commandeData = {
-          id_user: userId,
-          id_stock_medicament: item.id_stock,
-          quantite: item.quantity,
-          date_commande: new Date().toISOString(),
-          etat: 'en attente'
-        };
-
-        const { data: stockCheck, error: stockError } = await supabase
-          .from('stock_medicaments')
-          .select('id_stock, quantite')
-          .eq('id_stock', commandeData.id_stock_medicament)
-          .single();
-
-        if (stockError || !stockCheck) {
-          throw new Error("Stock introuvable");
-        }
-
-        if (stockCheck.quantite < commandeData.quantite) {
-          throw new Error(`Stock insuffisant pour ${item.nom}`);
-        }
-
-        const { data: insertData, error: insertError } = await supabase
-          .from('commande_médicaments')
-          .insert(commandeData)
-          .select();
-
-        if (insertError) {
-          throw new Error(`Erreur d'insertion: ${insertError.message}`);
-        }
-
-        const newQuantity = stockCheck.quantite - commandeData.quantite;
-        const { error: updateError } = await supabase
-          .from('stock_medicaments')
-          .update({ quantite: newQuantity })
-          .eq('id_stock', commandeData.id_stock_medicament);
-
-        if (updateError) {
-          throw new Error("Erreur lors de la mise à jour du stock");
-        }
-      }
-
-      alert("Commande passée avec succès !");
-      setCart([]);
-      await fetchStockMedicaments();
-      await fetchCommandes();
-
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Une erreur est survenue");
-    }
-  };
-
-  const addToCart = (item: CartItem) => {
-    setCart(prevCart => [...prevCart, item]);
-  };
-
-  const handleQuantityChange = (medicament_id: number, quantity: string) => {
-    setQuantities(prev => ({
-      ...prev,
-      [medicament_id]: Math.max(1, Math.min(Number(quantity), 100)),
-    }));
-  };
-
-  const removeFromCart = (medicament_id: number) => {
-    setCart(prevCart => prevCart.filter(item => item.medicament_id !== medicament_id));
-  };
-
-  const handleAddCommande = async () => {
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('commande_médicaments')
-      .insert([{
-        id_user: user.id,
-        id_stock_medicament: newCommande.id_stock_medicament,
-        quantite: newCommande.quantite,
-        etat: 'en attente',
-        date_commande: new Date().toISOString()
-      }]);
-
-
-    if (!error) {
-      setShowModal(false);
-      setNewCommande({ quantite: 0, etat: 'en attente' });
-      await fetchCommandes();
-    }
-  };
-  const handleUpdateState = async (id_commande: number, nouvelEtat: string) => {
-    if (!id_commande) {
-      console.error("ID de commande manquant");
-      alert("Erreur: ID de commande manquant");
-      return;
-    }
   
     try {
-      // Récupérer d'abord les informations de la commande
-      const { data: commandeData, error: commandeError } = await supabase
-        .from('commande_médicaments')
-        .select('*')
-        .eq('id_commande', id_commande)
+      const { data: userData, error: userError } = await supabase
+        .from("User")
+        .select("id")
+        .eq("email", user?.email)
         .single();
   
-      if (commandeError) {
-        throw new Error("Erreur lors de la récupération de la commande");
+      if (userError || !userData) {
+        console.error("Erreur récupération utilisateur:", userError);
+        alert("Utilisateur non trouvé.");
+        return;
       }
   
-      // Mise à jour de l'état de la commande
-      const { data, error } = await supabase
-        .from('commande_médicaments')
-        .update({ etat: nouvelEtat })
-        .eq('id_commande', id_commande)
-        .select();
-  
-      if (error) {
-        throw new Error(`Erreur lors de la mise à jour de l'état: ${error.message}`);
-      }
-  
-      // Si la commande est acceptée, mettre à jour le stock
-      if (nouvelEtat === 'acceptée') {
-        // Récupérer le stock actuel
+      // Vérifier si tous les medicaments du panier existent bien dans stock_medicaments
+      for (let item of cart) {
         const { data: stockData, error: stockError } = await supabase
-          .from('stock_medicaments')
-          .select('quantite')
-          .eq('id_stock', commandeData.id_stock_medicament)
+          .from("stock_medicaments")
+          .select("id_stock")
+          .eq("id_stock", item.medicamentId)
           .single();
   
-        if (stockError) {
-          throw new Error("Erreur lors de la récupération du stock");
-        }
-  
-        const newQuantity = stockData.quantite - commandeData.quantite;
-  
-        if (newQuantity < 0) {
-          throw new Error("Stock insuffisant pour cette commande");
-        }
-  
-        const { error: updateError } = await supabase
-          .from('stock_medicaments')
-          .update({ quantite: newQuantity })
-          .eq('id_stock', commandeData.id_stock_medicament);
-  
-        if (updateError) {
-          throw new Error("Erreur lors de la mise à jour du stock");
+        if (stockError || !stockData) {
+          alert(`Le médicament avec l'ID ${item.medicamentId} n'existe pas dans le stock.`);
+          return;
         }
       }
   
-      console.log("Commande mise à jour:", data);
-      await fetchCommandes(); // Rafraîchir la liste des commandes
-      await fetchStockMedicaments(); // Rafraîchir le stock
+      const commandes = cart.map((item) => ({
+        id_user: userData.id,
+        id_stock_medicament: item.medicamentId,
+        quantite: item.quantity,
+        date_commande: new Date().toISOString(),
+        etat: "en attente",
+        id_fournisseur: 1, // Remplacer par un ID fournisseur valide si nécessaire
+      }));
   
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Erreur interne:", error.message);
-        alert(`Erreur: ${error.message}`);
-      } else {
-        console.error("Erreur inconnue:", error);
-        alert("Une erreur inconnue est survenue.");
+      const { error } = await supabase.from("commande_médicaments").insert(commandes);
+  
+      if (error) {
+        console.error("Erreur lors de l'insertion:", error);
+        alert("Erreur lors de la commande.");
+        return;
       }
+  
+      setCart([]); // Vider le panier après la commande
+      fetchMedicaments(); // Rafraîchir le stock
+      alert("Commande passée avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de la commande:", error);
     }
   };
+  
+  
 
-
+  const addToCart = (item: CartItem) => {
+    setCart((prevCart) => [...prevCart, item]);
+  };
 
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <MenubarRe />
       <main className="flex-1 p-8 overflow-auto">
-        <div className="w-full max-w-7xl mx-auto">
-          {isAdmin ? (
-            <div>
-              <h1 className="text-2xl font-bold text-white">Liste des Commandes</h1>
-              <div className="grid grid-cols-1 gap-6 mt-4">
-                {commandes.map((commande) => {
-                  console.log("Commande ID:", commande.id_commande);  // Vérifier si chaque commande a un ID
-                  return (
-                    <div key={commande.id_commande} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
-                      <h2 className="text-xl font-bold mb-2 text-white">Commande #{commande.id_commande}</h2>
-                      <p className="text-sm text-white mb-4">Utilisateur: {commande.id_user}</p>
-                      <p className="text-sm text-white mb-4">ID Stock Médicament: {commande.id_stock_medicament}</p>
-                      <p className="text-sm text-white mb-4">Quantité: {commande.quantite}</p>
-                      <p className="text-sm text-white mb-4">Date de commande: {new Date(commande.date_commande).toLocaleString()}</p>
-                      <p className="text-sm text-white mb-4">État: {commande.etat}</p>
-                      {isAdmin && (
-                        <div className="flex space-x-2">
-                          <button
-                            className="bg-green-500 text-white px-3 py-1 rounded"
-                            onClick={() => handleUpdateState(commande.id_commande, 'acceptée')}
-                          >
-                            Accepter
-                          </button>
-                          <button
-                            className="bg-red-500 text-white px-3 py-1 rounded"
-                            onClick={() => handleUpdateState(commande.id_commande, 'refusée')}
-                          >
-                            Refuser
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                  );
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {medicaments.map((medicament) => (
+            <div key={medicament.id_stock} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-2 text-white">{medicament.medicament.name}</h2>
+              <p className="text-sm text-gray-300 mb-4">{medicament.medicament.description}</p>
+              <p className="text-sm text-gray-300 mb-4">Quantité disponible: {medicament.quantite}</p>
+              <button
+                onClick={() => addToCart({
+                  medicamentId: medicament.medicament_id,
+                  name: medicament.medicament.name,
+                  quantity: 1,
                 })}
-
-
-              </div>
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
+                disabled={medicament.quantite === 0}
+              >
+                {medicament.quantite === 0 ? "Rupture de stock" : "Ajouter au panier"}
+              </button>
             </div>
-          ) : (
-            <div>
-              <div className="flex justify-between items-center mb-8">
-                <h1 className="text-2xl font-bold text-white">Catalogue des Médicaments</h1>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsCartOpen(!isCartOpen)}
-                    className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    <span>{cart.length} articles</span>
-                  </button>
-                  {isCartOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg p-4 rounded-lg">
-                      <h2 className="text-lg font-bold">Panier</h2>
-                      {cart.map((item) => (
-                        <div key={item.medicament_id} className="border-b py-2 flex justify-between items-center">
-                          <p>{item.nom} x {item.quantity}</p>
-                          <button
-                            onClick={() => removeFromCart(item.medicament_id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        onClick={handleOrder}
-                        className="w-full bg-green-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-green-600"
-                      >
-                        Commander
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {stockMedicaments.length > 0 ? (
-                  stockMedicaments.map((medicament) => (
-                    <div key={medicament.id_stock} className="bg-white rounded-lg shadow-lg p-6">
-                      <h2 className="text-xl font-bold mb-2">{medicament.nom}</h2>
-                      {medicament.description && (
-                        <div className="text-sm text-gray-600 mb-4">{medicament.description}</div>
-                      )}
-                      <div className="text-sm text-gray-700 mb-4">
-                        Quantité disponible: {medicament.quantite}
-                      </div>
-                      <input
-                        type="number"
-                        min="1"
-                        max={medicament.quantite}
-                        value={quantities[medicament.medicament_id] || 1}
-                        onChange={(e) => handleQuantityChange(medicament.medicament_id, e.target.value)}
-                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg"
-                      />
-                      <button
-                        onClick={() => addToCart({
-                          id_stock: medicament.id_stock,
-                          medicament_id: medicament.medicament_id,
-                          nom: medicament.nom,
-                          quantity: quantities[medicament.medicament_id] || 1
-                        })}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
-                        disabled={medicament.quantite === 0}
-                      >
-                        {medicament.quantite === 0 ? "Rupture de stock" : "Ajouter au panier"}
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-white">❌ Aucun médicament disponible.</p>
-                )}
-              </div>
-            </div>
-          )}
+          ))}
         </div>
       </main>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-transparent border-2 border-white rounded-lg p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4 text-white">Nouvelle Commande</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white">ID Stock Médicament</label>
-                <input
-                  type="text"
-                  value={newCommande.id_stock_medicament || ''}
-                  onChange={(e) => setNewCommande({ ...newCommande, id_stock_medicament: parseInt(e.target.value) })}
-                  className="w-full p-2 border border-gray-300 rounded bg-transparent text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white">Quantité</label>
-                <input
-                  type="number"
-                  value={newCommande.quantite || ''}
-                  onChange={(e) => setNewCommande({ ...newCommande, quantite: parseInt(e.target.value) })}
-                  className="w-full p-2 border border-gray-300 rounded bg-transparent text-white"
-                />
-              </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleAddCommande}
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                >
-                  Commander
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="fixed top-4 right-4 z-10">
+        <button className="relative p-3 bg-blue-500 rounded-full" onClick={() => setIsCartOpen(!isCartOpen)}>
+          <ShoppingCart className="text-white" size={24} />
+          {cart.length > 0 && <span className="absolute top-0 right-0 text-white bg-red-600 rounded-full text-xs w-5 h-5 flex items-center justify-center">{cart.length}</span>}
+        </button>
 
+        {isCartOpen && (
+          <div className="fixed top-0 right-0 w-96 bg-white shadow-xl p-4">
+            <h2 className="text-lg font-bold">Mon Panier</h2>
+            {cart.length > 0 ? (
+              <div>
+                {cart.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center mb-4">
+                    <p>{item.name}</p>
+                    <span>{item.quantity}</span>
+                    <button className="text-red-600" onClick={() => setCart(cart.filter(c => c.medicamentId !== item.medicamentId))}>Supprimer</button>
+                  </div>
+                ))}
+                <button onClick={handleOrder} className="w-full bg-green-500 text-white py-2 rounded-lg mt-4">Passer la commande</button>
+              </div>
+            ) : <p>Votre panier est vide.</p>}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default CommandeMedicaments;
+export default CataloguePage;

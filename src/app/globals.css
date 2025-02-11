@@ -15,9 +15,13 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --background-image-light: url('/img/baground_blanc.jpg'); /* Image de fond pour le mode clair */
-    --background-image-dark: url('/img/baground.jpg'); /* Image de fond pour le mode sombre */
+    --background-image-light: url("/img/baground_blanc.jpg"); /* Image de fond pour le mode clair */
+    --background-image-dark: url("/img/baground.jpg"); /* Image de fond pour le mode sombre */
     --transition-speed: 0.5s; /* Vitesse de transition */
+  }
+  /* Ajoute une transition fluide */
+  .transition-transform {
+    transition: transform 0.5s ease-in-out;
   }
 
   .dark {
@@ -46,18 +50,24 @@
     @apply m-0 p-0 overflow-hidden;
     background-color: var(--background);
     color: var(--foreground);
-    background-image: var(--background-image-light); /* Utilise la variable CSS pour l'image de fond en mode clair */
+    background-image: var(
+      --background-image-light
+    ); /* Utilise la variable CSS pour l'image de fond en mode clair */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: background-color var(--transition-speed), color var(--transition-speed), background-image var(--transition-speed); /* Ajoute des transitions pour les propriétés */
+    transition: background-color var(--transition-speed),
+      color var(--transition-speed), background-image var(--transition-speed); /* Ajoute des transitions pour les propriétés */
   }
 
   .dark body {
-    background-image: var(--background-image-dark); /* Utilise la variable CSS pour l'image de fond en mode sombre */
+    background-image: var(
+      --background-image-dark
+    ); /* Utilise la variable CSS pour l'image de fond en mode sombre */
   }
 
-  html, body {
+  html,
+  body {
     height: 100%;
     width: 100%;
   }
@@ -81,18 +91,21 @@ ul.list-none li {
   transition: none !important;
 }
 
-h1, h2 {
+h1,
+h2 {
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
   transition: text-shadow var(--transition-speed); /* Ajoute une transition pour l'ombre du texte */
 }
 
-p, li {
+p,
+li {
   text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
   transition: text-shadow var(--transition-speed); /* Ajoute une transition pour l'ombre du texte */
 }
 
 /* Ensure full page coverage */
-#__next, #root {
+#__next,
+#root {
   height: 100%;
   width: 100%;
 }

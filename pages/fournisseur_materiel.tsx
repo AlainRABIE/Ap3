@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { User } from "@supabase/supabase-js";
-import { getUserRole } from "./api/role";
 import MenubarRe from "../components/ui/MenuBarRe";
 
-type Fournisseur = {
+type FournisseurMateriel = {
   id: number;
   nom: string;
   adresse: string;
@@ -13,240 +11,339 @@ type Fournisseur = {
   site_web: string;
 };
 
-const fetchFournisseurs = async (): Promise<Fournisseur[]> => {
-  const { data, error } = await supabase.from("fournisseur").select("*");
+const fetchFournisseursMateriel = async (): Promise<FournisseurMateriel[]> => {
+  const { data, error } = await supabase.from("fournisseur_materiel").select("*");
   if (error) {
-    console.error("Erreur lors de la récupération des fournisseurs :", error.message);
+    console.error("Erreur lors de la récupération des fournisseurs:", error.message);
     return [];
   }
   return data || [];
 };
 
-const deleteFournisseur = async (id: number) => {
-  const { data, error } = await supabase.from("fournisseur").delete().eq("id", id);
+const addFournisseurMateriel = async (fournisseur: Omit<FournisseurMateriel, "id">) => {
+  const { data, error } = await supabase.from("fournisseur_materiel").insert([fournisseur]);
   if (error) {
-    console.error("Erreur lors de la suppression du fournisseur :", error.message);
-    return null;
+    console.error("Erreur détaillée:", error);
+    return false;
   }
-  return data;
+  return true;
 };
 
-const updateFournisseur = async (id: number, fournisseur: Partial<Fournisseur>) => {
-  const { data, error } = await supabase.from("fournisseur").update(fournisseur).eq("id", id);
+const updateFournisseurMateriel = async (fournisseur: FournisseurMateriel) => {
+  const { data, error } = await supabase.from("fournisseur_materiel").update(fournisseur).eq("id", fournisseur.id);
   if (error) {
-    console.error("Erreur lors de la mise à jour du fournisseur :", error.message);
-    return null;
+    console.error("Erreur lors de la mise à jour du fournisseur:", error);
+    return false;
   }
-  return data;
+  return true;
 };
 
-const Fournisseur = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
+const deleteFournisseurMateriel = async (id: number) => {
+  const { error } = await supabase.from("fournisseur_materiel").delete().eq("id", id);
+  if (error) {
+    console.error("Erreur lors de la suppression:", error.message);
+    return false;
+  }
+  return true;
+};
+
+const FournisseurMaterielPage = () => {
+  const [fournisseurs, setFournisseurs] = useState<FournisseurMateriel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingFournisseur, setEditingFournisseur] = useState<Fournisseur | null>(null);
+  const [newFournisseur, setNewFournisseur] = useState<Omit<FournisseurMateriel, "id">>({
+    nom: "",
+    adresse: "",
+    email: "",
+    telephone: "",
+    site_web: "",
+  });
 
-  const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUser(session.user);
-      const { data: userData } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', session.user.email)
-        .single();
-
-      if (userData) {
-        const role = await getUserRole(userData.id);
-        setUserRole(role);
-        setIsAdmin(role === "administrateur");
-      }
-    } else {
-      setUser(null);
-      setUserRole(null);
-      setIsAdmin(false);
-    }
-  };
+  const [editingFournisseur, setEditingFournisseur] = useState<FournisseurMateriel | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
-      await checkSession();
-      const fetchedFournisseurs = await fetchFournisseurs();
+      const fetchedFournisseurs = await fetchFournisseursMateriel();
       setFournisseurs(fetchedFournisseurs);
       setIsLoading(false);
     };
 
     initialize();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: userData } = await supabase
-          .from('User')
-          .select('id')
-          .eq('email', session.user.email)
-          .single();
-
-        if (userData) {
-          const role = await getUserRole(userData.id);
-          setUserRole(role);
-          setIsAdmin(role === "administrateur");
-        }
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setIsAdmin(false);
-      }
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
   }, []);
 
-  const handleDelete = async (id: number) => {
-    const result = await deleteFournisseur(id);
-    if (result) {
-      setFournisseurs(fournisseurs.filter(fournisseur => fournisseur.id !== id));
-    }
-  };
-
-  const handleUpdate = async (id: number, updatedFournisseur: Partial<Fournisseur>) => {
-    console.log("Updating fournisseur with id:", id, "and data:", updatedFournisseur);
-    const updatedData = await updateFournisseur(id, updatedFournisseur);
-    if (updatedData) {
-      setFournisseurs(fournisseurs.map(fournisseur => fournisseur.id === id ? { ...fournisseur, ...updatedFournisseur } : fournisseur));
-      setEditingFournisseur(null);
-    }
-  };
-
-  const handleEditClick = (fournisseur: Fournisseur) => {
-    setEditingFournisseur(fournisseur);
-  };
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (editingFournisseur) {
-      setEditingFournisseur({
-        ...editingFournisseur,
-        [e.target.name]: e.target.value,
-      });
-    }
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (editingFournisseur) {
-      await handleUpdate(editingFournisseur.id, editingFournisseur);
+      if (await updateFournisseurMateriel({ ...editingFournisseur, ...newFournisseur })) {
+        setFournisseurs(await fetchFournisseursMateriel());
+        setEditingFournisseur(null);
+        setNewFournisseur({
+          nom: "",
+          adresse: "",
+          email: "",
+          telephone: "",
+          site_web: "",
+        });
+        setIsEditModalOpen(false);
+      }
+    } else {
+      if (await addFournisseurMateriel(newFournisseur)) {
+        setFournisseurs(await fetchFournisseursMateriel());
+        setNewFournisseur({
+          nom: "",
+          adresse: "",
+          email: "",
+          telephone: "",
+          site_web: "",
+        });
+        setIsModalOpen(false);
+      }
     }
+  };
+
+  const handleEdit = (fournisseur: FournisseurMateriel) => {
+    setEditingFournisseur(fournisseur);
+    setNewFournisseur({
+      nom: fournisseur.nom,
+      adresse: fournisseur.adresse,
+      email: fournisseur.email,
+      telephone: fournisseur.telephone,
+      site_web: fournisseur.site_web,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?")) {
+      if (await deleteFournisseurMateriel(id)) {
+        setFournisseurs(fournisseurs.filter(f => f.id !== id));
+      }
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewFournisseur(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <div className="animated-background"></div>
       <div className="waves"></div>
-
       <MenubarRe />
 
-      <div className="content">
+      <div className="content p-6 w-full">
         {isLoading ? (
-          <p>Loading...</p>
+          <p className="text-white">Chargement...</p>
         ) : (
-          <div>
-            <h1 className="text-white text-xl mb-4">Liste des Fournisseurs</h1>
-            {isAdmin && (
-              <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded">
-                Ajouter un fournisseur
-              </button>
+          <div className="space-y-6">
+            <h1 className="text-white text-2xl font-bold">Gestion des Fournisseurs</h1>
+
+            {/* Bouton Ajouter */}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
+            >
+              Ajouter un fournisseur
+            </button>
+
+            {/* Modal pour Ajouter un fournisseur */}
+            {isModalOpen && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
+                <div className="bg-gray-800 p-6 rounded-lg w-96">
+                  <h2 className="text-white text-xl font-semibold mb-4">Ajouter un Fournisseur</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-white mb-2">Nom</label>
+                      <input
+                        type="text"
+                        name="nom"
+                        value={newFournisseur.nom}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Adresse</label>
+                      <input
+                        type="text"
+                        name="adresse"
+                        value={newFournisseur.adresse}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={newFournisseur.email}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Téléphone</label>
+                      <input
+                        type="tel"
+                        name="telephone"
+                        value={newFournisseur.telephone}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Site web</label>
+                      <input
+                        type="url"
+                        name="site_web"
+                        value={newFournisseur.site_web}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition"
+                    >
+                      Ajouter le fournisseur
+                    </button>
+                  </form>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
             )}
-            <ul>
-              {fournisseurs.map((fournisseur) => (
-                <li key={fournisseur.id} className="text-white mb-4">
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <h2 className="text-lg font-bold">{fournisseur.nom}</h2>
-                    <p><strong>Adresse:</strong> {fournisseur.adresse}</p>
-                    <p><strong>Email:</strong> {fournisseur.email}</p>
-                    <p><strong>Téléphone:</strong> {fournisseur.telephone}</p>
-                    <p><strong>Site web:</strong> {fournisseur.site_web}</p>
-                    {isAdmin && (
-                      <div className="mt-4">
-                        <button
-                          className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
-                          onClick={() => handleDelete(fournisseur.id)}
-                        >
-                          Supprimer
-                        </button>
-                        <button
-                          className="px-4 py-2 bg-yellow-500 text-white rounded"
-                          onClick={() => handleEditClick(fournisseur)}
-                        >
-                          Modifier
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            {editingFournisseur && (
-              <form onSubmit={handleFormSubmit} className="bg-gray-700 p-4 rounded-lg mt-4">
-                <h2 className="text-lg font-bold text-white mb-4">Modifier Fournisseur</h2>
-                <div className="mb-4">
-                  <label className="block text-white mb-2">Nom</label>
-                  <input
-                    type="text"
-                    name="nom"
-                    value={editingFournisseur.nom}
-                    onChange={handleFormChange}
-                    className="w-full px-4 py-2"
-                  />
+
+            {/* Modal pour Modifier un fournisseur */}
+            {isEditModalOpen && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
+                <div className="bg-gray-800 p-6 rounded-lg w-96">
+                  <h2 className="text-white text-xl font-semibold mb-4">Modifier un Fournisseur</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-white mb-2">Nom</label>
+                      <input
+                        type="text"
+                        name="nom"
+                        value={newFournisseur.nom}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Adresse</label>
+                      <input
+                        type="text"
+                        name="adresse"
+                        value={newFournisseur.adresse}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={newFournisseur.email}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Téléphone</label>
+                      <input
+                        type="tel"
+                        name="telephone"
+                        value={newFournisseur.telephone}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Site web</label>
+                      <input
+                        type="url"
+                        name="site_web"
+                        value={newFournisseur.site_web}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition"
+                    >
+                      Modifier le fournisseur
+                    </button>
+                  </form>
+                  <button
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
+                  >
+                    Fermer
+                  </button>
                 </div>
-                <div className="mb-4">
-                  <label className="block text-white mb-2">Adresse</label>
-                  <input
-                    type="text"
-                    name="adresse"
-                    value={editingFournisseur.adresse}
-                    onChange={handleFormChange}
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-white mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={editingFournisseur.email}
-                    onChange={handleFormChange}
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-white mb-2">Téléphone</label>
-                  <input
-                    type="text"
-                    name="telephone"
-                    value={editingFournisseur.telephone}
-                    onChange={handleFormChange}
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-white mb-2">Site web</label>
-                  <input
-                    type="text"
-                    name="site_web"
-                    value={editingFournisseur.site_web}
-                    onChange={handleFormChange}
-                    className="w-full px-4 py-2"
-                  />
-                </div>
-                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
-                  Enregistrer
-                </button>
-              </form>
+              </div>
             )}
+
+            {/* Liste des fournisseurs */}
+            <table className="table-auto w-full text-white">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Nom</th>
+                  <th className="px-4 py-2">Adresse</th>
+                  <th className="px-4 py-2">Email</th>
+                  <th className="px-4 py-2">Téléphone</th>
+                  <th className="px-4 py-2">Site Web</th>
+                  <th className="px-4 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fournisseurs.map(f => (
+                  <tr key={f.id}>
+                    <td className="px-4 py-2">{f.nom}</td>
+                    <td className="px-4 py-2">{f.adresse}</td>
+                    <td className="px-4 py-2">{f.email}</td>
+                    <td className="px-4 py-2">{f.telephone}</td>
+                    <td className="px-4 py-2">{f.site_web}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => handleEdit(f)}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => handleDelete(f.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
+                      >
+                        Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -254,4 +351,4 @@ const Fournisseur = () => {
   );
 };
 
-export default Fournisseur;
+export default FournisseurMaterielPage;

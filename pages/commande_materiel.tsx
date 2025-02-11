@@ -39,7 +39,7 @@ const CataloguePage = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchStockMaterials();
+      await fetchMateriels();  // Utiliser fetchMateriels au lieu de fetchStockMaterials
       if (isAdmin) {
         await fetchOrders();
       }
@@ -108,11 +108,12 @@ const CataloguePage = () => {
     }
   };
 
-  const fetchStockMaterials = async () => {
+  // Modification ici pour interroger la table "materiels" au lieu de "stock_materiel"
+  const fetchMateriels = async () => {
     const { data, error } = await supabase
-      .from("stock_materiel")
-      .select("materiel_id, quantite, materiels(id_materiel, nom, description)")
-      .order("materiel_id", { ascending: true });
+      .from("materiels")  // Changement de 'stock_materiel' à 'materiels'
+      .select("id_materiel, nom, description, quantite") // Sélectionner les colonnes adéquates
+      .order("id_materiel", { ascending: true });
 
     if (error) {
       console.error("❌ Erreur Supabase:", error);
@@ -120,16 +121,33 @@ const CataloguePage = () => {
     }
 
     if (data && data.length > 0) {
-      const formattedData: Materiel[] = data.map(item => {
-        const materielInfo = Array.isArray(item.materiels) ? item.materiels[0] : item.materiels;
-        return {
-          materiel_id: item.materiel_id,
-          quantite: item.quantite,
-          nom: materielInfo?.nom || "Nom inconnu",
-          description: materielInfo?.description || "Pas de description"
-        };
-      });
-      setStockMaterials(formattedData);
+      const formattedData: Materiel[] = data.map(item => ({
+        materiel_id: item.id_materiel,
+        quantite: item.quantite,
+        nom: item.nom || "Nom inconnu",
+        description: item.description || "Pas de description",
+      }));
+      setStockMaterials(formattedData);  // Mettre à jour l'état avec les nouveaux matériaux
+    }
+  };
+  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('commande_materiel')
+        .update({ etat: newStatus })
+        .eq('id_commande', orderId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Re-fetch orders after updating the status
+      fetchOrders();
+
+      alert(`La commande a été ${newStatus === 'acceptée' ? 'acceptée' : 'refusée'}.`);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'état de la commande:", error);
+      alert("Une erreur est survenue lors de la mise à jour de la commande.");
     }
   };
 
@@ -175,9 +193,9 @@ const CataloguePage = () => {
           }
 
           await supabase
-            .from('stock_materiel')
+            .from('materiels')  // Mise à jour dans la table 'materiels'
             .update({ quantite: newQuantity })
-            .eq('materiel_id', item.materielId);
+            .eq('id_materiel', item.materielId);
         }
       });
 
@@ -185,7 +203,7 @@ const CataloguePage = () => {
 
       alert("Commande passée avec succès !");
       setCart([]);
-      fetchStockMaterials();
+      fetchMateriels();  // Recharger les données de la table 'materiels'
     } catch (error) {
       console.error("Erreur lors de la commande:", error);
       alert(error instanceof Error ? error.message : "Une erreur est survenue.");
@@ -193,8 +211,16 @@ const CataloguePage = () => {
   };
 
   const addToCart = (item: CartItem) => {
+    const material = stockMaterials.find(material => material.materiel_id === item.materielId);
+  
+    if (material && item.quantity > material.quantite) {
+      alert(`La quantité demandée pour ${item.nom} dépasse le stock disponible.`);
+      return;
+    }
+  
     setCart(prevCart => [...prevCart, item]);
   };
+  
 
   const handleQuantityChange = (materielId: number, quantity: string) => {
     setQuantities(prev => ({
@@ -207,131 +233,6 @@ const CataloguePage = () => {
     setCart(prevCart => prevCart.filter(item => item.materielId !== materielId));
   };
 
-  const updateOrderStatus = async (id_commande: number, newStatus: string) => {
-    try {
-      // Récupère les informations de la commande actuelle pour vérifier son état et les détails de la commande
-      const { data: currentOrder, error: fetchError } = await supabase
-        .from('commande_materiel')
-        .select('id_stock_materiel, quantite, etat')
-        .eq('id_commande', id_commande)
-        .single();
-  
-      if (fetchError) {
-        console.error('Erreur lors de la récupération de la commande:', fetchError);
-        alert('Erreur lors de la récupération de la commande');
-        return;
-      }
-  
-      if (!currentOrder) {
-        console.error('Commande introuvable');
-        alert('Commande introuvable');
-        return;
-      }
-  
-      // Si l'état de la commande est déjà celui que l'on veut, on l'annule
-      if (currentOrder.etat === newStatus) {
-        alert(`La commande est déjà dans cet état (${newStatus}).`);
-        return;
-      }
-  
-      // Met à jour l'état de la commande dans la base de données
-      const { error: updateError } = await supabase
-        .from('commande_materiel')
-        .update({ etat: newStatus })
-        .eq('id_commande', id_commande);
-  
-      if (updateError) {
-        console.error('Erreur lors de la mise à jour du statut:', updateError);
-        alert('Erreur lors de la mise à jour du statut');
-        return;
-      }
-  
-      if (newStatus === 'acceptée') {
-        // Mettre à jour le stock si la commande est acceptée
-        await updateStockOnAccept(currentOrder.id_stock_materiel, currentOrder.quantite);
-        alert('Commande acceptée et stock mis à jour avec succès.');
-      } else if (newStatus === 'refusée') {
-        // Remettre le stock à l'état précédent si la commande est refusée
-        await restoreStockOnReject(currentOrder.id_stock_materiel, currentOrder.quantite);
-        alert('Commande refusée et stock restauré.');
-      }
-  
-      // Rafraîchit la liste des commandes pour que l'interface reflète les modifications
-      fetchOrders();
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Une erreur est survenue');
-    }
-  };
-  
-  const updateStockOnAccept = async (materielId: number, quantity: number) => {
-    const { data: currentStock, error } = await supabase
-      .from('stock_materiel')
-      .select('quantite')
-      .eq('materiel_id', materielId)
-      .single();
-  
-    if (error) {
-      console.error('Erreur lors de la récupération du stock:', error);
-      alert('Erreur lors de la récupération du stock');
-      return;
-    }
-  
-    if (!currentStock) {
-      alert('Stock introuvable');
-      return;
-    }
-  
-    const newQuantity = currentStock.quantite - quantity;
-  
-    if (newQuantity < 0) {
-      alert('Stock insuffisant pour traiter la commande');
-      return;
-    }
-  
-    // Mise à jour du stock
-    const { error: updateError } = await supabase
-      .from('stock_materiel')
-      .update({ quantite: newQuantity })
-      .eq('materiel_id', materielId);
-  
-    if (updateError) {
-      console.error('Erreur lors de la mise à jour du stock:', updateError);
-      alert('Erreur lors de la mise à jour du stock');
-    }
-  };
-  
-  // Fonction pour restaurer le stock si la commande est refusée
-  const restoreStockOnReject = async (materielId: number, quantity: number) => {
-    const { data: currentStock, error } = await supabase
-      .from('stock_materiel')
-      .select('quantite')
-      .eq('materiel_id', materielId)
-      .single();
-  
-    if (error) {
-      console.error('Erreur lors de la récupération du stock:', error);
-      alert('Erreur lors de la récupération du stock');
-      return;
-    }
-  
-    if (!currentStock) {
-      alert('Stock introuvable');
-      return;
-    }
-  
-    const newQuantity = currentStock.quantite + quantity;
-  
-    const { error: updateError } = await supabase
-      .from('stock_materiel')
-      .update({ quantite: newQuantity })
-      .eq('materiel_id', materielId);
-  
-    if (updateError) {
-      console.error('Erreur lors de la restauration du stock:', updateError);
-      alert('Erreur lors de la restauration du stock');
-    }
-  };
   const renderAdminView = () => {
     return (
       <div className="bg-transparent border border-white rounded-lg shadow-lg p-6">
@@ -382,71 +283,25 @@ const CataloguePage = () => {
                   nom: material.nom,
                   quantity: quantities[material.materiel_id] || 1
                 })}
-                className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
-                disabled={material.quantite === 0}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600 w-full"
               >
-                {material.quantite === 0 ? "Rupture de stock" : "Ajouter au panier"}
+                Ajouter au panier
               </button>
             </div>
           ))
         ) : (
-          <p className="text-white">❌ Aucun matériel disponible.</p>
+          <p className="text-white">Chargement des matériaux...</p>
         )}
       </div>
     );
   };
 
   return (
-    <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
+    <div className="flex flex-col">
       <Menubar />
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="w-full max-w-7xl mx-auto">
-          {isAdmin ? renderAdminView() : renderCatalogue()}
-        </div>
-      </main>
-
-      <div className="fixed top-4 right-4 z-10">
-        <button
-          className="relative p-3 bg-blue-500 rounded-full"
-          onClick={() => setIsCartOpen(!isCartOpen)}
-        >
-          <ShoppingCart className="text-white" size={24} />
-          {cart.length > 0 && (
-            <span className="absolute top-0 right-0 text-white bg-red-600 rounded-full text-xs w-5 h-5 flex items-center justify-center">
-              {cart.length}
-            </span>
-          )}
-        </button>
-
-        <div className={`fixed top-0 right-0 w-96 bg-white shadow-xl transition-transform duration-500 ease-in-out ${isCartOpen ? 'transform translate-x-0' : 'transform translate-x-full'}`}>
-          <div className="p-4 flex justify-between items-center">
-            <h2 className="text-lg font-bold">Mon Panier</h2>
-            <button onClick={() => setIsCartOpen(false)}>
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="p-4">
-            {cart.length > 0 ? (
-              <div>
-                {cart.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center mb-4">
-                    <p>{item.nom}</p>
-                    <span>{item.quantity} x {item.nom}</span>
-                    <button className="text-red-600" onClick={() => removeFromCart(item.materielId)}>
-                      Supprimer
-                    </button>
-                  </div>
-                ))}
-                <button onClick={handleOrder} className="w-full bg-green-500 text-white py-2 rounded-lg mt-4">
-                  Passer la commande
-                </button>
-              </div>
-            ) : (
-              <p>Votre panier est vide.</p>
-            )}
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto py-8 px-6">
+        <h1 className="text-3xl font-bold text-white mb-6">Catalogue</h1>
+        {isAdmin ? renderAdminView() : renderCatalogue()}
       </div>
     </div>
   );

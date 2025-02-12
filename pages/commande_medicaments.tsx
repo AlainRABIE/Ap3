@@ -1,24 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import MenubarRe from "../components/ui/MenuBarRe";
-import { ShoppingCart, X } from "lucide-react";
-import { getUserRole } from "./api/role";
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import MenubarRe from '../components/ui/MenuBarRe';
+import { ShoppingCart } from 'lucide-react';
+import { getUserRole } from './api/role';
 
 interface Medicament {
   id: number;
   name: string;
   description: string;
   posologie: string;
-  maladies_non_compatibles: string;
-}
-
-interface StockMedicament {
-  id_stock: number;
-  medicament_id: number;
   quantite: number;
-  date_ajout: string;
-  date_expiration: string;
-  medicament: Medicament;
 }
 
 interface CartItem {
@@ -34,11 +25,10 @@ interface User {
 
 const CataloguePage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [medicaments, setMedicaments] = useState<StockMedicament[]>([]);
+  const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -52,126 +42,96 @@ const CataloguePage = () => {
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser({ id: session.user.id, email: session.user.email || "" });
-      const { data: userData } = await supabase.from("User").select("id").eq("email", session.user.email).single();
+      setUser({ id: session.user.id, email: session.user.email || '' });
+      const { data: userData } = await supabase.from('User').select('id').eq('email', session.user.email).single();
       if (userData) {
         const role = await getUserRole(userData.id);
         setUserRole(role);
-        setIsAdmin(role === "administrateur");
+        setIsAdmin(role === 'administrateur');
       }
     }
   };
 
   const fetchMedicaments = async () => {
     const { data, error } = await supabase
-      .from("stock_medicaments")
-      .select(`
-        id_stock,
-        medicament_id,
-        quantite,
-        date_ajout,
-        date_expiration,
-        medicaments (
-          id,
-          name,
-          description,
-          posologie,
-          maladies_non_compatibles
-        )
-      `)
-      .order("medicament_id", { ascending: true });
+      .from('medicaments')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error('❌ Erreur Supabase:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      setMedicaments(data);
+    }
+  };
+
+  const fetchValidFournisseurId = async () => {
+    const { data, error } = await supabase
+      .from('fournisseur_medicament')
+      .select('fournisseur_id')
+      .limit(1)
+      .single();
   
     if (error) {
-      console.error("❌ Erreur Supabase:", error);
-      return;
+      console.error('❌ Erreur lors de la récupération du fournisseur:', error);
+      return null;
     }
-  
-    console.log(data);  // Ajouter un console.log pour voir les données récupérées
-  
-    if (data && data.length > 0) {
-      const formattedData: StockMedicament[] = data.map((item) => {
-        const medicamentData = Array.isArray(item.medicaments) ? item.medicaments[0] : item.medicaments;
-  
-        return {
-          id_stock: item.id_stock,
-          medicament_id: item.medicament_id,
-          quantite: item.quantite,
-          date_ajout: item.date_ajout,
-          date_expiration: item.date_expiration,
-          medicament: {
-            id: medicamentData?.id || null,
-            name: medicamentData?.name || "Nom inconnu",
-            description: medicamentData?.description || "Pas de description",
-            posologie: medicamentData?.posologie || "Non renseigné",
-            maladies_non_compatibles: medicamentData?.maladies_non_compatibles || "Non renseigné",
-          }
-        };
-      });
-  
-      setMedicaments(formattedData); // Affichage des médicaments dans le state
-    }
+
+    return data?.fournisseur_id || null;
   };
-  
-  
+
   const handleOrder = async () => {
     if (cart.length === 0) {
-      alert("Votre panier est vide.");
+      alert('Votre panier est vide.');
       return;
     }
-  
+
     try {
       const { data: userData, error: userError } = await supabase
-        .from("User")
-        .select("id")
-        .eq("email", user?.email)
+        .from('User')
+        .select('id')
+        .eq('email', user?.email)
         .single();
-  
+
       if (userError || !userData) {
-        console.error("Erreur récupération utilisateur:", userError);
-        alert("Utilisateur non trouvé.");
+        console.error('Erreur récupération utilisateur:', userError);
+        alert('Utilisateur non trouvé.');
         return;
       }
-  
-      // Vérifier si tous les medicaments du panier existent bien dans stock_medicaments
-      for (let item of cart) {
-        const { data: stockData, error: stockError } = await supabase
-          .from("stock_medicaments")
-          .select("id_stock")
-          .eq("id_stock", item.medicamentId)
-          .single();
-  
-        if (stockError || !stockData) {
-          alert(`Le médicament avec l'ID ${item.medicamentId} n'existe pas dans le stock.`);
-          return;
-        }
+
+      const fournisseurId = await fetchValidFournisseurId();
+      if (!fournisseurId) {
+        alert('Aucun fournisseur valide trouvé.');
+        return;
       }
-  
+
       const commandes = cart.map((item) => ({
         id_user: userData.id,
-        id_stock_medicament: item.medicamentId,
+        id_medicament: item.medicamentId,
         quantite: item.quantity,
         date_commande: new Date().toISOString(),
-        etat: "en attente",
-        id_fournisseur: 1, // Remplacer par un ID fournisseur valide si nécessaire
+        etat: 'en attente',
+        id_fournisseur: fournisseurId, // Utilise un ID fournisseur valide récupéré
       }));
-  
-      const { error } = await supabase.from("commande_médicaments").insert(commandes);
-  
+
+      const { error } = await supabase.from('commande_médicaments').insert(commandes);
+
       if (error) {
-        console.error("Erreur lors de l'insertion:", error);
-        alert("Erreur lors de la commande.");
+        console.error('Erreur lors de l\'insertion:', error);
+        alert('Erreur lors de la commande.');
         return;
       }
-  
-      setCart([]); // Vider le panier après la commande
-      fetchMedicaments(); // Rafraîchir le stock
-      alert("Commande passée avec succès !");
+
+      setCart([]);
+      fetchMedicaments();
+      alert('Commande passée avec succès !');
     } catch (error) {
-      console.error("Erreur lors de la commande:", error);
+      console.error('Erreur lors de la commande:', error);
     }
   };
-  
-  
 
   const addToCart = (item: CartItem) => {
     setCart((prevCart) => [...prevCart, item]);
@@ -183,20 +143,20 @@ const CataloguePage = () => {
       <main className="flex-1 p-8 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {medicaments.map((medicament) => (
-            <div key={medicament.id_stock} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-2 text-white">{medicament.medicament.name}</h2>
-              <p className="text-sm text-gray-300 mb-4">{medicament.medicament.description}</p>
+            <div key={medicament.id} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-2 text-white">{medicament.name}</h2>
+              <p className="text-sm text-gray-300 mb-4">{medicament.description}</p>
               <p className="text-sm text-gray-300 mb-4">Quantité disponible: {medicament.quantite}</p>
               <button
                 onClick={() => addToCart({
-                  medicamentId: medicament.medicament_id,
-                  name: medicament.medicament.name,
+                  medicamentId: medicament.id,
+                  name: medicament.name,
                   quantity: 1,
                 })}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
                 disabled={medicament.quantite === 0}
               >
-                {medicament.quantite === 0 ? "Rupture de stock" : "Ajouter au panier"}
+                {medicament.quantite === 0 ? 'Rupture de stock' : 'Ajouter au panier'}
               </button>
             </div>
           ))}

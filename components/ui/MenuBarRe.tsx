@@ -155,7 +155,34 @@ const Sidebar = () => {
                 </MenubarItem>
               </MenubarContent>
             </MenubarMenu>
-
+            <MenubarMenu>
+              <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
+                <FiShoppingCart size={24} />
+                {isSidebarVisible && <span>Vos commande</span>}
+              </MenubarTrigger>
+              <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
+                <MenubarItem>
+                  <Link
+                    href="/fournisseur_materiel"
+                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
+                    aria-label="Fournisseurs de Matériel"
+                  >
+                    <FiShoppingCart size={20} />
+                    {isSidebarVisible && <span>Vos commande de medicaments</span>}
+                  </Link>
+                </MenubarItem>
+                <MenubarItem>
+                  <Link
+                    href="/commande-en-cour"
+                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
+                    aria-label="Fournisseurs de Médicaments"
+                  >
+                    <FiShoppingCart size={20} />
+                    {isSidebarVisible && <span>Vos commande de materiaux</span>}
+                  </Link>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
                 <FiUsers size={24} />

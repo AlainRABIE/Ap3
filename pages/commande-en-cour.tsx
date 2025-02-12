@@ -11,7 +11,7 @@ const supabase = createClient(
 interface Commande {
   id_commande: number;
   id_user: string;
-  id_stock_medicament: number;
+  id_medicament: number;
   quantite: number;
   date_commande: string;
   etat: string;
@@ -22,6 +22,7 @@ const MesCommandes = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -70,29 +71,27 @@ const MesCommandes = () => {
       }
     }
   };
+
   const fetchCommandes = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
   
-    let query = supabase
+    const { data, error } = await supabase
       .from("commande_médicaments")
       .select("*")
       .eq('etat', 'en attente')
       .order("date_commande", { ascending: false });
   
-    const { data, error } = await query;
-  
     if (error) {
-      console.error("❌ Erreur Supabase:", error);
+      console.error("❌ Erreur lors de la récupération des commandes:", error);
+      setError(error.message);
       return;
     }
   
     console.log("Commandes récupérées:", data);
     setCommandes(data || []);
   };
-  
 
-  
   const handleUpdateState = async (id_commande: number, nouvelEtat: string) => {
     if (!id_commande) {
       console.error("ID de commande manquant");
@@ -108,8 +107,13 @@ const MesCommandes = () => {
         .eq('id_commande', id_commande)
         .single();
 
-      if (commandeError) {
+      if (commandeError || !commandeData) {
         throw new Error("Erreur lors de la récupération de la commande");
+      }
+
+      // Vérifier si id_medicament est valide
+      if (!commandeData.id_medicament) {
+        throw new Error("ID du médicament manquant ou invalide");
       }
 
       // Mise à jour de l'état de la commande
@@ -123,35 +127,39 @@ const MesCommandes = () => {
         throw new Error(`Erreur lors de la mise à jour de l'état: ${error.message}`);
       }
 
-      // Si la commande est acceptée, mettre à jour le stock
-      if (nouvelEtat === 'acceptée') {
+      // Mise à jour du stock selon l'état de la commande
+      const adjustStock = async (adjustment: number) => {
         // Récupérer le stock actuel
         const { data: stockData, error: stockError } = await supabase
-          .from('stock_medicaments')
+          .from('medicaments')
           .select('quantite')
-          .eq('id_stock', commandeData.id_stock_medicament)
+          .eq('id', commandeData.id_medicament)
           .single();
 
-        if (stockError) {
+        if (stockError || !stockData) {
           throw new Error("Erreur lors de la récupération du stock");
         }
 
         // Calculer la nouvelle quantité
-        const newQuantity = stockData.quantite - commandeData.quantite;
-
-        if (newQuantity < 0) {
-          throw new Error("Stock insuffisant pour cette commande");
-        }
+        const newQuantity = stockData.quantite + adjustment;
 
         // Mettre à jour le stock
         const { error: updateError } = await supabase
-          .from('stock_medicaments')
+          .from('medicaments')
           .update({ quantite: newQuantity })
-          .eq('id_stock', commandeData.id_stock_medicament);
+          .eq('id', commandeData.id_medicament);
 
         if (updateError) {
           throw new Error("Erreur lors de la mise à jour du stock");
         }
+      };
+
+      if (nouvelEtat === 'acceptée') {
+        // Retirer les médicaments du stock
+        await adjustStock(-commandeData.quantite);
+      } else if (nouvelEtat === 'refusée') {
+        // Remettre les médicaments en stock
+        await adjustStock(commandeData.quantite);
       }
 
       console.log("Commande mise à jour:", data);
@@ -176,6 +184,7 @@ const MesCommandes = () => {
           <h1 className="text-2xl font-bold text-white mb-8">
             {isAdmin ? "Liste des Commandes" : "Mes Commandes en Attente"}
           </h1>
+          {error && <p className="text-red-500">{error}</p>}
           <div className="grid grid-cols-1 gap-6 mt-4">
             {commandes.map((commande) => (
               <div key={commande.id_commande} className="bg-transparent border border-white rounded-lg shadow-lg p-6">

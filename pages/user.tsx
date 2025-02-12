@@ -14,6 +14,7 @@ type User = {
   createdAt: string;
   updatedAt: string;
   roleid: number;
+  role_name: string; // Ajout de cette ligne
 };
 
 const UserPage = () => {
@@ -21,33 +22,49 @@ const UserPage = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: userData } = await supabase
-          .from('User')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-
-        if (userData) {
-          setCurrentUser(userData);
-        }
-      }
-
-      const { data, error } = await supabase
+  const fetchUsers = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data: userData } = await supabase
         .from('User')
-        .select('*');
+        .select(`
+          *,
+          role:roleid (
+            name
+          )
+        `)
+        .eq('email', session.user.email)
+        .single();
 
-      if (error) {
-        console.error('Erreur lors de la récupération des utilisateurs:', error);
-        setError(error.message);
-      } else {
-        setUsers(data || []);
+      if (userData) {
+        setCurrentUser({
+          ...userData,
+          role_name: userData.role.name
+        });
       }
-    };
+    }
 
+    const { data, error } = await supabase
+      .from('User')
+      .select(`
+        *,
+        role:roleid (
+          name
+        )
+      `);
+
+    if (error) {
+      console.error('Erreur lors de la récupération des utilisateurs:', error);
+      setError(error.message);
+    } else {
+      setUsers(data.map(user => ({
+        ...user,
+        role_name: user.role.name
+      })));
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -61,7 +78,8 @@ const UserPage = () => {
       console.error('Erreur lors de la mise à jour du rôle:', error);
       setError(error.message);
     } else {
-      setUsers(users.map(user => user.id === id ? { ...user, roleid: newRoleId } : user));
+      // Re-fetch the users after the role is updated
+      await fetchUsers();
     }
   };
 
@@ -77,7 +95,7 @@ const UserPage = () => {
   };
 
   return (
-    <div className="relative flex h-screen bg-black bg-opacity-40 backdrop-blur-md">
+    <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <div className="animated-background"></div>
       <div className="waves"></div>
       <MenubarRe />
@@ -91,7 +109,7 @@ const UserPage = () => {
               <th className="px-4 py-2 border">Nom</th>
               <th className="px-4 py-2 border">Date de Création</th>
               <th className="px-4 py-2 border">Date de Mise à Jour</th>
-              <th className="px-4 py-2 border">Role ID</th>
+              <th className="px-4 py-2 border">Rôle</th> {/* Modification du titre de la colonne */}
               <th className="px-4 py-2 border">Actions</th>
             </tr>
           </thead>
@@ -104,7 +122,7 @@ const UserPage = () => {
                   <td className="px-4 py-2 border">{user.name}</td>
                   <td className="px-4 py-2 border">{new Date(user.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 border">{new Date(user.updatedAt).toLocaleString()}</td>
-                  <td className="px-4 py-2 border">{user.roleid}</td>
+                  <td className="px-4 py-2 border">{user.role_name}</td> {/* Utilisation de role_name */}
                   <td className="px-4 py-2 border">
                     <button
                       className="bg-blue-500 text-white px-2 py-1 rounded mr-2"

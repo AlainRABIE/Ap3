@@ -21,6 +21,7 @@ const fetchFournisseursMateriel = async (): Promise<FournisseurMateriel[]> => {
   return data || [];
 };
 
+
 const addFournisseurMateriel = async (fournisseur: Omit<FournisseurMateriel, "id">) => {
   const { data, error } = await supabase.from("fournisseur_materiel").insert([fournisseur]);
   if (error) {
@@ -61,6 +62,7 @@ const FournisseurMaterielPage = () => {
   const [editingFournisseur, setEditingFournisseur] = useState<FournisseurMateriel | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null); // Nouvel état pour stocker le rôle utilisateur
   const [isAdmin, setIsAdmin] = useState(false); // Nouvel état pour vérifier si l'utilisateur est admin
 
   useEffect(() => {
@@ -79,6 +81,7 @@ const FournisseurMaterielPage = () => {
       if (data?.user) {  // Vérifie si l'utilisateur est disponible
         const userId = parseInt(data.user.id, 10);  // Convertir l'ID en nombre
         const role = await getUserRole(userId);  // Passer un nombre à la fonction
+        setUserRole(role);
         if (role === "admin") {
           setIsAdmin(true);  // Si l'utilisateur est admin, mettre à jour l'état
         }
@@ -247,6 +250,83 @@ const FournisseurMaterielPage = () => {
               </div>
             )}
 
+            {/* Modal pour Modifier un fournisseur */}
+            {isEditModalOpen && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
+                <div className="bg-gray-800 p-6 rounded-lg w-96">
+                  <h2 className="text-white text-xl font-semibold mb-4">Modifier un Fournisseur</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-white mb-2">Nom</label>
+                      <input
+                        type="text"
+                        name="nom"
+                        value={newFournisseur.nom}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Adresse</label>
+                      <input
+                        type="text"
+                        name="adresse"
+                        value={newFournisseur.adresse}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={newFournisseur.email}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Téléphone</label>
+                      <input
+                        type="tel"
+                        name="telephone"
+                        value={newFournisseur.telephone}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white mb-2">Site web</label>
+                      <input
+                        type="url"
+                        name="site_web"
+                        value={newFournisseur.site_web}
+                        onChange={handleInputChange}
+                        className="w-full p-2 rounded"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="bg-blue-500 text-white px-4 py-2 rounded transition mt-4 w-full"
+                    >
+                      Enregistrer
+                    </button>
+                  </form>
+                  <button
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="text-white mt-4 w-full bg-red-500 py-2 rounded"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Liste des Fournisseurs */}
             <div className="space-y-4">
               {fournisseurs.map(fournisseur => (
@@ -254,23 +334,25 @@ const FournisseurMaterielPage = () => {
                   <h3 className="text-white text-lg font-semibold">{fournisseur.nom}</h3>
                   <p className="text-white">{fournisseur.adresse}</p>
                   <p className="text-white">{fournisseur.email}</p>
-                  <p className="text-white">{fournisseur.telephone}</p>
+                  <p className="text-white">{fournisseur.telephone}</p> {/* Affichage du téléphone */}
                   <p className="text-white">{fournisseur.site_web}</p>
 
-                  <div className="mt-4 flex justify-between">
-                    <button
-                      onClick={() => handleEdit(fournisseur)}
-                      className="bg-yellow-500 text-white px-4 py-2 rounded"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => handleDelete(fournisseur.id)}
-                      className="bg-red-500 text-white px-4 py-2 rounded"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="mt-4 flex justify-between">
+                      <button
+                        onClick={() => handleEdit(fournisseur)}
+                        className="bg-yellow-500 text-white px-4 py-2 rounded"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => handleDelete(fournisseur.id)}
+                        className="bg-red-500 text-white px-4 py-2 rounded"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

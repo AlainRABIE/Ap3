@@ -114,37 +114,35 @@ const MedicamentsPage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
+  
     // Validation pour vérifier que la quantité est >= 0
     if (formData.quantite !== null && formData.quantite < 0) {
       alert("La quantité ne peut pas être inférieure à 0.");
       return;
     }
-
+  
     try {
       const dataToSubmit = {
         name: formData.name || null,
         posologie: formData.posologie || null,
         description: formData.description || null,
-        quantite: formData.quantite || null, // Ajout de la quantité ici
+        quantite: formData.quantite || null,
       };
-
+  
       if (isEditing && selectedMedicament) {
         const { error } = await supabase
           .from('medicaments')
           .update(dataToSubmit)
           .eq('id', selectedMedicament.id);
         if (error) throw new Error(error.message);
-        setMedicaments(
-          medicaments.map((medicament) =>
-            medicament.id === selectedMedicament.id ? { ...medicament, ...dataToSubmit } : medicament
-          )
-        );
       } else {
         const { data, error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
-        if (data) setMedicaments([...medicaments, ...data]);
       }
+      
+      // Appel à fetchMedicaments pour rafraîchir les données
+      await fetchMedicaments();
+  
     } catch (error) {
       console.error('Erreur lors de la soumission du formulaire:', error);
     } finally {
@@ -153,6 +151,7 @@ const MedicamentsPage = () => {
       setShowModal(false);
     }
   };
+  
 
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">

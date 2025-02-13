@@ -1,347 +1,196 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import React, { useState, useEffect } from "react";
+import { createClient, User } from "@supabase/supabase-js";
 import MenubarRe from "../components/ui/MenuBarRe";
+import { getUserRole } from "./api/role";
 
-type FournisseurMedicament = {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+interface Fournisseur {
   fournisseur_id: number;
   nom: string;
   adresse: string;
   email: string;
   telephone: string;
   site_web: string;
-};
+}
 
-const fetchFournisseursMedicament = async (): Promise<FournisseurMedicament[]> => {
-  const { data, error } = await supabase.from("fournisseur_medicament").select("*");
-  if (error) {
-    console.error("Erreur lors de la récupération des fournisseurs:", error.message);
-    return [];
-  }
-  return data || [];
-};
-
-const addFournisseurMedicament = async (fournisseur: Omit<FournisseurMedicament, "fournisseur_id">) => {
-  const { data, error } = await supabase.from("fournisseur_medicament").insert([fournisseur]);
-  if (error) {
-    console.error("Erreur détaillée:", error);
-    return false;
-  }
-  return true;
-};
-
-const updateFournisseurMedicament = async (fournisseur: FournisseurMedicament) => {
-  const { data, error } = await supabase.from("fournisseur_medicament").update(fournisseur).eq("fournisseur_id", fournisseur.fournisseur_id);
-  if (error) {
-    console.error("Erreur lors de la mise à jour du fournisseur:", error);
-    return false;
-  }
-  return true;
-};
-
-const deleteFournisseurMedicament = async (fournisseur_id: number) => {
-  const { error } = await supabase.from("fournisseur_medicament").delete().eq("fournisseur_id", fournisseur_id);
-  if (error) {
-    console.error("Erreur lors de la suppression:", error.message);
-    return false;
-  }
-  return true;
-};
-
-const FournisseurMedicamentPage = () => {
-  const [fournisseurs, setFournisseurs] = useState<FournisseurMedicament[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [newFournisseur, setNewFournisseur] = useState<Omit<FournisseurMedicament, "fournisseur_id">>({
-    nom: "",
-    adresse: "",
-    email: "",
-    telephone: "",
-    site_web: ""
-  });
-
-  const [editingFournisseur, setEditingFournisseur] = useState<FournisseurMedicament | null>(null);
-
-  // Etat pour gérer l'affichage du modal pour ajouter un fournisseur
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Etat pour gérer l'affichage du modal de modification
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+const GestionFournisseurs = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initialize = async () => {
-      const fetchedFournisseurs = await fetchFournisseursMedicament();
-      setFournisseurs(fetchedFournisseurs);
-      setIsLoading(false);
+      await checkSession();
+      await fetchData();
     };
-
     initialize();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
+      const { data: userData } = await supabase
+        .from("User")
+        .select("id")
+        .eq("email", session.user.email)
+        .single();
 
-    if (editingFournisseur) {
-      if (await updateFournisseurMedicament({ ...editingFournisseur, ...newFournisseur })) {
-        setFournisseurs(await fetchFournisseursMedicament());
-        setEditingFournisseur(null);
-        setNewFournisseur({
-          nom: "",
-          adresse: "",
-          email: "",
-          telephone: "",
-          site_web: ""
-        });
-        setIsEditModalOpen(false); // Fermer le modal après la modification
+      if (userData) {
+        const role = await getUserRole(userData.id);
+        setUserRole(role);
+        setIsAdmin(role === "administrateur");
       }
+    }
+  };
+
+  const fetchData = async () => {
+    const { data, error } = await supabase
+      .from("fournisseur_medicament")  // Nouvelle table à utiliser
+      .select("*")
+      .order("fournisseur_id", { ascending: false });
+
+    if (error) {
+      console.error("❌ Erreur lors de la récupération des fournisseurs:", error);
+      setError(error.message);
+      return;
+    }
+
+    setFournisseurs(data || []);
+  };
+
+  const addFournisseur = async () => {
+    const nom = prompt("Nom du fournisseur ?");
+    const adresse = prompt("Adresse ?");
+    const email = prompt("Email ?");
+    const telephone = prompt("Téléphone ?");
+    const site_web = prompt("Site web ?");
+
+    if (!nom || !adresse || !email || !telephone) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("fournisseur_medicament")
+      .insert([{ nom, adresse, email, telephone, site_web }]);
+
+    if (error) {
+      alert("Erreur lors de l'ajout !");
+      console.error(error);
     } else {
-      if (await addFournisseurMedicament(newFournisseur)) {
-        const updatedFournisseurs = await fetchFournisseursMedicament();
-        setFournisseurs(updatedFournisseurs);
-        setNewFournisseur({
-          nom: "",
-          adresse: "",
-          email: "",
-          telephone: "",
-          site_web: ""
-        });
-        setIsModalOpen(false); // Fermer le modal après l'ajout
-      }
+      fetchData();
     }
   };
 
-  const handleEdit = (fournisseur: FournisseurMedicament) => {
-    setEditingFournisseur(fournisseur);
-    setNewFournisseur({
-      nom: fournisseur.nom,
-      adresse: fournisseur.adresse,
-      email: fournisseur.email,
-      telephone: fournisseur.telephone,
-      site_web: fournisseur.site_web
-    });
-    setIsEditModalOpen(true); // Ouvrir le modal de modification
-  };
+  const editFournisseur = async (id: number) => {
+    const nom = prompt("Nouveau nom ?");
+    if (!nom) return;
 
-  const handleDelete = async (fournisseur_id: number) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?")) {
-      if (await deleteFournisseurMedicament(fournisseur_id)) {
-        setFournisseurs(fournisseurs.filter(f => f.fournisseur_id !== fournisseur_id));
-      }
+    const { error } = await supabase
+      .from("fournisseur_medicament")
+      .update({ nom })
+      .eq("fournisseur_id", id);
+
+    if (error) {
+      alert("Erreur lors de la modification !");
+      console.error(error);
+    } else {
+      fetchData();
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewFournisseur(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const deleteFournisseur = async (id: number) => {
+    if (!confirm("Supprimer ce fournisseur ?")) return;
+
+    const { error } = await supabase
+      .from("fournisseur_medicament")
+      .delete()
+      .eq("fournisseur_id", id);
+
+    if (error) {
+      alert("Erreur lors de la suppression !");
+      console.error(error);
+    } else {
+      fetchData();
+    }
   };
 
   return (
-    <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
-      <div className="animated-background"></div>
-      <div className="waves"></div>
+    <div className="p-6">
       <MenubarRe />
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Liste des Fournisseurs</h1>
 
-      <div className="content p-6 w-full">
-        {isLoading ? (
-          <p className="text-white">Chargement...</p>
-        ) : (
-          <div className="space-y-6">
-            <h1 className="text-white text-2xl font-bold">Gestion des Fournisseurs de Médicaments</h1>
+      {error && <p className="text-red-500 text-center">{error}</p>}
 
-            {/* Bouton Ajouter */}
-            <button
-              onClick={() => setIsModalOpen(true)} // Ouvrir le modal pour ajouter
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
-            >
-              Ajouter un fournisseur
-            </button>
+      {isAdmin && (
+        <button
+          className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          onClick={addFournisseur}
+        >
+          ➕ Ajouter un Fournisseur
+        </button>
+      )}
 
-            {/* Modal pour Ajouter un fournisseur */}
-            {isModalOpen && (
-              <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
-                <div className="bg-gray-800 p-6 rounded-lg w-96">
-                  <h2 className="text-white text-xl font-semibold mb-4">Ajouter un Fournisseur</h2>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-white mb-2">Nom</label>
-                      <input
-                        type="text"
-                        name="nom"
-                        value={newFournisseur.nom}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Adresse</label>
-                      <input
-                        type="text"
-                        name="adresse"
-                        value={newFournisseur.adresse}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={newFournisseur.email}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Téléphone</label>
-                      <input
-                        type="tel"
-                        name="telephone"
-                        value={newFournisseur.telephone}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Site web</label>
-                      <input
-                        type="url"
-                        name="site_web"
-                        value={newFournisseur.site_web}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                      />
-                    </div>
+      <div className="overflow-x-auto shadow-lg rounded-lg">
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead>
+            <tr className="bg-blue-500 text-white text-left">
+              <th className="p-3 border">ID</th>
+              <th className="p-3 border">Nom</th>
+              <th className="p-3 border">Adresse</th>
+              <th className="p-3 border">Email</th>
+              <th className="p-3 border">Téléphone</th>
+              <th className="p-3 border">Site Web</th>
+              {isAdmin && <th className="p-3 border">Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {fournisseurs.map((fournisseur, index) => (
+              <tr key={fournisseur.fournisseur_id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                <td className="p-3 border">{fournisseur.fournisseur_id}</td>
+                <td className="p-3 border">{fournisseur.nom}</td>
+                <td className="p-3 border">{fournisseur.adresse}</td>
+                <td className="p-3 border">{fournisseur.email}</td>
+                <td className="p-3 border">{fournisseur.telephone}</td>
+                <td className="p-3 border">
+                  {fournisseur.site_web ? (
+                    <a href={fournisseur.site_web} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                      {fournisseur.site_web}
+                    </a>
+                  ) : (
+                    "N/A"
+                  )}
+                </td>
+                {isAdmin && (
+                  <td className="p-3 border flex gap-2">
                     <button
-                      type="submit"
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition"
+                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      onClick={() => editFournisseur(fournisseur.fournisseur_id)}
                     >
-                      Ajouter le fournisseur
-                    </button>
-                  </form>
-                  <button
-                    onClick={() => setIsModalOpen(false)} // Fermer le modal
-                    className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Modal pour Modifier un fournisseur */}
-            {isEditModalOpen && (
-              <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
-                <div className="bg-gray-800 p-6 rounded-lg w-96">
-                  <h2 className="text-white text-xl font-semibold mb-4">Modifier un Fournisseur</h2>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-white mb-2">Nom</label>
-                      <input
-                        type="text"
-                        name="nom"
-                        value={newFournisseur.nom}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Adresse</label>
-                      <input
-                        type="text"
-                        name="adresse"
-                        value={newFournisseur.adresse}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={newFournisseur.email}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Téléphone</label>
-                      <input
-                        type="tel"
-                        name="telephone"
-                        value={newFournisseur.telephone}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white mb-2">Site web</label>
-                      <input
-                        type="url"
-                        name="site_web"
-                        value={newFournisseur.site_web}
-                        onChange={handleInputChange}
-                        className="w-full p-2 rounded"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition"
-                    >
-                      Modifier le fournisseur
-                    </button>
-                  </form>
-                  <button
-                    onClick={() => setIsEditModalOpen(false)} // Fermer le modal de modification
-                    className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Liste des fournisseurs */}
-            <ul className="space-y-4">
-              {fournisseurs.map(fournisseur => (
-                <li key={fournisseur.fournisseur_id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-center">
-                  <div>
-                    <p className="text-white">{fournisseur.nom}</p>
-                    <p className="text-gray-400">{fournisseur.adresse}</p>
-                    <p className="text-gray-400">{fournisseur.email}</p>
-                  </div>
-                  <div>
-                    <button
-                      onClick={() => handleEdit(fournisseur)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition"
-                    >
-                      Modifier
+                      ✏️ Modifier
                     </button>
                     <button
-                      onClick={() => handleDelete(fournisseur.fournisseur_id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition ml-2"
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      onClick={() => deleteFournisseur(fournisseur.fournisseur_id)}
                     >
-                      Supprimer
+                      🗑️ Supprimer
                     </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 };
 
-export default FournisseurMedicamentPage;
+export default GestionFournisseurs;

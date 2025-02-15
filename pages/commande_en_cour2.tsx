@@ -12,13 +12,14 @@ const supabase = createClient(
 interface Commande {
   id_commande: number;
   id_user: string;
-  id_medicament: number;
+  id_materiel: number;
   quantite: number;
   date_commande: string;
   etat: string;
+  id_fournisseur: number;
 }
 
-const MesCommandes = () => {
+const MesCommandesMateriel = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -78,7 +79,7 @@ const MesCommandes = () => {
     if (!session?.user) return;
   
     const { data, error } = await supabase
-      .from("commande_médicaments")
+      .from("commande_materiel")
       .select("*")
       .eq('etat', 'en attente')
       .order("date_commande", { ascending: false });
@@ -103,7 +104,7 @@ const MesCommandes = () => {
     try {
       // Récupérer d'abord les informations de la commande
       const { data: commandeData, error: commandeError } = await supabase
-        .from('commande_médicaments')
+        .from('commande_materiel')
         .select('*')
         .eq('id_commande', id_commande)
         .single();
@@ -112,14 +113,14 @@ const MesCommandes = () => {
         throw new Error("Erreur lors de la récupération de la commande");
       }
 
-      // Vérifier si id_medicament est valide
-      if (!commandeData.id_medicament) {
-        throw new Error("ID du médicament manquant ou invalide");
+      // Vérifier si id_materiel est valide
+      if (!commandeData.id_materiel) {
+        throw new Error("ID du matériel manquant ou invalide");
       }
 
       // Mise à jour de l'état de la commande
       const { data, error } = await supabase
-        .from('commande_médicaments')
+        .from('commande_materiel')
         .update({ etat: nouvelEtat })
         .eq('id_commande', id_commande)
         .select();
@@ -132,9 +133,9 @@ const MesCommandes = () => {
       const adjustStock = async (adjustment: number) => {
         // Récupérer le stock actuel
         const { data: stockData, error: stockError } = await supabase
-          .from('medicaments')
+          .from('materiels')
           .select('quantite')
-          .eq('id', commandeData.id_medicament)
+          .eq('id_materiel', commandeData.id_materiel)
           .single();
 
         if (stockError || !stockData) {
@@ -146,9 +147,9 @@ const MesCommandes = () => {
 
         // Mettre à jour le stock
         const { error: updateError } = await supabase
-          .from('medicaments')
+          .from('materiels')
           .update({ quantite: newQuantity })
-          .eq('id', commandeData.id_medicament);
+          .eq('id_materiel', commandeData.id_materiel);
 
         if (updateError) {
           throw new Error("Erreur lors de la mise à jour du stock");
@@ -156,10 +157,10 @@ const MesCommandes = () => {
       };
 
       if (nouvelEtat === 'acceptée') {
-        // Retirer les médicaments du stock
+        // Retirer les matériels du stock
         await adjustStock(-commandeData.quantite);
       } else if (nouvelEtat === 'refusée') {
-        // Remettre les médicaments en stock
+        // Remettre les matériels en stock
         await adjustStock(commandeData.quantite);
       }
 
@@ -179,10 +180,16 @@ const MesCommandes = () => {
 
   const handleDownloadPDF = (commande: Commande) => {
     const doc = new jsPDF();
-    doc.text(`Commande #${commande.id_commande}`, 10, 10);
-    doc.text(`Quantité: ${commande.quantite}`, 10, 20);
-    doc.text(`Date de commande: ${new Date(commande.date_commande).toLocaleString()}`, 10, 30);
-    doc.text(`État: ${commande.etat}`, 10, 40);
+    doc.setFontSize(18);
+    doc.setFontSize(12);
+    doc.text(`Commande #${commande.id_commande}`, 20, 40);
+    doc.text(`Quantité: ${commande.quantite}`, 20, 50);
+    doc.text(`Date de commande: ${new Date(commande.date_commande).toLocaleString()}`, 20, 60);
+    doc.text(`État: ${commande.etat}`, 20, 70);
+    doc.setLineWidth(0.5);
+    doc.line(20, 80, 190, 80); // Draw a line
+    doc.text("Signature:", 20, 90);
+    doc.line(20, 95, 80, 95); // Draw a line for signature
     doc.save(`commande_${commande.id_commande}.pdf`);
   };
 
@@ -192,7 +199,7 @@ const MesCommandes = () => {
       <main className="flex-1 p-8 overflow-auto">
         <div className="w-full max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-8">
-            {isAdmin ? "Liste des Commandes" : "Mes Commandes en Attente"}
+            {isAdmin ? "Liste des Commandes de Matériel" : "Mes Commandes de Matériel en Attente"}
           </h1>
           {error && <p className="text-red-500">{error}</p>}
           <div className="grid grid-cols-1 gap-6 mt-4">
@@ -243,4 +250,4 @@ const MesCommandes = () => {
   );
 };
 
-export default MesCommandes;
+export default MesCommandesMateriel;

@@ -117,7 +117,25 @@ const MaterielsPage = () => {
     setShowModal(true);
   };
 
+  const isMaterielCommanded = async (id: number) => {
+    const { data, error } = await supabase
+      .from('commande_materiel')
+      .select('*')
+      .eq('id_materiel', id);
+    if (error) {
+      console.error('Erreur lors de la vérification des commandes:', error);
+      return false;
+    }
+    return data.length > 0;
+  };
+
   const handleDelete = async (id: number) => {
+    const commanded = await isMaterielCommanded(id);
+    if (commanded) {
+      alert('Ce matériel a été commandé et ne peut pas être supprimé.');
+      return;
+    }
+
     try {
       const { error } = await supabase.from('materiels').delete().eq('id_materiel', id);
       if (error) throw new Error(error.message);
@@ -266,10 +284,9 @@ const MaterielsPage = () => {
                     required
                   >
                     <option value="neuf">Neuf</option>
-                    <option value="bon">Bon</option>
-                    <option value="moyen">Moyen</option>
-                    <option value="mauvais">Mauvais</option>
-                    <option value="hors_service">Hors service</option>
+                    <option value="bon état">Bon état</option>
+                    <option value="à réparer">À réparer</option>
+                    <option value="hors service">Hors service</option>
                   </select>
                   <input
                     type="date"

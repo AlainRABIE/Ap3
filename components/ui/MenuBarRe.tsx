@@ -163,7 +163,7 @@ const Sidebar = () => {
               <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
                 <MenubarItem>
                   <Link
-                    href="/fournisseur_materiel"
+                    href="/commande_en_cour2"
                     className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
                     aria-label="Fournisseurs de Matériel"
                   >
@@ -309,20 +309,19 @@ const Sidebar = () => {
         )}
       </div>
 
-      <div className="fixed bottom-8 right-8 flex items-center justify-center">
-        <button
-          onClick={toggleDarkMode}
-          className="p-2 bg-gray-800 text-white rounded-full transition duration-300 ease-in-out hover:bg-gray-600"
-        >
-          {isDarkMode ? (
-            <span>🌞</span>
-          ) : (
-            <span>🌙</span>
-          )}
-        </button>
-      </div>
-
       <div className="mt-auto p-4">
+        <div className="flex items-center justify-center mb-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 bg-gray-800 text-white rounded-full transition duration-300 ease-in-out hover:bg-gray-600"
+          >
+            {isDarkMode ? (
+              <span>🌞</span>
+            ) : (
+              <span>🌙</span>
+            )}
+          </button>
+        </div>
         {user && (
           <div className="block py-2 px-4 text-gray-500">
             Bienvenue, {user.email}

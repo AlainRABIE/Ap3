@@ -22,7 +22,7 @@ const MedicamentsPage = () => {
     name: '',
     posologie: '',
     description: '',
-    quantite: null, // Ajoutez quantite ici
+    quantite: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
@@ -102,7 +102,25 @@ const MedicamentsPage = () => {
     setShowModal(true);
   };
 
+  const isMedicamentCommanded = async (id: number) => {
+    const { data, error } = await supabase
+      .from('commande_médicaments')
+      .select('*')
+      .eq('id_medicament', id);
+    if (error) {
+      console.error('Erreur lors de la vérification des commandes:', error);
+      return false;
+    }
+    return data.length > 0;
+  };
+
   const handleDelete = async (id: number) => {
+    const commanded = await isMedicamentCommanded(id);
+    if (commanded) {
+      alert('Ce médicament a été commandé et ne peut pas être supprimé.');
+      return;
+    }
+
     try {
       const { error } = await supabase.from('medicaments').delete().eq('id', id);
       if (error) throw new Error(error.message);
@@ -114,13 +132,13 @@ const MedicamentsPage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-  
+
     // Validation pour vérifier que la quantité est >= 0
     if (formData.quantite !== null && formData.quantite < 0) {
       alert("La quantité ne peut pas être inférieure à 0.");
       return;
     }
-  
+
     try {
       const dataToSubmit = {
         name: formData.name || null,
@@ -128,7 +146,7 @@ const MedicamentsPage = () => {
         description: formData.description || null,
         quantite: formData.quantite || null,
       };
-  
+
       if (isEditing && selectedMedicament) {
         const { error } = await supabase
           .from('medicaments')
@@ -139,10 +157,10 @@ const MedicamentsPage = () => {
         const { data, error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
       }
-      
+
       // Appel à fetchMedicaments pour rafraîchir les données
       await fetchMedicaments();
-  
+
     } catch (error) {
       console.error('Erreur lors de la soumission du formulaire:', error);
     } finally {
@@ -151,7 +169,6 @@ const MedicamentsPage = () => {
       setShowModal(false);
     }
   };
-  
 
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
@@ -244,7 +261,7 @@ const MedicamentsPage = () => {
                     placeholder="Quantité"
                     value={formData.quantite || ""}
                     onChange={(e) => setFormData({ ...formData, quantite: parseInt(e.target.value) })}
-                    min="0" // Ajout de la validation min="0" sur le champ
+                    min="0" 
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
                   />
                   <div className="flex justify-end mt-2">

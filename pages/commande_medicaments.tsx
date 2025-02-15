@@ -31,6 +31,7 @@ const CataloguePage: React.FC = () => {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
 
   useEffect(() => {
     const initialize = async () => {
@@ -94,7 +95,6 @@ const CataloguePage: React.FC = () => {
     }
     return true;
   };
-
 
   const updateStock = async (cartItems: CartItem[]): Promise<void> => {
     for (const item of cartItems) {
@@ -207,18 +207,26 @@ const CataloguePage: React.FC = () => {
   };
 
   const addToCart = (medicament: Medicament): void => {
+    const quantity = quantities[medicament.id] || 1;
     setCart((prevCart) => [
       ...prevCart,
       {
         medicamentId: medicament.id,
         name: medicament.name,
-        quantity: 1,
+        quantity,
       }
     ]);
   };
 
   const removeFromCart = (medicamentId: number): void => {
     setCart((prevCart) => prevCart.filter(item => item.medicamentId !== medicamentId));
+  };
+
+  const handleQuantityChange = (medicamentId: number, quantity: number) => {
+    setQuantities((prevQuantities) => ({
+      ...prevQuantities,
+      [medicamentId]: quantity,
+    }));
   };
 
   return (
@@ -233,6 +241,14 @@ const CataloguePage: React.FC = () => {
               <p className="text-sm text-gray-300 mb-4">
                 Quantité disponible: {medicament.quantite}
               </p>
+              <input
+                type="number"
+                min="1"
+                max={medicament.quantite}
+                value={quantities[medicament.id] || 1}
+                onChange={(e) => handleQuantityChange(medicament.id, Math.max(1, Math.min(medicament.quantite, Number(e.target.value))))}
+                className="w-full mb-4 p-2 border rounded"
+              />
               <button
                 onClick={() => addToCart(medicament)}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"

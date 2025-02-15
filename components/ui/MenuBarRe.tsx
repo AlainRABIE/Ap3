@@ -135,16 +135,6 @@ const Sidebar = () => {
                 </MenubarItem>
                 <MenubarItem>
                   <Link
-                    href="/commande-en-cour"
-                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
-                    aria-label="Commande de médicaments"
-                  >
-                    <FiShoppingCart size={20} />
-                    {isSidebarVisible && <span>Commande en cour</span>}
-                  </Link>
-                </MenubarItem>
-                <MenubarItem>
-                  <Link
                     href="/commande_materiel"
                     className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
                     aria-label="Commande de Matériel"

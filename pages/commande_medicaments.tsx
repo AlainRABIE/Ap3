@@ -98,7 +98,6 @@ const CataloguePage: React.FC = () => {
 
   const updateStock = async (cartItems: CartItem[]): Promise<void> => {
     for (const item of cartItems) {
-      // Récupérer le médicament actuel
       const { data: medicament, error: fetchError } = await supabase
         .from('medicaments')
         .select('quantite')
@@ -109,14 +108,12 @@ const CataloguePage: React.FC = () => {
         throw new Error(`Erreur lors de la récupération du médicament ${item.name}`);
       }
   
-      // Calculer la nouvelle quantité
       const newQuantite = medicament.quantite - item.quantity;
   
       if (newQuantite < 0) {
         throw new Error(`Stock insuffisant pour ${item.name}`);
       }
   
-      // Mettre à jour le stock
       const { error: updateError } = await supabase
         .from('medicaments')
         .update({ quantite: newQuantite })
@@ -153,7 +150,6 @@ const CataloguePage: React.FC = () => {
     setIsLoading(true);
   
     try {
-      // Vérifier le stock d'abord
       await verifyStock(cart);
   
       const { data: userData, error: userError } = await supabase
@@ -171,10 +167,8 @@ const CataloguePage: React.FC = () => {
         throw new Error('Aucun fournisseur valide trouvé.');
       }
   
-      // Mettre à jour le stock
       await updateStock(cart);
   
-      // Créer la commande
       const commandes = cart.map((item) => ({
         id_user: userData.id,
         id_medicament: item.medicamentId,
@@ -184,7 +178,6 @@ const CataloguePage: React.FC = () => {
         id_fournisseur: fournisseurId,
       }));
   
-      // Insérer la commande
       const { error: commandeError } = await supabase
         .from('commande_médicaments')
         .insert(commandes);

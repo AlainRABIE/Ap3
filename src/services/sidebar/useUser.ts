@@ -34,6 +34,10 @@ export const useUser = () => {
     fetchUser();
   }, []);
 
+  const deleteCookie = (name: string) => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  };
+
   const logout = async () => {
     try {
       const response = await fetch('/api/logout', {
@@ -44,6 +48,7 @@ export const useUser = () => {
         throw new Error(`Erreur lors de la déconnexion : ${response.status}`);
       }
       setUser(null); 
+      deleteCookie('token'); 
       console.log('Déconnexion réussie');
     } catch (error) {
       if (error instanceof Error) {

@@ -64,7 +64,6 @@ const Sidebar = () => {
         isDarkMode ? "bg-black text-white" : "bg-white text-black"
       } bg-opacity-40 backdrop-blur-md shadow-lg transition-all duration-300`}
     >
-      {/* Bouton pour masquer/afficher la sidebar */}
       <div className="flex justify-between items-center py-4 px-2">
         <button
           onClick={toggleSidebar}
@@ -86,7 +85,6 @@ const Sidebar = () => {
               {isSidebarVisible && <span>Accueil</span>}
             </Link>
 
-            {/* Menu Stock */}
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
                 <FiShoppingCart size={24} />
@@ -116,7 +114,6 @@ const Sidebar = () => {
               </MenubarContent>
             </MenubarMenu>
 
-            {/* Menu Commande */}
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
                 <FiShoppingCart size={24} />
@@ -240,10 +237,20 @@ const Sidebar = () => {
                     {isSidebarVisible && <span>Profil</span>}
                   </Link>
                 </MenubarItem>
+                <MenubarItem>
+                  <Link
+                    href="/dashboard"
+                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
+                    aria-label="Profil"
+                  >
+                    <FiUser size={20} />
+                    {isSidebarVisible && <span>Dashboard</span>}
+                  </Link>
+                </MenubarItem>
               </MenubarContent>
             </MenubarMenu>
 
-            {/* Menu Déconnexion */}
+        
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
                 <FiLogOut size={24} />

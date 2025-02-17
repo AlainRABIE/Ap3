@@ -6,14 +6,13 @@ const SettingsPage = () => {
   const [language, setLanguage] = useState<string>('fr');
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
 
-  // Ajouter ou supprimer la classe 'dark' au chargement du composant ou à chaque changement de thème
   useEffect(() => {
     if (isDarkMode) {
       document.body.classList.add('dark');
     } else {
       document.body.classList.remove('dark');
     }
-  }, [isDarkMode]); // Cette fonction se déclenche chaque fois que 'isDarkMode' change
+  }, [isDarkMode]); 
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);

@@ -19,7 +19,6 @@ const Profil = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle form submission logic here
     console.log('User profile updated:', user);
   };
 

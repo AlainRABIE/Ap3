@@ -14,7 +14,7 @@ type User = {
   createdAt: string;
   updatedAt: string;
   roleid: number;
-  role_name: string; // Ajout de cette ligne
+  role_name: string; 
 };
 
 const UserPage = () => {
@@ -78,7 +78,6 @@ const UserPage = () => {
       console.error('Erreur lors de la mise à jour du rôle:', error);
       setError(error.message);
     } else {
-      // Re-fetch the users after the role is updated
       await fetchUsers();
     }
   };

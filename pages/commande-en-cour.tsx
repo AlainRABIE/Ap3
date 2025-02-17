@@ -101,7 +101,6 @@ const MesCommandes = () => {
     }
 
     try {
-      // Récupérer d'abord les informations de la commande
       const { data: commandeData, error: commandeError } = await supabase
         .from('commande_médicaments')
         .select('*')
@@ -112,12 +111,10 @@ const MesCommandes = () => {
         throw new Error("Erreur lors de la récupération de la commande");
       }
 
-      // Vérifier si id_medicament est valide
       if (!commandeData.id_medicament) {
         throw new Error("ID du médicament manquant ou invalide");
       }
 
-      // Mise à jour de l'état de la commande
       const { data, error } = await supabase
         .from('commande_médicaments')
         .update({ etat: nouvelEtat })
@@ -128,9 +125,7 @@ const MesCommandes = () => {
         throw new Error(`Erreur lors de la mise à jour de l'état: ${error.message}`);
       }
 
-      // Mise à jour du stock selon l'état de la commande
       const adjustStock = async (adjustment: number) => {
-        // Récupérer le stock actuel
         const { data: stockData, error: stockError } = await supabase
           .from('medicaments')
           .select('quantite')
@@ -141,10 +136,8 @@ const MesCommandes = () => {
           throw new Error("Erreur lors de la récupération du stock");
         }
 
-        // Calculer la nouvelle quantité
         const newQuantity = stockData.quantite + adjustment;
 
-        // Mettre à jour le stock
         const { error: updateError } = await supabase
           .from('medicaments')
           .update({ quantite: newQuantity })
@@ -156,10 +149,8 @@ const MesCommandes = () => {
       };
 
       if (nouvelEtat === 'acceptée') {
-        // Retirer les médicaments du stock
         await adjustStock(-commandeData.quantite);
       } else if (nouvelEtat === 'refusée') {
-        // Remettre les médicaments en stock
         await adjustStock(commandeData.quantite);
       }
 

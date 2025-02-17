@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient, User } from "@supabase/supabase-js";
 import MenubarRe from "../components/ui/MenuBarRe";
-import Modal from "../components/ui/modal"; // Assurez-vous d'avoir un composant Modal
+import Modal from "../components/ui/modal"; 
 import { getUserRole } from "./api/role";
 
 const supabase = createClient(

@@ -18,7 +18,7 @@ const RegisterPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name, role: 'user' }), // Définir un rôle par défaut
+        body: JSON.stringify({ email, password, name, role: 'user' }), 
       });
 
       const data = await response.json();

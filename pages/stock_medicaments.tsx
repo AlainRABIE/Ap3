@@ -133,7 +133,6 @@ const MedicamentsPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Validation pour vérifier que la quantité est >= 0
     if (formData.quantite !== null && formData.quantite < 0) {
       alert("La quantité ne peut pas être inférieure à 0.");
       return;
@@ -158,7 +157,6 @@ const MedicamentsPage = () => {
         if (error) throw new Error(error.message);
       }
 
-      // Appel à fetchMedicaments pour rafraîchir les données
       await fetchMedicaments();
 
     } catch (error) {
@@ -189,46 +187,32 @@ const MedicamentsPage = () => {
                 Ajouter un médicament
               </button>
             )}
-            <table className="table-auto w-full text-white">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2">Nom</th>
-                  <th className="px-4 py-2">Posologie</th>
-                  <th className="px-4 py-2">Description</th>
-                  <th className="px-4 py-2">Quantité</th> {/* Ajout de la colonne Quantité */}
-                  {isAdmin && <th className="px-4 py-2">Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {medicaments.map((medicament) => (
-                  <tr key={medicament.id} className="bg-gray-700">
-                    <td className="px-4 py-2">{medicament.name}</td>
-                    <td className="px-4 py-2">{medicament.posologie}</td>
-                    <td className="px-4 py-2">{medicament.description}</td>
-                    <td className="px-4 py-2">{medicament.quantite}</td> {/* Affichage de la quantité */}
-                    {isAdmin && (
-                      <td className="px-4 py-2">
-                        <div className="flex justify-around">
-                          <button
-                            className="px-4 py-2 bg-yellow-500 text-white rounded"
-                            onClick={() => handleEdit(medicament)}
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            className="px-4 py-2 bg-red-500 text-white rounded"
-                            onClick={() => handleDelete(medicament.id)}
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {medicaments.map((medicament) => (
+                <div key={medicament.id} className="p-4 bg-white bg-opacity-40 backdrop-blur-md rounded-lg shadow-md">
+                  <h2 className="text-lg font-bold mb-2">{medicament.name}</h2>
+                  <p className="mb-2"><strong>Posologie:</strong> {medicament.posologie}</p>
+                  <p className="mb-2"><strong>Description:</strong> {medicament.description}</p>
+                  <p className="mb-2"><strong>Quantité:</strong> {medicament.quantite}</p>
+                  {isAdmin && (
+                    <div className="flex justify-around mt-4">
+                      <button
+                        className="px-4 py-2 bg-yellow-500 text-black rounded"
+                        onClick={() => handleEdit(medicament)}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-red-500 text-white rounded"
+                        onClick={() => handleDelete(medicament.id)}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
             <Modal show={showModal} onClose={() => setShowModal(false)}>
               <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
                 <h2 className="text-lg font-bold mb-4 text-black">
@@ -240,7 +224,7 @@ const MedicamentsPage = () => {
                     placeholder="Nom"
                     value={formData.name || ""}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                    className="mb-2 p-2 border border-gray-300 rounded text-gray-300"
                   />
                   <input
                     type="text"
@@ -261,7 +245,7 @@ const MedicamentsPage = () => {
                     placeholder="Quantité"
                     value={formData.quantite || ""}
                     onChange={(e) => setFormData({ ...formData, quantite: parseInt(e.target.value) })}
-                    min="0" 
+                    min="0"
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
                   />
                   <div className="flex justify-end mt-2">

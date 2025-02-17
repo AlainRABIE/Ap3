@@ -163,11 +163,11 @@ const MaterielsPage = () => {
           .update(dataToSubmit)
           .eq('id_materiel', selectedMateriel.id_materiel);
         if (error) throw new Error(error.message);
-        await fetchMateriels(); // Rafraîchir les données après la mise à jour
+        await fetchMateriels(); 
       } else {
         const { error } = await supabase.from('materiels').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
-        await fetchMateriels(); // Rafraîchir les données après l'insertion
+        await fetchMateriels(); 
       }
     } catch (error) {
       console.error('Erreur lors de la soumission du formulaire:', error);
@@ -197,50 +197,34 @@ const MaterielsPage = () => {
                 Ajouter un matériel
               </button>
             )}
-            <table className="table-auto w-full text-white">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2">Nom</th>
-                  <th className="px-4 py-2">Description</th>
-                  <th className="px-4 py-2">Quantité</th>
-                  <th className="px-4 py-2">N° de série</th>
-                  <th className="px-4 py-2">État</th>
-                  <th className="px-4 py-2">Date d'expiration</th>
-                  {isAdmin && <th className="px-4 py-2">Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {materiels.map((materiel) => (
-                  <tr key={materiel.id_materiel} className="bg-gray-700">
-                    <td className="px-4 py-2">{materiel.nom}</td>
-                    <td className="px-4 py-2">{materiel.description}</td>
-                    <td className="px-4 py-2">{materiel.quantite}</td>
-                    <td className="px-4 py-2">{materiel.numero_serie}</td>
-                    <td className="px-4 py-2">{materiel.etat}</td>
-                    <td className="px-4 py-2">{materiel.date_expiration}</td>
-                    {isAdmin && (
-                      <td className="px-4 py-2">
-                        <div className="flex justify-around">
-                          <button
-                            className="px-4 py-2 bg-yellow-500 text-white rounded"
-                            onClick={() => handleEdit(materiel)}
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            className="px-4 py-2 bg-red-500 text-white rounded"
-                            onClick={() => handleDelete(materiel.id_materiel)}
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {materiels.map((materiel) => (
+                <div key={materiel.id_materiel} className="p-4 bg-white bg-opacity-40 backdrop-blur-md rounded-lg shadow-md">
+                  <h2 className="text-lg font-bold mb-2">{materiel.nom}</h2>
+                  <p className="mb-2"><strong>Description:</strong> {materiel.description}</p>
+                  <p className="mb-2"><strong>Quantité:</strong> {materiel.quantite}</p>
+                  <p className="mb-2"><strong>N° de série:</strong> {materiel.numero_serie}</p>
+                  <p className="mb-2"><strong>État:</strong> {materiel.etat}</p>
+                  <p className="mb-2"><strong>Date d'expiration:</strong> {materiel.date_expiration}</p>
+                  {isAdmin && (
+                    <div className="flex justify-around mt-4">
+                      <button
+                        className="px-4 py-2 bg-yellow-500 text-black rounded"
+                        onClick={() => handleEdit(materiel)}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-red-500 text-white rounded"
+                        onClick={() => handleDelete(materiel.id_materiel)}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
             <Modal show={showModal} onClose={() => setShowModal(false)}>
               <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
                 <h2 className="text-lg font-bold mb-4 text-black">

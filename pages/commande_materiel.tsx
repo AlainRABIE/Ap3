@@ -100,7 +100,6 @@ const CataloguePage = () => {
 
   const updateStock = async (cartItems: CartItem[]): Promise<void> => {
     for (const item of cartItems) {
-      // Récupérer le matériel actuel
       const { data: materiel, error: fetchError } = await supabase
         .from('materiels')
         .select('quantite')
@@ -111,14 +110,12 @@ const CataloguePage = () => {
         throw new Error(`Erreur lors de la récupération du matériel ${item.nom}`);
       }
 
-      // Calculer la nouvelle quantité
       const newQuantite = materiel.quantite - item.quantity;
 
       if (newQuantite < 0) {
         throw new Error(`Stock insuffisant pour ${item.nom}`);
       }
 
-      // Mettre à jour le stock
       const { error: updateError } = await supabase
         .from('materiels')
         .update({ quantite: newQuantite })
@@ -151,10 +148,8 @@ const CataloguePage = () => {
         throw new Error('Utilisateur non trouvé.');
       }
 
-      // Mettre à jour le stock
       await updateStock(cart);
 
-      // Créer les commandes
       const commandes = cart.map((item) => ({
         id_user: userData.id,
         id_materiel: item.materielId,

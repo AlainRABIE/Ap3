@@ -102,7 +102,6 @@ const MesCommandesMateriel = () => {
     }
 
     try {
-      // Récupérer d'abord les informations de la commande
       const { data: commandeData, error: commandeError } = await supabase
         .from('commande_materiel')
         .select('*')
@@ -113,12 +112,10 @@ const MesCommandesMateriel = () => {
         throw new Error("Erreur lors de la récupération de la commande");
       }
 
-      // Vérifier si id_materiel est valide
       if (!commandeData.id_materiel) {
         throw new Error("ID du matériel manquant ou invalide");
       }
 
-      // Mise à jour de l'état de la commande
       const { data, error } = await supabase
         .from('commande_materiel')
         .update({ etat: nouvelEtat })
@@ -129,9 +126,7 @@ const MesCommandesMateriel = () => {
         throw new Error(`Erreur lors de la mise à jour de l'état: ${error.message}`);
       }
 
-      // Mise à jour du stock selon l'état de la commande
       const adjustStock = async (adjustment: number) => {
-        // Récupérer le stock actuel
         const { data: stockData, error: stockError } = await supabase
           .from('materiels')
           .select('quantite')
@@ -142,10 +137,8 @@ const MesCommandesMateriel = () => {
           throw new Error("Erreur lors de la récupération du stock");
         }
 
-        // Calculer la nouvelle quantité
         const newQuantity = stockData.quantite + adjustment;
 
-        // Mettre à jour le stock
         const { error: updateError } = await supabase
           .from('materiels')
           .update({ quantite: newQuantity })
@@ -157,10 +150,8 @@ const MesCommandesMateriel = () => {
       };
 
       if (nouvelEtat === 'acceptée') {
-        // Retirer les matériels du stock
         await adjustStock(-commandeData.quantite);
       } else if (nouvelEtat === 'refusée') {
-        // Remettre les matériels en stock
         await adjustStock(commandeData.quantite);
       }
 
@@ -187,9 +178,9 @@ const MesCommandesMateriel = () => {
     doc.text(`Date de commande: ${new Date(commande.date_commande).toLocaleString()}`, 20, 60);
     doc.text(`État: ${commande.etat}`, 20, 70);
     doc.setLineWidth(0.5);
-    doc.line(20, 80, 190, 80); // Draw a line
+    doc.line(20, 80, 190, 80); 
     doc.text("Signature:", 20, 90);
-    doc.line(20, 95, 80, 95); // Draw a line for signature
+    doc.line(20, 95, 80, 95); 
     doc.save(`commande_${commande.id_commande}.pdf`);
   };
 

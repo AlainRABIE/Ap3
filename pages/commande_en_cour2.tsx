@@ -25,6 +25,7 @@ const MesCommandesMateriel = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>('en attente');
 
   useEffect(() => {
     const initialize = async () => {
@@ -54,7 +55,7 @@ const MesCommandesMateriel = () => {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [filter]);
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -77,11 +78,13 @@ const MesCommandesMateriel = () => {
   const fetchCommandes = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
+
+    console.log(`Fetching commandes with filter: ${filter}`);
   
     const { data, error } = await supabase
       .from("commande_materiel")
       .select("*")
-      .eq('etat', 'en attente')
+      .eq('etat', filter)
       .order("date_commande", { ascending: false });
   
     if (error) {
@@ -190,9 +193,29 @@ const MesCommandesMateriel = () => {
       <main className="flex-1 p-8 overflow-auto">
         <div className="w-full max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-8">
-            {isAdmin ? "Liste des Commandes de Matériel" : "Mes Commandes de Matériel en Attente"}
+            {isAdmin ? "Liste des Commandes de Matériel" : "Mes Commandes de Matériel"}
           </h1>
           {error && <p className="text-red-500">{error}</p>}
+          <div className="flex space-x-4 mb-4">
+            <button
+              className={`px-4 py-2 rounded ${filter === 'en attente' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setFilter('en attente')}
+            >
+              En attente
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${filter === 'acceptée' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setFilter('acceptée')}
+            >
+              Acceptée
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${filter === 'refusée' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setFilter('refusée')}
+            >
+              Refusée
+            </button>
+          </div>
           <div className="grid grid-cols-1 gap-6 mt-4">
             {commandes.map((commande) => (
               <div key={commande.id_commande} className="bg-transparent border border-white rounded-lg shadow-lg p-6">

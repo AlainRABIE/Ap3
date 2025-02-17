@@ -26,6 +26,7 @@ const MesCommandesMateriel = () => {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('en attente');
+  const [search, setSearch] = useState<string>('');
 
   useEffect(() => {
     const initialize = async () => {
@@ -187,6 +188,10 @@ const MesCommandesMateriel = () => {
     doc.save(`commande_${commande.id_commande}.pdf`);
   };
 
+  const filteredCommandes = commandes.filter((commande) =>
+    commande.id_commande.toString().includes(search)
+  );
+
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <MenubarRe />
@@ -216,8 +221,17 @@ const MesCommandesMateriel = () => {
               Refusée
             </button>
           </div>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Rechercher par numéro de commande"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-4 py-2 rounded w-full"
+            />
+          </div>
           <div className="grid grid-cols-1 gap-6 mt-4">
-            {commandes.map((commande) => (
+            {filteredCommandes.map((commande) => (
               <div key={commande.id_commande} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
                 <h2 className="text-xl font-bold mb-2 text-white">
                   Commande #{commande.id_commande}

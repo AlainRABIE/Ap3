@@ -24,6 +24,8 @@ const MesCommandes = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>('en attente');
+  const [search, setSearch] = useState<string>('');
 
   useEffect(() => {
     const initialize = async () => {
@@ -53,7 +55,7 @@ const MesCommandes = () => {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [filter]);
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -76,11 +78,13 @@ const MesCommandes = () => {
   const fetchCommandes = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
+
+    console.log(`Fetching commandes with filter: ${filter}`);
   
     const { data, error } = await supabase
       .from("commande_médicaments")
       .select("*")
-      .eq('etat', 'en attente')
+      .eq('etat', filter)
       .order("date_commande", { ascending: false });
   
     if (error) {
@@ -177,17 +181,50 @@ const MesCommandes = () => {
     doc.save(`commande_${commande.id_commande}.pdf`);
   };
 
+  const filteredCommandes = commandes.filter((commande) =>
+    commande.id_commande.toString().includes(search)
+  );
+
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <MenubarRe />
       <main className="flex-1 p-8 overflow-auto">
         <div className="w-full max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-8">
-            {isAdmin ? "Liste des Commandes" : "Mes Commandes en Attente"}
+            {isAdmin ? "Liste des Commandes" : "Mes Commandes"}
           </h1>
           {error && <p className="text-red-500">{error}</p>}
+          <div className="flex space-x-4 mb-4">
+            <button
+              className={`px-4 py-2 rounded ${filter === 'en attente' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setFilter('en attente')}
+            >
+              En attente
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${filter === 'acceptée' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setFilter('acceptée')}
+            >
+              Acceptée
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${filter === 'refusée' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setFilter('refusée')}
+            >
+              Refusée
+            </button>
+          </div>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Rechercher par numéro de commande"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-4 py-2 rounded w-full"
+            />
+          </div>
           <div className="grid grid-cols-1 gap-6 mt-4">
-            {commandes.map((commande) => (
+            {filteredCommandes.map((commande) => (
               <div key={commande.id_commande} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
                 <h2 className="text-xl font-bold mb-2 text-white">
                   Commande #{commande.id_commande}

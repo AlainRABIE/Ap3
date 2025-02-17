@@ -9,7 +9,7 @@ import {
   MenubarMenu,
 } from "./Menubar";
 import Link from "next/link";
-import { FiSettings, FiBell, FiMenu, FiHome, FiShoppingCart, FiUsers, FiUser, FiLogOut, FiLogIn } from "react-icons/fi"; 
+import { FiSettings, FiBell, FiMenu, FiHome, FiShoppingCart, FiUsers, FiBook, FiUser, FiLogOut, FiLogIn } from "react-icons/fi";
 import { useUser } from "@/services/sidebar/useUser";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -241,7 +241,7 @@ const Sidebar = () => {
                   <Link
                     href="/dashboard"
                     className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
-                    aria-label="Profil"
+                    aria-label="Dashboard"
                   >
                     <FiUser size={20} />
                     {isSidebarVisible && <span>Dashboard</span>}
@@ -250,7 +250,6 @@ const Sidebar = () => {
               </MenubarContent>
             </MenubarMenu>
 
-        
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
                 <FiLogOut size={24} />
@@ -318,6 +317,16 @@ const Sidebar = () => {
               <span>🌙</span>
             )}
           </button>
+        </div>
+        <div className="block py-2 px-4 text-gray-500">
+          <Link
+            href="/guide"
+            className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
+            aria-label="Guide d'utilisation"
+          >
+            <FiBook size={20} />
+            {isSidebarVisible && <span>Guide d'utilisation</span>}
+          </Link>
         </div>
         {user && (
           <div className="block py-2 px-4 text-gray-500">

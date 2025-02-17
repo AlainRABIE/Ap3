@@ -159,9 +159,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          
           <div className="bg-gray-700 p-6 rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4 text-white">Nombre de visite du site</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-white">Nombre de visite du site</h2>
             <div style={{ width: '300px', height: '300px' }}>
               <Pie data={chartDataVisites} options={{
                 responsive: true,
@@ -173,12 +172,14 @@ const Dashboard = () => {
                   },
                   tooltip: {
                     backgroundColor: '#333',
-                    
                   },
                 }
               }} />
             </div>
           </div>
+        </div>
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4 text-white">Tableau des Matériels</h2>
         </div>
       </main>
     </div>

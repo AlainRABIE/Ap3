@@ -1,4 +1,6 @@
+import { supabase } from '@/lib/supabaseClient';
 import { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 
 interface User {
   email: string;
@@ -37,19 +39,22 @@ export const useUser = () => {
   const deleteCookie = (name: string) => {
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   };
-
   const logout = async () => {
     try {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error(`Erreur lors de la déconnexion : ${response.status}`);
-      }
-      setUser(null); 
-      deleteCookie('token'); 
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      Cookies.remove('supabaseToken');
+      
+      // Nettoyer localStorage et sessionStorage
+      localStorage.removeItem('supabase.auth.token');
+      // Si vous utilisez d'autres clés liées à l'authentification, supprimez-les aussi
+      
+      // Réinitialiser l'état de l'utilisateur
+      setUser(null);
+      
       console.log('Déconnexion réussie');
+      window.location.href = '/login';
     } catch (error) {
       if (error instanceof Error) {
         console.error('Erreur lors de la déconnexion:', error.message);

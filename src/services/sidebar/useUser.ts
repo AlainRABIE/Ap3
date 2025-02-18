@@ -45,12 +45,7 @@ export const useUser = () => {
       if (error) throw error;
       
       Cookies.remove('supabaseToken');
-      
-      // Nettoyer localStorage et sessionStorage
       localStorage.removeItem('supabase.auth.token');
-      // Si vous utilisez d'autres clés liées à l'authentification, supprimez-les aussi
-      
-      // Réinitialiser l'état de l'utilisateur
       setUser(null);
       
       console.log('Déconnexion réussie');

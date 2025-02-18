@@ -60,9 +60,8 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`flex flex-col ${isSidebarVisible ? "w-64" : "w-16"} h-full ${
-        isDarkMode ? "bg-black text-white" : "bg-white text-black"
-      } bg-opacity-40 backdrop-blur-md shadow-lg transition-all duration-300`}
+      className={`flex flex-col ${isSidebarVisible ? "w-64" : "w-16"} h-full ${isDarkMode ? "bg-black text-white" : "bg-white text-black"
+        } bg-opacity-40 backdrop-blur-md shadow-lg transition-all duration-300`}
     >
       <div className="flex justify-between items-center py-4 px-2">
         <button
@@ -78,7 +77,7 @@ const Sidebar = () => {
           <Menubar className="flex flex-col space-y-2">
             <Link
               href="/"
-              className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2"
+              className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2 focus:outline-none"
               aria-label="Accueil"
             >
               <FiHome size={24} />

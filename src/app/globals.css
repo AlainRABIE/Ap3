@@ -40,7 +40,6 @@
 
 @layer base {
   * {
-    @apply border-border;
     box-sizing: border-box;
     animation: none !important;
     transition: none !important;

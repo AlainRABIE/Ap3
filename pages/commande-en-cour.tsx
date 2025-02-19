@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createClient, User } from '@supabase/supabase-js';
 import MenubarRe from '../components/ui/MenuBarRe';
 import { getUserRole } from './api/role';
@@ -26,7 +26,7 @@ const MesCommandes = () => {
   const [filter, setFilter] = useState<string>('en attente');
   const [search, setSearch] = useState<string>('');
 
-  const checkSession = async () => {
+  const checkSession = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       setUser(session.user);
@@ -41,9 +41,9 @@ const MesCommandes = () => {
         setIsAdmin(role === "administrateur");
       }
     }
-  };
+  }, []);
 
-  const fetchCommandes = async () => {
+  const fetchCommandes = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
 
@@ -63,7 +63,7 @@ const MesCommandes = () => {
   
     console.log("Commandes récupérées:", data);
     setCommandes(data || []);
-  };
+  }, [filter]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -92,7 +92,7 @@ const MesCommandes = () => {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, [filter, fetchCommandes]);
+  }, [filter, fetchCommandes, checkSession]);
 
   const handleUpdateState = async (id_commande: number, nouvelEtat: string) => {
     if (!id_commande) {

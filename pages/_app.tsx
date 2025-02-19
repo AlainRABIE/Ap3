@@ -1,7 +1,7 @@
 import { AppProps } from "next/app";
+import React, { useEffect } from 'react';
 import { UserProvider } from "@/contexte/UserContext";
 import "../src/app/globals.css";
-import { useEffect } from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {

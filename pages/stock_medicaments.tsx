@@ -25,8 +25,6 @@ const MedicamentsPage = () => {
     quantite: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSession = async () => {
@@ -34,7 +32,6 @@ const MedicamentsPage = () => {
       data: { session },
     } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
       const { data: userData } = await supabase
         .from('User')
         .select('id')
@@ -42,12 +39,9 @@ const MedicamentsPage = () => {
         .single();
       if (userData) {
         const role = await getUserRole(userData.id);
-        setUserRole(role);
         setIsAdmin(role === 'administrateur');
       }
     } else {
-      setUser(null);
-      setUserRole(null);
       setIsAdmin(false);
     }
   };
@@ -73,7 +67,6 @@ const MedicamentsPage = () => {
     initialize();
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user);
         const { data: userData } = await supabase
           .from('User')
           .select('id')
@@ -81,12 +74,9 @@ const MedicamentsPage = () => {
           .single();
         if (userData) {
           const role = await getUserRole(userData.id);
-          setUserRole(role);
           setIsAdmin(role === 'administrateur');
         }
       } else {
-        setUser(null);
-        setUserRole(null);
         setIsAdmin(false);
       }
     });
@@ -153,7 +143,7 @@ const MedicamentsPage = () => {
           .eq('id', selectedMedicament.id);
         if (error) throw new Error(error.message);
       } else {
-        const { data, error } = await supabase.from('medicaments').insert([dataToSubmit]);
+        const { error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
       }
 

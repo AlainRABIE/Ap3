@@ -3,8 +3,14 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
 import MenubarRe from '../components/ui/MenuBarRe';
 
+interface User {
+  email: string;
+  user_metadata: {
+    full_name: string;
+  };
+}
+
 const ProfilePage = () => {
-  const [user, setUser] = useState<any>(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -20,19 +26,19 @@ const ProfilePage = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        setUser(session.user);
-        setFormData({
-          ...formData,
-          email: session.user.email ?? '',
-          name: session.user.user_metadata.full_name ?? '',
-        });
+        const user = session.user as unknown as User;
+        setFormData((prevData) => ({
+          ...prevData,
+          email: user.email ?? '',
+          name: user.user_metadata.full_name ?? '',
+        }));
       } else {
         router.push('/login'); 
       }
     };
 
     checkSession();
-  }, []);
+  }, [formData, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,7 +70,7 @@ const ProfilePage = () => {
       } else {
         setSuccess('Profil mis à jour avec succès.');
       }
-    } catch (error) {
+    } catch {
       setError('Une erreur est survenue lors de la mise à jour du profil.');
     }
   };

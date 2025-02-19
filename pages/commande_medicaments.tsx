@@ -27,9 +27,7 @@ const CataloguePage: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
 
@@ -52,9 +50,7 @@ const CataloguePage: React.FC = () => {
         .single();
       
       if (userData) {
-        const role = await getUserRole(userData.id);
-        setUserRole(role);
-        setIsAdmin(role === 'administrateur');
+        await getUserRole(userData.id);
       }
     }
   };

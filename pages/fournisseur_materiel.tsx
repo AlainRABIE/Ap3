@@ -22,7 +22,6 @@ interface FournisseurMateriel {
 
 const GestionFournisseurs = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [fournisseurs, setFournisseurs] = useState<FournisseurMateriel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +57,6 @@ const GestionFournisseurs = () => {
 
       if (userData) {
         const role = await getUserRole(userData.id);
-        setUserRole(role);
         setIsAdmin(role === "administrateur");
       }
     }
@@ -85,7 +83,7 @@ const GestionFournisseurs = () => {
   const handleAddFournisseur = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("fournisseur_materiel")
       .insert([formData]);
 
@@ -93,7 +91,7 @@ const GestionFournisseurs = () => {
       alert("Erreur lors de l'ajout !");
       console.error(error);
     } else {
-      setFournisseurs([...(data || []), ...fournisseurs]);
+      await fetchData();
       setShowAddModal(false);
       setFormData({
         nom: '',
@@ -110,7 +108,7 @@ const GestionFournisseurs = () => {
 
     if (!selectedFournisseur) return;
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("fournisseur_materiel")
       .update(formData)
       .eq("id", selectedFournisseur.id);
@@ -119,7 +117,7 @@ const GestionFournisseurs = () => {
       alert("Erreur lors de la modification !");
       console.error(error);
     } else {
-      setFournisseurs(fournisseurs.map(f => f.id === selectedFournisseur.id ? { ...selectedFournisseur, ...formData } : f));
+      await fetchData();
       setShowEditModal(false);
       setSelectedFournisseur(null);
       setFormData({
@@ -332,7 +330,7 @@ const GestionFournisseurs = () => {
                 placeholder="Site web"
                 value={formData.site_web}
                 onChange={(e) => setFormData({ ...formData, site_web: e.target.value })}
-                className="mb-2 p-2 border border-gray-300 rounded text-black dark:text-white bg-gray-100 dark:bg-gray-700"
+                className="mb-2 p-2 border border-gray-300 rounded text-black dark:bg-gray-700"
               />
               <div className="flex justify-end mt-2">
                 <button type="submit" className="px-4 py-2 bg-yellow-500 text-white rounded">

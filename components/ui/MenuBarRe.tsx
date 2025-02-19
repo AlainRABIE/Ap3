@@ -9,7 +9,7 @@ import {
   MenubarMenu,
 } from "./Menubar";
 import Link from "next/link";
-import { FiSettings, FiBell, FiMenu, FiHome, FiShoppingCart, FiUsers, FiBook, FiUser, FiLogOut, FiLogIn } from "react-icons/fi";
+import { FiSettings, FiMenu, FiHome, FiShoppingCart, FiUsers, FiBook, FiUser, FiLogOut, FiLogIn } from "react-icons/fi";
 import { useUser } from "@/services/sidebar/useUser";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -17,7 +17,6 @@ import { getUserRole } from "../../pages/api/role";
 
 const Sidebar = () => {
   const { user, logout } = useUser();
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -32,18 +31,16 @@ const Sidebar = () => {
 
       if (userData) {
         const role = await getUserRole(userData.id);
-        setUserRole(role);
         setIsAdmin(role === "administrateur");
       }
     } else {
-      setUserRole(null);
       setIsAdmin(false);
     }
   };
 
   useEffect(() => {
     checkSession();
-  }, [user]);
+  }, [user, checkSession]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -324,7 +321,7 @@ const Sidebar = () => {
             aria-label="Guide d'utilisation"
           >
             <FiBook size={20} />
-            {isSidebarVisible && <span>Guide d'utilisation</span>}
+            {isSidebarVisible && <span>Guide d&apos;utilisation</span>}
           </Link>
         </div>
         {user && (

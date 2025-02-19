@@ -30,9 +30,7 @@ const CataloguePage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [materiels, setMateriels] = useState<Materiel[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -54,9 +52,7 @@ const CataloguePage = () => {
         .single();
       
       if (userData) {
-        const role = await getUserRole(userData.id);
-        setUserRole(role);
-        setIsAdmin(role === 'administrateur');
+        await getUserRole(userData.id);
       }
     }
   };

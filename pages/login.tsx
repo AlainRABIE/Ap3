@@ -2,6 +2,7 @@ import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from "@/lib/supabaseClient";
 import Cookies from 'js-cookie';
+import Link from 'next/link';
 import "../src/app/globals.css";
 
 const LoginPage = () => {
@@ -76,10 +77,10 @@ const LoginPage = () => {
         </form>
         <div className="text-center mt-4 space-y-2">
           <p className="text-sm">
-            Pas encore de compte ? <a href="/register" className="text-blue-600 hover:underline">Inscrivez-vous</a>
+            Pas encore de compte ? <Link href="/register"><a className="text-blue-600 hover:underline">Inscrivez-vous</a></Link>
           </p>
           <p className="text-sm">
-            <a href="/forgot-password" className="text-blue-600 hover:underline">Mot de passe oublié ?</a>
+            <Link href="/forgot-password"><a className="text-blue-600 hover:underline">Mot de passe oublié ?</a></Link>
           </p>
         </div>
       </div>

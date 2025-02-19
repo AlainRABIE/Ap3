@@ -30,8 +30,6 @@ const MaterielsPage = () => {
     date_expiration: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSession = async () => {
@@ -39,7 +37,6 @@ const MaterielsPage = () => {
       data: { session },
     } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
       const { data: userData } = await supabase
         .from('User')
         .select('id')
@@ -47,12 +44,9 @@ const MaterielsPage = () => {
         .single();
       if (userData) {
         const role = await getUserRole(userData.id);
-        setUserRole(role);
         setIsAdmin(role === 'administrateur');
       }
     } else {
-      setUser(null);
-      setUserRole(null);
       setIsAdmin(false);
     }
   };
@@ -81,7 +75,6 @@ const MaterielsPage = () => {
     initialize();
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user);
         const { data: userData } = await supabase
           .from('User')
           .select('id')
@@ -89,12 +82,9 @@ const MaterielsPage = () => {
           .single();
         if (userData) {
           const role = await getUserRole(userData.id);
-          setUserRole(role);
           setIsAdmin(role === 'administrateur');
         }
       } else {
-        setUser(null);
-        setUserRole(null);
         setIsAdmin(false);
       }
     });
@@ -205,7 +195,7 @@ const MaterielsPage = () => {
                   <p className="mb-2"><strong>Quantité:</strong> {materiel.quantite}</p>
                   <p className="mb-2"><strong>N° de série:</strong> {materiel.numero_serie}</p>
                   <p className="mb-2"><strong>État:</strong> {materiel.etat}</p>
-                  <p className="mb-2"><strong>Date d'expiration:</strong> {materiel.date_expiration}</p>
+                  <p className="mb-2"><strong>Date d&apos;expiration:</strong> {materiel.date_expiration}</p>
                   {isAdmin && (
                     <div className="flex justify-around mt-4">
                       <button

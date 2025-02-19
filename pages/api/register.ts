@@ -15,15 +15,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const { data: roleData, error: roleError } = await supabase
         .from('role')
         .select('id')
-        .limit(1) 
-        .single(); 
+        .limit(1)
+        .single();
 
       if (roleError || !roleData) {
         console.error('Le rôle par défaut n\'existe pas');
         return res.status(400).json({ message: 'Le rôle par défaut n\'existe pas' });
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
       });

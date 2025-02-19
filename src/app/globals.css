@@ -15,11 +15,10 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --background-image-light: url("/img/baground_blanc.jpg"); /* Image de fond pour le mode clair */
-    --background-image-dark: url("/img/baground.jpg"); /* Image de fond pour le mode sombre */
-    --transition-speed: 0.5s; /* Vitesse de transition */
+    --background-image-light: url("/img/baground_blanc.jpg");
+    --background-image-dark: url("/img/baground.jpg"); 
+    --transition-speed: 0.5s; 
   }
-  /* Ajoute une transition fluide */
   .transition-transform {
     transition: transform 0.5s ease-in-out;
   }
@@ -51,18 +50,18 @@
     color: var(--foreground);
     background-image: var(
       --background-image-light
-    ); /* Utilise la variable CSS pour l'image de fond en mode clair */
+    ); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     transition: background-color var(--transition-speed),
-      color var(--transition-speed), background-image var(--transition-speed); /* Ajoute des transitions pour les propriétés */
+      color var(--transition-speed), background-image var(--transition-speed); 
   }
 
   .dark body {
     background-image: var(
       --background-image-dark
-    ); /* Utilise la variable CSS pour l'image de fond en mode sombre */
+    ); 
   }
 
   html,
@@ -83,7 +82,7 @@ main {
   height: 100%;
   position: relative;
   z-index: 1;
-  transition: color var(--transition-speed); /* Ajoute une transition pour la couleur du texte */
+  transition: color var(--transition-speed); 
 }
 
 ul.list-none li {
@@ -93,16 +92,15 @@ ul.list-none li {
 h1,
 h2 {
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-  transition: text-shadow var(--transition-speed); /* Ajoute une transition pour l'ombre du texte */
+  transition: text-shadow var(--transition-speed); 
 }
 
 p,
 li {
   text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
-  transition: text-shadow var(--transition-speed); /* Ajoute une transition pour l'ombre du texte */
+  transition: text-shadow var(--transition-speed); 
 }
 
-/* Ensure full page coverage */
 #__next,
 #root {
   height: 100%;

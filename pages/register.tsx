@@ -47,14 +47,19 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Une erreur s\'est produite lors de l\'inscription.');
+        throw new Error(data.message || 'Une erreur s&apos;est produite lors de l&apos;inscription.');
       }
 
       console.log('Inscription réussie:', data);
       setShowSuccessModal(true); // Afficher le modal au lieu de rediriger immédiatement
-    } catch (error: any) {
-      console.error('Erreur lors de l\'inscription:', error.message);
-      setError(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Erreur lors de l&apos;inscription:', error.message);
+        setError(error.message);
+      } else {
+        console.error('Erreur inconnue lors de l&apos;inscription:', error);
+        setError('Erreur inconnue');
+      }
     }
   };
 
@@ -103,7 +108,7 @@ const RegisterPage = () => {
           </div>
           {error && <p className="text-red-500">{error}</p>}
           <button type="submit" className="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-            S'inscrire
+            S&apos;inscrire
           </button>
         </form>
       </div>

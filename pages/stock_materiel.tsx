@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import MenubarRe from '../components/ui/MenuBarRe';
-import { User } from '@supabase/supabase-js';
 import { getUserRole } from './api/role';
 import Modal from '../components/ui/modal';
 

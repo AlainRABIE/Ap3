@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { createClient, User } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import MenubarRe from "../components/ui/MenuBarRe";
 import Modal from "../components/ui/modal"; 
 import { getUserRole } from "./api/role";
@@ -21,7 +21,6 @@ interface FournisseurMateriel {
 }
 
 const GestionFournisseurs = () => {
-  const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [fournisseurs, setFournisseurs] = useState<FournisseurMateriel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +47,6 @@ const GestionFournisseurs = () => {
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
       const { data: userData } = await supabase
         .from("User")
         .select("id")
@@ -344,5 +342,4 @@ const GestionFournisseurs = () => {
     </div>
   );
 };
-
 export default GestionFournisseurs;

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { createClient, User } from '@supabase/supabase-js';
+import React, { useState, useEffect, useCallback } from "react";
+import { createClient } from '@supabase/supabase-js';
 import MenubarRe from '../components/ui/MenuBarRe';
 import { getUserRole } from './api/role';
 import jsPDF from 'jspdf';
@@ -20,14 +20,13 @@ interface Commande {
 }
 
 const MesCommandesMateriel = () => {
-  const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('en attente');
   const [search, setSearch] = useState<string>('');
 
-  const fetchCommandes = async () => {
+  const fetchCommandes = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
 
@@ -47,7 +46,7 @@ const MesCommandesMateriel = () => {
   
     console.log("Commandes récupérées:", data);
     setCommandes(data || []);
-  };
+  }, [filter]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -58,7 +57,6 @@ const MesCommandesMateriel = () => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        setUser(session.user);
         const { data: userData } = await supabase
           .from('User')
           .select('id')
@@ -81,7 +79,6 @@ const MesCommandesMateriel = () => {
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      setUser(session.user);
       const { data: userData } = await supabase
         .from('User')
         .select('id')

@@ -19,43 +19,12 @@ interface Commande {
 }
 
 const MesCommandes = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('en attente');
   const [search, setSearch] = useState<string>('');
-
-  useEffect(() => {
-    const initialize = async () => {
-      await checkSession();
-      await fetchCommandes();
-    };
-    initialize();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: userData } = await supabase
-          .from('User')
-          .select('id')
-          .eq('email', session.user.email)
-          .single();
-
-        if (userData) {
-          const role = await getUserRole(userData.id);
-          setUserRole(role);
-          setIsAdmin(role === "administrateur");
-          await fetchCommandes();
-        }
-      }
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
-  }, [filter]);
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -69,7 +38,6 @@ const MesCommandes = () => {
 
       if (userData) {
         const role = await getUserRole(userData.id);
-        setUserRole(role);
         setIsAdmin(role === "administrateur");
       }
     }
@@ -96,6 +64,35 @@ const MesCommandes = () => {
     console.log("Commandes récupérées:", data);
     setCommandes(data || []);
   };
+
+  useEffect(() => {
+    const initialize = async () => {
+      await checkSession();
+      await fetchCommandes();
+    };
+    initialize();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        const { data: userData } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userData) {
+          const role = await getUserRole(userData.id);
+          setIsAdmin(role === "administrateur");
+          await fetchCommandes();
+        }
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [filter, fetchCommandes]);
 
   const handleUpdateState = async (id_commande: number, nouvelEtat: string) => {
     if (!id_commande) {

@@ -1,15 +1,12 @@
 import { AppProps } from "next/app";
 import { UserProvider } from "@/contexte/UserContext";
 import "../src/app/globals.css";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
   useEffect(() => {
     const storedTheme = localStorage.getItem("darkMode");
     if (storedTheme === "true") {
-      setIsDarkMode(true);
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");

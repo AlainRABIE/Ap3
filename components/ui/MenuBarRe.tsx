@@ -195,56 +195,7 @@ const Sidebar = () => {
               </MenubarContent>
             </MenubarMenu>
 
-            <MenubarMenu>
-              <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">
-                <FiSettings size={24} />
-                {isSidebarVisible && <span>Paramètres</span>}
-              </MenubarTrigger>
-              <MenubarContent className="bg-gray-900/80 backdrop-blur-md text-gray-300">
-                <MenubarItem>
-                  <Link
-                    href="/settings"
-                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
-                    aria-label="Paramètres"
-                  >
-                    <FiSettings size={20} />
-                    {isSidebarVisible && <span>Paramètres</span>}
-                  </Link>
-                </MenubarItem>
-                {isAdmin && (
-                  <MenubarItem>
-                    <Link
-                      href="/user"
-                      className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
-                      aria-label="Liste d'utilisateurs"
-                    >
-                      <FiUsers size={20} />
-                      {isSidebarVisible && <span>Utilisateurs</span>}
-                    </Link>
-                  </MenubarItem>
-                )}
-                <MenubarItem>
-                  <Link
-                    href="/profil"
-                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
-                    aria-label="Profil"
-                  >
-                    <FiUser size={20} />
-                    {isSidebarVisible && <span>Profil</span>}
-                  </Link>
-                </MenubarItem>
-                <MenubarItem>
-                  <Link
-                    href="/dashboard"
-                    className="block py-2 px-4 text-gray-400 hover:bg-gray-700 flex items-center space-x-2"
-                    aria-label="Dashboard"
-                  >
-                    <FiUser size={20} />
-                    {isSidebarVisible && <span>Dashboard</span>}
-                  </Link>
-                </MenubarItem>
-              </MenubarContent>
-            </MenubarMenu>
+            
 
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">

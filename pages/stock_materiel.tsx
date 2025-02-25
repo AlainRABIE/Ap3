@@ -15,6 +15,15 @@ type Materiel = {
   date_expiration: string | null;
 };
 
+type FormErrors = {
+  nom?: string;
+  description?: string;
+  quantite?: string;
+  numero_serie?: string;
+  etat?: string;
+  date_expiration?: string;
+};
+
 const MaterielsPage = () => {
   const [materiels, setMateriels] = useState<Materiel[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,6 +37,7 @@ const MaterielsPage = () => {
     etat: 'neuf',
     date_expiration: null,
   });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -104,6 +114,7 @@ const MaterielsPage = () => {
     });
     setIsEditing(true);
     setShowModal(true);
+    setErrors({});
   };
 
   const isMaterielCommanded = async (id: number) => {
@@ -134,8 +145,36 @@ const MaterielsPage = () => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+
+    if (!formData.nom || formData.nom.trim() === '') {
+      newErrors.nom = 'Le nom est requis';
+      isValid = false;
+    }
+
+    if (formData.quantite !== null && formData.quantite < 0) {
+      newErrors.quantite = 'La quantité ne peut pas être négative';
+      isValid = false;
+    }
+
+    if (!formData.etat) {
+      newErrors.etat = 'L\'état est requis';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     try {
       const dataToSubmit = {
         nom: formData.nom,
@@ -158,12 +197,38 @@ const MaterielsPage = () => {
         if (error) throw new Error(error.message);
         await fetchMateriels(); 
       }
-    } catch (error) {
-      console.error('Erreur lors de la soumission du formulaire:', error);
-    } finally {
+      
+      // Réinitialiser le formulaire
+      setFormData({
+        nom: '',
+        description: '',
+        quantite: null,
+        numero_serie: '',
+        etat: 'neuf',
+        date_expiration: null,
+      });
+      setErrors({});
       setIsEditing(false);
       setSelectedMateriel(null);
       setShowModal(false);
+    } catch (error) {
+      console.error('Erreur lors de la soumission du formulaire:', error);
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setErrors({});
+    // Réinitialiser le formulaire si on n'est pas en mode édition
+    if (!isEditing) {
+      setFormData({
+        nom: '',
+        description: '',
+        quantite: null,
+        numero_serie: '',
+        etat: 'neuf',
+        date_expiration: null,
+      });
     }
   };
 
@@ -181,7 +246,19 @@ const MaterielsPage = () => {
             {isAdmin && (
               <button
                 className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setSelectedMateriel(null);
+                  setFormData({
+                    nom: '',
+                    description: '',
+                    quantite: null,
+                    numero_serie: '',
+                    etat: 'neuf',
+                    date_expiration: null,
+                  });
+                  setShowModal(true);
+                }}
               >
                 Ajouter un matériel
               </button>
@@ -214,61 +291,91 @@ const MaterielsPage = () => {
                 </div>
               ))}
             </div>
-            <Modal show={showModal} onClose={() => setShowModal(false)}>
-              <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
+            <Modal show={showModal} onClose={handleModalClose}>
+              <div className="w-96 p-4 bg-white rounded-lg shadow-lg">
                 <h2 className="text-lg font-bold mb-4 text-black">
                   {isEditing ? 'Modifier' : 'Ajouter'} un Matériel
                 </h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
-                  <input
-                    type="text"
-                    placeholder="Nom"
-                    value={formData.nom}
-                    onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Quantité"
-                    value={formData.quantite || ''}
-                    onChange={(e) => setFormData({ ...formData, quantite: parseInt(e.target.value) })}
-                    min="0"
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Numéro de série"
-                    value={formData.numero_serie || ''}
-                    onChange={(e) => setFormData({ ...formData, numero_serie: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                  />
-                  <select
-                    value={formData.etat}
-                    onChange={(e) => setFormData({ ...formData, etat: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                    required
-                  >
-                    <option value="neuf">Neuf</option>
-                    <option value="bon état">Bon état</option>
-                    <option value="à réparer">À réparer</option>
-                    <option value="hors service">Hors service</option>
-                  </select>
-                  <input
-                    type="date"
-                    placeholder="Date d'expiration"
-                    value={formData.date_expiration || ''}
-                    onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-black"
-                  />
-                  <div className="flex justify-end mt-2">
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      placeholder="Nom *"
+                      value={formData.nom}
+                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                      className={`w-full p-2 border ${errors.nom ? 'border-red-500' : 'border-gray-300'} rounded text-black`}
+                    />
+                    {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      placeholder="Description"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded text-black"
+                    />
+                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <input
+                      type="number"
+                      placeholder="Quantite"
+                      value={formData.quantite === null ? '' : formData.quantite}
+                      onChange={(e) => setFormData({ ...formData, quantite: e.target.value ? parseInt(e.target.value) : null })}
+                      min="0"
+                      className={`w-full p-2 border ${errors.quantite ? 'border-red-500' : 'border-gray-300'} rounded text-black`}
+                    />
+                    {errors.quantite && <p className="text-red-500 text-xs mt-1">{errors.quantite}</p>}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      placeholder="Numéro de série"
+                      value={formData.numero_serie || ''}
+                      onChange={(e) => setFormData({ ...formData, numero_serie: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded text-black"
+                    />
+                    {errors.numero_serie && <p className="text-red-500 text-xs mt-1">{errors.numero_serie}</p>}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <select
+                      value={formData.etat}
+                      onChange={(e) => setFormData({ ...formData, etat: e.target.value })}
+                      className={`w-full p-2 border ${errors.etat ? 'border-red-500' : 'border-gray-300'} rounded text-black`}
+                    >
+                      <option value="">Sélectionnez un état *</option>
+                      <option value="neuf">Neuf</option>
+                      <option value="bon état">Bon état</option>
+                      <option value="à réparer">À réparer</option>
+                      <option value="hors service">Hors service</option>
+                    </select>
+                    {errors.etat && <p className="text-red-500 text-xs mt-1">{errors.etat}</p>}
+                  </div>
+                  
+                  <div className="mb-4">
+                    <input
+                      type="date"
+                      placeholder="Date d'expiration"
+                      value={formData.date_expiration || ''}
+                      onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded text-black"
+                    />
+                    {errors.date_expiration && <p className="text-red-500 text-xs mt-1">{errors.date_expiration}</p>}
+                  </div>
+                  
+                  <div className="flex justify-between mt-2">
+                    <button 
+                      type="button" 
+                      className="px-4 py-2 bg-gray-500 text-white rounded"
+                      onClick={handleModalClose}
+                    >
+                      Annuler
+                    </button>
                     <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
                       {isEditing ? 'Modifier' : 'Ajouter'}
                     </button>

@@ -77,10 +77,10 @@ const LoginPage = () => {
         </form>
         <div className="text-center mt-4 space-y-2">
           <p className="text-sm">
-            Pas encore de compte ? <Link href="/register"><a className="text-blue-600 hover:underline">Inscrivez-vous</a></Link>
+            Pas encore de compte ? <Link href="/register" className="text-blue-600 hover:underline">Inscrivez-vous</Link>
           </p>
           <p className="text-sm">
-            <Link href="/forgot-password"><a className="text-blue-600 hover:underline">Mot de passe oublié ?</a></Link>
+            <Link href="/forgot-password" className="text-blue-600 hover:underline">Mot de passe oublié ?</Link>
           </p>
         </div>
       </div>

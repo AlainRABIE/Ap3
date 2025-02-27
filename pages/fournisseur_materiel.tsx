@@ -185,7 +185,7 @@ const GestionFournisseurs = () => {
                 <Skeleton height={20} width={`70%`} />
                 <Skeleton height={20} width={`50%`} />
                 {isAdmin && (
-                  <div className="flex justify-around mt-4 pt-4 border-t border-gray-600">
+                  <div className="flex justify-around mt-4 pt-4 border-t border-blanc-600">
                     <Skeleton height={40} width={`40%`} />
                     <Skeleton height={40} width={`40%`} />
                   </div>

@@ -25,8 +25,8 @@ const MedicamentsPage = () => {
     quantite: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [, setUser] = useState<User | null>(null);
+  const [, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSession = async () => {
@@ -155,7 +155,7 @@ const MedicamentsPage = () => {
           .eq('id', selectedMedicament.id);
         if (error) throw new Error(error.message);
       } else {
-        const { data, error } = await supabase.from('medicaments').insert([dataToSubmit]);
+        const {error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
       }
 

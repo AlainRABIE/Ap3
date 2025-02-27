@@ -20,7 +20,7 @@ interface Commande {
 
 
 const MesCommandes = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);

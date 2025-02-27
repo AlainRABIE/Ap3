@@ -9,7 +9,7 @@ import {
   MenubarMenu,
 } from "./Menubar";
 import Link from "next/link";
-import { FiSettings, FiMenu, FiHome, FiShoppingCart, FiUsers, FiBook, FiUser, FiLogOut, FiLogIn } from "react-icons/fi";
+import {  FiMenu, FiHome, FiShoppingCart, FiUsers, FiBook, FiLogOut, FiLogIn } from "react-icons/fi";
 import { useUser } from "@/services/sidebar/useUser";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -201,7 +201,7 @@ const Sidebar = () => {
                 aria-label="Liste des utilisateurs"
               >
                 <FiUsers size={24} />
-                {isSidebarVisible && <span>Liste d'utilisateurs</span>}
+                {isSidebarVisible && <span>Liste d&apos;utilisateurs</span>}
               </Link>
             )}
 

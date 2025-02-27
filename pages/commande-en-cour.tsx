@@ -66,7 +66,6 @@ const MesCommandes = () => {
 
       console.log(`Fetching commandes with filter: ${filter}`);
     
-      // Requête modifiée pour inclure les données des médicaments
       const { data, error } = await supabase
         .from("commande_médicaments")
         .select(`
@@ -93,7 +92,6 @@ const MesCommandes = () => {
     }
   }, [filter]);
 
-  // Initialisation au chargement du composant
   useEffect(() => {
     const initialize = async () => {
       const sessionValid = await checkSession();
@@ -105,16 +103,14 @@ const MesCommandes = () => {
     };
     
     initialize();
-  }, []); // Dépendances vides pour s'exécuter uniquement au montage initial
+  }, []); 
 
-  // Effet pour recharger les commandes quand le filtre change
   useEffect(() => {
     if (user) {
       fetchCommandes();
     }
   }, [filter, fetchCommandes, user]);
 
-  // Écouteur d'authentification
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {

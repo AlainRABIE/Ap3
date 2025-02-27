@@ -186,16 +186,13 @@ const CataloguePage = () => {
   const addToCart = (materiel: Materiel) => {
     const quantity = quantities[materiel.id_materiel] || 1;
     
-    // Vérifier si le matériel est déjà dans le panier
     const existingItemIndex = cart.findIndex(item => item.materielId === materiel.id_materiel);
     
     if (existingItemIndex >= 0) {
-      // Mettre à jour la quantité si l'article est déjà dans le panier
       const updatedCart = [...cart];
       updatedCart[existingItemIndex].quantity = quantity;
       setCart(updatedCart);
     } else {
-      // Ajouter un nouvel article au panier
       setCart((prevCart) => [
         ...prevCart,
         {
@@ -224,7 +221,6 @@ const CataloguePage = () => {
                 Quantité disponible: {materiel.quantite}
               </p>
               
-              {/* Sélecteur de quantité (style simple avec input number) */}
               <input
                 type="number"
                 min="1"

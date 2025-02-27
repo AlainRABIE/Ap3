@@ -6,7 +6,7 @@ import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 const Guide = () => {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  const pdfUrl = '/gide.pdf'; // Assure-toi que le fichier est dans le dossier public
+  const pdfUrl = '/gide.pdf'; 
 
   return (
     <div className="relative p-8">

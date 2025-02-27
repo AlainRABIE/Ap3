@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
 
-// Type pour un fournisseur
 export type Fournisseur = {
   fournisseur_id: number;
   medicament_id: number;
@@ -11,10 +10,9 @@ export type Fournisseur = {
   site_web: string;
 };
 
-// Fonction pour récupérer tous les fournisseurs
 export const getFournisseurs = async (): Promise<Fournisseur[]> => {
   const { data, error } = await supabase
-    .from("fournisseur_medicament") // Assurez-vous que le nom de la table est correct
+    .from("fournisseur_medicament") 
     .select("*");
 
   if (error) {
@@ -25,10 +23,9 @@ export const getFournisseurs = async (): Promise<Fournisseur[]> => {
   return data || [];
 };
 
-// Fonction pour ajouter un fournisseur
 export const addFournisseur = async (fournisseur: Fournisseur): Promise<Fournisseur | null> => {
   const { data, error } = await supabase
-    .from("fournisseur_medicament") // Assurez-vous que le nom de la table est correct
+    .from("fournisseur_medicament") 
     .insert([fournisseur]);
 
   if (error) {
@@ -36,13 +33,12 @@ export const addFournisseur = async (fournisseur: Fournisseur): Promise<Fourniss
     return null;
   }
 
-  return data ? data[0] : null; // Retourne le fournisseur ajouté
+  return data ? data[0] : null; 
 };
 
-// Fonction pour supprimer un fournisseur
 export const deleteFournisseur = async (fournisseur_id: number): Promise<boolean> => {
   const { error } = await supabase
-    .from("fournisseur_medicament") // Assurez-vous que le nom de la table est correct
+    .from("fournisseur_medicament")
     .delete()
     .eq("fournisseur_id", fournisseur_id);
 
@@ -54,13 +50,12 @@ export const deleteFournisseur = async (fournisseur_id: number): Promise<boolean
   return true;
 };
 
-// Fonction pour mettre à jour un fournisseur
 export const updateFournisseur = async (
   fournisseur_id: number,
   updatedData: Partial<Fournisseur>
 ): Promise<Fournisseur | null> => {
   const { data, error } = await supabase
-    .from("fournisseur_medicament") // Assurez-vous que le nom de la table est correct
+    .from("fournisseur_medicament") 
     .update(updatedData)
     .eq("fournisseur_id", fournisseur_id);
 
@@ -72,10 +67,9 @@ export const updateFournisseur = async (
   return data ? data[0] : null;
 };
 
-// Fonction pour récupérer un fournisseur par son ID
 export const getFournisseurById = async (fournisseur_id: number): Promise<Fournisseur | null> => {
   const { data, error } = await supabase
-    .from("fournisseur_medicament") // Assurez-vous que le nom de la table est correct
+    .from("fournisseur_medicament")
     .select("*")
     .eq("fournisseur_id", fournisseur_id)
     .single();

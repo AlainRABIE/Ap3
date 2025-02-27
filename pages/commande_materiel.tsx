@@ -32,6 +32,7 @@ const CataloguePage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [materiels, setMateriels] = useState<Materiel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
 
   useEffect(() => {
     const initialize = async () => {
@@ -175,20 +176,41 @@ const CataloguePage = () => {
     }
   };
 
+  const handleQuantityChange = (materielId: number, quantity: number) => {
+    setQuantities((prevQuantities) => ({
+      ...prevQuantities,
+      [materielId]: quantity,
+    }));
+  };
+
   const addToCart = (materiel: Materiel) => {
-    setCart((prevCart) => [
-      ...prevCart,
-      {
-        materielId: materiel.id_materiel,
-        nom: materiel.nom,
-        quantity: 1,
-      }
-    ]);
+    const quantity = quantities[materiel.id_materiel] || 1;
+    
+    // Vérifier si le matériel est déjà dans le panier
+    const existingItemIndex = cart.findIndex(item => item.materielId === materiel.id_materiel);
+    
+    if (existingItemIndex >= 0) {
+      // Mettre à jour la quantité si l'article est déjà dans le panier
+      const updatedCart = [...cart];
+      updatedCart[existingItemIndex].quantity = quantity;
+      setCart(updatedCart);
+    } else {
+      // Ajouter un nouvel article au panier
+      setCart((prevCart) => [
+        ...prevCart,
+        {
+          materielId: materiel.id_materiel,
+          nom: materiel.nom,
+          quantity: quantity,
+        }
+      ]);
+    }
   };
 
   const removeFromCart = (materielId: number) => {
     setCart((prevCart) => prevCart.filter(item => item.materielId !== materielId));
   };
+
   return (
     <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
       <Menubar />
@@ -201,9 +223,23 @@ const CataloguePage = () => {
               <p className="text-sm text-gray-300 mb-4">
                 Quantité disponible: {materiel.quantite}
               </p>
+              
+              {/* Sélecteur de quantité (style simple avec input number) */}
+              <input
+                type="number"
+                min="1"
+                max={materiel.quantite}
+                value={quantities[materiel.id_materiel] || 1}
+                onChange={(e) => handleQuantityChange(
+                  materiel.id_materiel,
+                  Math.max(1, Math.min(materiel.quantite, Number(e.target.value)))
+                )}
+                className="w-full mb-4 p-2 border rounded"
+              />
+              
               <button
                 onClick={() => addToCart(materiel)}
-                className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600"
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={materiel.quantite === 0 || isLoading}
               >
                 {materiel.quantite === 0 ? 'Rupture de stock' : 'Ajouter au panier'}

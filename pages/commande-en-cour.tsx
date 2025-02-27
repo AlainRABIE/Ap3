@@ -19,7 +19,7 @@ interface Commande {
 }
 
 const MesCommandes = () => {
-  const [, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +86,9 @@ const MesCommandes = () => {
           setIsAdmin(role === "administrateur");
           await fetchCommandes();
         }
+      } else {
+        setUser(null);
+        setIsAdmin(false);
       }
     });
 
@@ -269,3 +272,4 @@ const MesCommandes = () => {
 };
 
 export default MesCommandes;
+

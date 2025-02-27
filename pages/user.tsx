@@ -108,7 +108,7 @@ const UserPage = () => {
               <th className="px-4 py-2 border">Nom</th>
               <th className="px-4 py-2 border">Date de Création</th>
               <th className="px-4 py-2 border">Date de Mise à Jour</th>
-              <th className="px-4 py-2 border">Rôle</th> {/* Modification du titre de la colonne */}
+              <th className="px-4 py-2 border">Rôle</th>
               <th className="px-4 py-2 border">Actions</th>
             </tr>
           </thead>
@@ -121,7 +121,7 @@ const UserPage = () => {
                   <td className="px-4 py-2 border">{user.name}</td>
                   <td className="px-4 py-2 border">{new Date(user.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 border">{new Date(user.updatedAt).toLocaleString()}</td>
-                  <td className="px-4 py-2 border">{user.role_name}</td> {/* Utilisation de role_name */}
+                  <td className="px-4 py-2 border">{user.role_name}</td> 
                   <td className="px-4 py-2 border">
                     <button
                       className="bg-blue-500 text-white px-2 py-1 rounded mr-2"

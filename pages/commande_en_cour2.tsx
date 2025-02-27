@@ -27,25 +27,34 @@ const MesCommandesMateriel = () => {
   const [search, setSearch] = useState<string>('');
 
   const fetchCommandes = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    console.log(`Fetching commandes with filter: ${filter}`);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        console.log("Pas de session utilisateur");
+        return;
+      }
   
-    const { data, error } = await supabase
-      .from("commande_materiel")
-      .select("*")
-      .eq('etat', filter)
-      .order("date_commande", { ascending: false });
-  
-    if (error) {
-      console.error("❌ Erreur lors de la récupération des commandes:", error);
-      setError(error.message);
-      return;
+      console.log(`Fetching commandes with filter: ${filter}`);
+    
+      const { data, error } = await supabase
+        .from("commande_materiel")
+        .select("*")
+        .eq('etat', filter)
+        .order("date_commande", { ascending: false });
+    
+      if (error) {
+        console.error("❌ Erreur lors de la récupération des commandes:", error);
+        setError(error.message || JSON.stringify(error));
+        return;
+      }
+    
+      console.log("Commandes récupérées:", data);
+      setCommandes(data || []);
+      setError(null);
+    } catch (err) {
+      console.error("Erreur dans fetchCommandes:", err);
+      setError(err instanceof Error ? err.message : "Erreur lors de la récupération des commandes");
     }
-  
-    console.log("Commandes récupérées:", data);
-    setCommandes(data || []);
   }, [filter]);
 
   useEffect(() => {

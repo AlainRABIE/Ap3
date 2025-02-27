@@ -1,7 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/router';
 
-// Composant Modal de confirmation
 const SuccessModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   if (!isOpen) return null;
 
@@ -51,7 +50,7 @@ const RegisterPage = () => {
       }
 
       console.log('Inscription réussie:', data);
-      setShowSuccessModal(true); // Afficher le modal au lieu de rediriger immédiatement
+      setShowSuccessModal(true);
     } catch (error) {
       if (error instanceof Error) {
         console.error('Erreur lors de l&apos;inscription:', error.message);

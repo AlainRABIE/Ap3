@@ -198,7 +198,6 @@ const MaterielsPage = () => {
         await fetchMateriels(); 
       }
       
-      // Réinitialiser le formulaire
       setFormData({
         nom: '',
         description: '',
@@ -219,7 +218,6 @@ const MaterielsPage = () => {
   const handleModalClose = () => {
     setShowModal(false);
     setErrors({});
-    // Réinitialiser le formulaire si on n'est pas en mode édition
     if (!isEditing) {
       setFormData({
         nom: '',

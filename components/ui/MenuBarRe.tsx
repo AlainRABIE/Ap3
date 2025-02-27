@@ -194,8 +194,18 @@ const Sidebar = () => {
                 </MenubarItem>
               </MenubarContent>
             </MenubarMenu>
+            {isAdmin && (
+              <Link
+                href="/user"
+                className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2 focus:outline-none"
+                aria-label="Liste des utilisateurs"
+              >
+                <FiUsers size={24} />
+                {isSidebarVisible && <span>Liste d'utilisateurs</span>}
+              </Link>
+            )}
 
-            
+
 
             <MenubarMenu>
               <MenubarTrigger className="block py-2 px-4 text-gray-400 hover:bg-gray-700 rounded flex items-center space-x-2">

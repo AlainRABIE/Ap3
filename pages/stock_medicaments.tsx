@@ -11,10 +11,21 @@ type Medicament = {
   posologie: string | null;
   description: string | null;
   quantite: number | null;
+  id_fournisseur: number | null;
+};
+
+type Fournisseur = {
+  fournisseur_id: number;
+  nom: string;
+  adresse: string;
+  email: string;
+  telephone: string;
+  site_web: string;
 };
 
 const MedicamentsPage = () => {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
+  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedMedicament, setSelectedMedicament] = useState<Medicament | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -23,6 +34,7 @@ const MedicamentsPage = () => {
     posologie: '',
     description: '',
     quantite: null,
+    id_fournisseur: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [, setUser] = useState<User | null>(null);
@@ -57,7 +69,7 @@ const MedicamentsPage = () => {
     try {
       const { data, error } = await supabase.from('medicaments').select('*');
       if (error) throw new Error(error.message);
-      if (Array.isArray(data)) setMedicaments(data);
+      setMedicaments(data || []);
     } catch (error) {
       console.error('Erreur lors de la récupération des médicaments:', error);
     } finally {
@@ -65,37 +77,24 @@ const MedicamentsPage = () => {
     }
   };
 
+  const fetchFournisseurs = async () => {
+    try {
+      const { data, error } = await supabase.from('fournisseur_medicament').select('*');
+      if (error) throw new Error(error.message);
+      setFournisseurs(data || []);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des fournisseurs:', error);
+    }
+  };
+
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
       await fetchMedicaments();
+      await fetchFournisseurs();
     };
     initialize();
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: userData } = await supabase
-          .from('User')
-          .select('id')
-          .eq('email', session.user.email)
-          .single();
-        if (userData) {
-          const role = await getUserRole(userData.id);
-          setUserRole(role);
-          setIsAdmin(role === 'administrateur');
-          await fetchMedicaments();
-        }
-      } else {
-        setUser(null);
-        setUserRole(null);
-        setIsAdmin(false);
-      }
-    });
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
   }, []);
-  
 
   const handleEdit = (medicament: Medicament) => {
     setSelectedMedicament(medicament);
@@ -104,25 +103,7 @@ const MedicamentsPage = () => {
     setShowModal(true);
   };
 
-  const isMedicamentCommanded = async (id: number) => {
-    const { data, error } = await supabase
-      .from('commande_médicaments')
-      .select('*')
-      .eq('id_medicament', id);
-    if (error) {
-      console.error('Erreur lors de la vérification des commandes:', error);
-      return false;
-    }
-    return data.length > 0;
-  };
-
   const handleDelete = async (id: number) => {
-    const commanded = await isMedicamentCommanded(id);
-    if (commanded) {
-      alert('Ce médicament a été commandé et ne peut pas être supprimé.');
-      return;
-    }
-
     try {
       const { error } = await supabase.from('medicaments').delete().eq('id', id);
       if (error) throw new Error(error.message);
@@ -135,17 +116,13 @@ const MedicamentsPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (formData.quantite !== null && formData.quantite < 0) {
-      alert("La quantité ne peut pas être inférieure à 0.");
-      return;
-    }
-
     try {
       const dataToSubmit = {
         name: formData.name || null,
         posologie: formData.posologie || null,
         description: formData.description || null,
         quantite: formData.quantite || null,
+        fournisseur_id: formData.id_fournisseur || null,
       };
 
       if (isEditing && selectedMedicament) {
@@ -155,12 +132,11 @@ const MedicamentsPage = () => {
           .eq('id', selectedMedicament.id);
         if (error) throw new Error(error.message);
       } else {
-        const {error } = await supabase.from('medicaments').insert([dataToSubmit]);
+        const { error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
       }
 
       await fetchMedicaments();
-
     } catch (error) {
       console.error('Erreur lors de la soumission du formulaire:', error);
     } finally {
@@ -196,6 +172,10 @@ const MedicamentsPage = () => {
                   <p className="mb-2"><strong>Posologie:</strong> {medicament.posologie}</p>
                   <p className="mb-2"><strong>Description:</strong> {medicament.description}</p>
                   <p className="mb-2"><strong>Quantité:</strong> {medicament.quantite}</p>
+                  <p className="mb-2">
+                    <strong>Fournisseur:</strong>{' '}
+                    {fournisseurs.find((f) => f.fournisseur_id === medicament.id_fournisseur)?.nom || 'Non spécifié'}
+                  </p>
                   {isAdmin && (
                     <div className="flex justify-around mt-4">
                       <button
@@ -226,7 +206,7 @@ const MedicamentsPage = () => {
                     placeholder="Nom"
                     value={formData.name || ""}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mb-2 p-2 border border-gray-300 rounded text-gray-300"
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
                   />
                   <input
                     type="text"
@@ -250,6 +230,20 @@ const MedicamentsPage = () => {
                     min="0"
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
                   />
+                  <select
+                    value={formData.id_fournisseur || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, id_fournisseur: parseInt(e.target.value) })
+                    }
+                    className="mb-2 p-2 border border-gray-300 rounded text-black"
+                  >
+                    <option value="">Sélectionner un fournisseur</option>
+                    {fournisseurs.map((fournisseur) => (
+                      <option key={fournisseur.fournisseur_id} value={fournisseur.fournisseur_id}>
+                        {fournisseur.nom}
+                      </option>
+                    ))}
+                  </select>
                   <div className="flex justify-end mt-2">
                     <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">
                       {isEditing ? 'Modifier' : 'Ajouter'}

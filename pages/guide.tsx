@@ -7,7 +7,7 @@ import MenubarRe from "../components/ui/MenuBarRe";
 
 const Guide = () => {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  const pdfUrl = '/gide.pdf'; 
+  const pdfUrl = '/guide.pdf'; 
 
   return (
     <div className="flex flex-col min-h-screen">

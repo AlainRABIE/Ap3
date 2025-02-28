@@ -92,13 +92,21 @@ const MedicamentsPage = () => {
       await checkSession();
       await fetchMedicaments();
       await fetchFournisseurs();
+      
+      // Logs de débogage
+      console.log("Médicaments:", medicaments);
+      console.log("Fournisseurs:", fournisseurs);
     };
     initialize();
   }, []);
 
   const handleEdit = (medicament: Medicament) => {
     setSelectedMedicament(medicament);
-    setFormData({ ...medicament });
+    // Assurez-vous que id_fournisseur a une valeur
+    setFormData({ 
+      ...medicament, 
+      id_fournisseur: medicament.id_fournisseur || fournisseurs[0]?.fournisseur_id
+    });
     setIsEditing(true);
     setShowModal(true);
   };
@@ -118,11 +126,11 @@ const MedicamentsPage = () => {
 
     try {
       const dataToSubmit = {
-        name: formData.name || null,
-        posologie: formData.posologie || null,
-        description: formData.description || null,
-        quantite: formData.quantite || null,
-        fournisseur_id: formData.id_fournisseur || null,
+        name: formData.name || '',
+        posologie: formData.posologie || '',
+        description: formData.description || '',
+        quantite: formData.quantite || 0,
+        id_fournisseur: formData.id_fournisseur || fournisseurs[0]?.fournisseur_id,
       };
 
       if (isEditing && selectedMedicament) {
@@ -160,7 +168,17 @@ const MedicamentsPage = () => {
             {isAdmin && (
               <button
                 className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                  setFormData({
+                    name: '',
+                    posologie: '',
+                    description: '',
+                    quantite: 0,
+                    id_fournisseur: fournisseurs[0]?.fournisseur_id || null,
+                  });
+                  setIsEditing(false);
+                  setShowModal(true);
+                }}
               >
                 Ajouter un médicament
               </button>
@@ -174,7 +192,10 @@ const MedicamentsPage = () => {
                   <p className="mb-2"><strong>Quantité:</strong> {medicament.quantite}</p>
                   <p className="mb-2">
                     <strong>Fournisseur:</strong>{' '}
-                    {fournisseurs.find((f) => f.fournisseur_id === medicament.id_fournisseur)?.nom || 'Non spécifié'}
+                    {medicament.id_fournisseur 
+                      ? (fournisseurs.find((f) => f.fournisseur_id === medicament.id_fournisseur)?.nom || 'Erreur de référence') 
+                      : 'À attribuer'
+                    }
                   </p>
                   {isAdmin && (
                     <div className="flex justify-around mt-4">
@@ -207,6 +228,7 @@ const MedicamentsPage = () => {
                     value={formData.name || ""}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
+                    required
                   />
                   <input
                     type="text"
@@ -214,6 +236,7 @@ const MedicamentsPage = () => {
                     value={formData.posologie || ""}
                     onChange={(e) => setFormData({ ...formData, posologie: e.target.value })}
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
+                    required
                   />
                   <input
                     type="text"
@@ -221,6 +244,7 @@ const MedicamentsPage = () => {
                     value={formData.description || ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
+                    required
                   />
                   <input
                     type="number"
@@ -229,6 +253,7 @@ const MedicamentsPage = () => {
                     onChange={(e) => setFormData({ ...formData, quantite: parseInt(e.target.value) })}
                     min="0"
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
+                    required
                   />
                   <select
                     value={formData.id_fournisseur || ''}
@@ -236,8 +261,9 @@ const MedicamentsPage = () => {
                       setFormData({ ...formData, id_fournisseur: parseInt(e.target.value) })
                     }
                     className="mb-2 p-2 border border-gray-300 rounded text-black"
+                    required
                   >
-                    <option value="">Sélectionner un fournisseur</option>
+                    <option value="" disabled>Sélectionner un fournisseur</option>
                     {fournisseurs.map((fournisseur) => (
                       <option key={fournisseur.fournisseur_id} value={fournisseur.fournisseur_id}>
                         {fournisseur.nom}

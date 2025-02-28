@@ -4,38 +4,40 @@ import MenubarRe from '../components/ui/MenuBarRe';
 import { getUserRole } from './api/role';
 import Modal from '../components/ui/modal';
 
-type Materiel = {
-  id_materiel: number;
-  nom: string;
+type Medicament = {
+  id: number;
+  name: string;
+  posologie: string | null;
   description: string | null;
   quantite: number | null;
-  date_ajout: string;
-  numero_serie: string | null;
-  etat: string;
-  date_expiration: string | null;
+  id_fournisseur: number | null;
+};
+
+type Fournisseur = {
+  fournisseur_id: number;
+  nom: string;
 };
 
 type FormErrors = {
-  nom?: string;
+  name?: string;
+  posologie?: string;
   description?: string;
   quantite?: string;
-  numero_serie?: string;
-  etat?: string;
-  date_expiration?: string;
+  id_fournisseur?: string;
 };
 
-const MaterielsPage = () => {
-  const [materiels, setMateriels] = useState<Materiel[]>([]);
+const MedicamentsPage = () => {
+  const [medicaments, setMedicaments] = useState<Medicament[]>([]);
+  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedMateriel, setSelectedMateriel] = useState<Materiel | null>(null);
+  const [selectedMedicament, setSelectedMedicament] = useState<Medicament | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [formData, setFormData] = useState<Omit<Materiel, 'id_materiel' | 'date_ajout'>>({
-    nom: '',
+  const [formData, setFormData] = useState<Omit<Medicament, 'id'>>({
+    name: '',
+    posologie: '',
     description: '',
     quantite: null,
-    numero_serie: '',
-    etat: 'neuf',
-    date_expiration: null,
+    id_fournisseur: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -60,26 +62,39 @@ const MaterielsPage = () => {
     }
   };
 
-  const fetchMateriels = async () => {
+  const fetchMedicaments = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('materiels')
+        .from('medicaments')
         .select('*')
-        .order('id_materiel', { ascending: true });
+        .order('id', { ascending: true });
       if (error) throw new Error(error.message);
-      if (Array.isArray(data)) setMateriels(data);
+      if (Array.isArray(data)) setMedicaments(data);
     } catch (error) {
-      console.error('Erreur lors de la récupération des matériels:', error);
+      console.error('Erreur lors de la récupération des médicaments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFournisseurs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('fournisseur_medicament')
+        .select('fournisseur_id, nom');
+      if (error) throw new Error(error.message);
+      if (Array.isArray(data)) setFournisseurs(data);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des fournisseurs:', error);
     }
   };
 
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchMateriels();
+      await fetchMedicaments();
+      await fetchFournisseurs();
     };
     initialize();
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -102,26 +117,25 @@ const MaterielsPage = () => {
     };
   }, []);
 
-  const handleEdit = (materiel: Materiel) => {
-    setSelectedMateriel(materiel);
+  const handleEdit = (medicament: Medicament) => {
+    setSelectedMedicament(medicament);
     setFormData({
-      nom: materiel.nom,
-      description: materiel.description,
-      quantite: materiel.quantite,
-      numero_serie: materiel.numero_serie,
-      etat: materiel.etat,
-      date_expiration: materiel.date_expiration,
+      name: medicament.name,
+      posologie: medicament.posologie,
+      description: medicament.description,
+      quantite: medicament.quantite,
+      id_fournisseur: medicament.id_fournisseur,
     });
     setIsEditing(true);
     setShowModal(true);
     setErrors({});
   };
 
-  const isMaterielCommanded = async (id: number) => {
+  const isMedicamentCommanded = async (id: number) => {
     const { data, error } = await supabase
-      .from('commande_materiel')
+      .from('commande_medicaments')
       .select('*')
-      .eq('id_materiel', id);
+      .eq('id_medicament', id);
     if (error) {
       console.error('Erreur lors de la vérification des commandes:', error);
       return false;
@@ -130,18 +144,18 @@ const MaterielsPage = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const commanded = await isMaterielCommanded(id);
+    const commanded = await isMedicamentCommanded(id);
     if (commanded) {
-      alert('Ce matériel a été commandé et ne peut pas être supprimé.');
+      alert('Ce médicament a été commandé et ne peut pas être supprimé.');
       return;
     }
 
     try {
-      const { error } = await supabase.from('materiels').delete().eq('id_materiel', id);
+      const { error } = await supabase.from('medicaments').delete().eq('id', id);
       if (error) throw new Error(error.message);
-      setMateriels(materiels.filter((materiel) => materiel.id_materiel !== id));
+      setMedicaments(medicaments.filter((medicament) => medicament.id !== id));
     } catch (error) {
-      console.error('Erreur lors de la suppression du matériel:', error);
+      console.error('Erreur lors de la suppression du médicament:', error);
     }
   };
 
@@ -149,18 +163,13 @@ const MaterielsPage = () => {
     const newErrors: FormErrors = {};
     let isValid = true;
 
-    if (!formData.nom || formData.nom.trim() === '') {
-      newErrors.nom = 'Le nom est requis';
+    if (!formData.name || formData.name.trim() === '') {
+      newErrors.name = 'Le nom est requis';
       isValid = false;
     }
 
     if (formData.quantite !== null && formData.quantite < 0) {
       newErrors.quantite = 'La quantité ne peut pas être négative';
-      isValid = false;
-    }
-
-    if (!formData.etat) {
-      newErrors.etat = 'L\'état est requis';
       isValid = false;
     }
 
@@ -177,38 +186,36 @@ const MaterielsPage = () => {
     
     try {
       const dataToSubmit = {
-        nom: formData.nom,
+        name: formData.name,
+        posologie: formData.posologie,
         description: formData.description,
         quantite: formData.quantite,
-        numero_serie: formData.numero_serie,
-        etat: formData.etat,
-        date_expiration: formData.date_expiration,
+        id_fournisseur: formData.id_fournisseur,
       };
 
-      if (isEditing && selectedMateriel) {
+      if (isEditing && selectedMedicament) {
         const { error } = await supabase
-          .from('materiels')
+          .from('medicaments')
           .update(dataToSubmit)
-          .eq('id_materiel', selectedMateriel.id_materiel);
+          .eq('id', selectedMedicament.id);
         if (error) throw new Error(error.message);
-        await fetchMateriels(); 
+        await fetchMedicaments(); 
       } else {
-        const { error } = await supabase.from('materiels').insert([dataToSubmit]);
+        const { error } = await supabase.from('medicaments').insert([dataToSubmit]);
         if (error) throw new Error(error.message);
-        await fetchMateriels(); 
+        await fetchMedicaments(); 
       }
       
       setFormData({
-        nom: '',
+        name: '',
+        posologie: '',
         description: '',
         quantite: null,
-        numero_serie: '',
-        etat: 'neuf',
-        date_expiration: null,
+        id_fournisseur: null,
       });
       setErrors({});
       setIsEditing(false);
-      setSelectedMateriel(null);
+      setSelectedMedicament(null);
       setShowModal(false);
     } catch (error) {
       console.error('Erreur lors de la soumission du formulaire:', error);
@@ -220,14 +227,19 @@ const MaterielsPage = () => {
     setErrors({});
     if (!isEditing) {
       setFormData({
-        nom: '',
+        name: '',
+        posologie: '',
         description: '',
         quantite: null,
-        numero_serie: '',
-        etat: 'neuf',
-        date_expiration: null,
+        id_fournisseur: null,
       });
     }
+  };
+
+  const getFournisseurNom = (id: number | null) => {
+    if (!id) return 'Non spécifié';
+    const fournisseur = fournisseurs.find(f => f.fournisseur_id === id);
+    return fournisseur ? fournisseur.nom : 'Inconnu';
   };
 
   return (
@@ -237,50 +249,48 @@ const MaterielsPage = () => {
       <MenubarRe />
       <div className="content">
         {loading ? (
-          <p>Chargement des matériels...</p>
+          <p>Chargement des médicaments...</p>
         ) : (
           <div>
-            <h1 className="text-white text-xl mb-4">Liste des Matériels</h1>
+            <h1 className="text-white text-xl mb-4">Liste des Médicaments</h1>
             {isAdmin && (
               <button
                 className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
                 onClick={() => {
                   setIsEditing(false);
-                  setSelectedMateriel(null);
+                  setSelectedMedicament(null);
                   setFormData({
-                    nom: '',
+                    name: '',
+                    posologie: '',
                     description: '',
                     quantite: null,
-                    numero_serie: '',
-                    etat: 'neuf',
-                    date_expiration: null,
+                    id_fournisseur: null,
                   });
                   setShowModal(true);
                 }}
               >
-                Ajouter un matériel
+                Ajouter un médicament
               </button>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {materiels.map((materiel) => (
-                <div key={materiel.id_materiel} className="p-4 bg-white bg-opacity-40 backdrop-blur-md rounded-lg shadow-md">
-                  <h2 className="text-lg font-bold mb-2">{materiel.nom}</h2>
-                  <p className="mb-2"><strong>Description:</strong> {materiel.description}</p>
-                  <p className="mb-2"><strong>Quantité:</strong> {materiel.quantite}</p>
-                  <p className="mb-2"><strong>N° de série:</strong> {materiel.numero_serie}</p>
-                  <p className="mb-2"><strong>État:</strong> {materiel.etat}</p>
-                  <p className="mb-2"><strong>Date d&apos;expiration:</strong> {materiel.date_expiration}</p>
+              {medicaments.map((medicament) => (
+                <div key={medicament.id} className="p-4 bg-white bg-opacity-40 backdrop-blur-md rounded-lg shadow-md">
+                  <h2 className="text-lg font-bold mb-2">{medicament.name}</h2>
+                  <p className="mb-2"><strong>Posologie:</strong> {medicament.posologie}</p>
+                  <p className="mb-2"><strong>Description:</strong> {medicament.description}</p>
+                  <p className="mb-2"><strong>Quantité:</strong> {medicament.quantite}</p>
+                  <p className="mb-2"><strong>Fournisseur:</strong> {getFournisseurNom(medicament.id_fournisseur)}</p>
                   {isAdmin && (
                     <div className="flex justify-around mt-4">
                       <button
                         className="px-4 py-2 bg-yellow-500 text-black rounded"
-                        onClick={() => handleEdit(materiel)}
+                        onClick={() => handleEdit(medicament)}
                       >
                         Modifier
                       </button>
                       <button
                         className="px-4 py-2 bg-red-500 text-white rounded"
-                        onClick={() => handleDelete(materiel.id_materiel)}
+                        onClick={() => handleDelete(medicament.id)}
                       >
                         Supprimer
                       </button>
@@ -292,23 +302,33 @@ const MaterielsPage = () => {
             <Modal show={showModal} onClose={handleModalClose}>
               <div className="w-96 p-4 bg-white rounded-lg shadow-lg">
                 <h2 className="text-lg font-bold mb-4 text-black">
-                  {isEditing ? 'Modifier' : 'Ajouter'} un Matériel
+                  {isEditing ? 'Modifier' : 'Ajouter'} un Médicament
                 </h2>
                 <form onSubmit={handleSubmit} className="flex flex-col">
                   <div className="mb-2">
                     <input
                       type="text"
                       placeholder="Nom *"
-                      value={formData.nom}
-                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                      className={`w-full p-2 border ${errors.nom ? 'border-red-500' : 'border-gray-300'} rounded text-black`}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className={`w-full p-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded text-black`}
                     />
-                    {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
+                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                   </div>
                   
                   <div className="mb-2">
                     <input
                       type="text"
+                      placeholder="Posologie"
+                      value={formData.posologie || ''}
+                      onChange={(e) => setFormData({ ...formData, posologie: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded text-black"
+                    />
+                    {errors.posologie && <p className="text-red-500 text-xs mt-1">{errors.posologie}</p>}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <textarea
                       placeholder="Description"
                       value={formData.description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -320,7 +340,7 @@ const MaterielsPage = () => {
                   <div className="mb-2">
                     <input
                       type="number"
-                      placeholder="Quantite"
+                      placeholder="Quantité"
                       value={formData.quantite === null ? '' : formData.quantite}
                       onChange={(e) => setFormData({ ...formData, quantite: e.target.value ? parseInt(e.target.value) : null })}
                       min="0"
@@ -329,41 +349,20 @@ const MaterielsPage = () => {
                     {errors.quantite && <p className="text-red-500 text-xs mt-1">{errors.quantite}</p>}
                   </div>
                   
-                  <div className="mb-2">
-                    <input
-                      type="text"
-                      placeholder="Numéro de série"
-                      value={formData.numero_serie || ''}
-                      onChange={(e) => setFormData({ ...formData, numero_serie: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded text-black"
-                    />
-                    {errors.numero_serie && <p className="text-red-500 text-xs mt-1">{errors.numero_serie}</p>}
-                  </div>
-                  
-                  <div className="mb-2">
-                    <select
-                      value={formData.etat}
-                      onChange={(e) => setFormData({ ...formData, etat: e.target.value })}
-                      className={`w-full p-2 border ${errors.etat ? 'border-red-500' : 'border-gray-300'} rounded text-black`}
-                    >
-                      <option value="">Sélectionnez un état *</option>
-                      <option value="neuf">Neuf</option>
-                      <option value="bon état">Bon état</option>
-                      <option value="à réparer">À réparer</option>
-                      <option value="hors service">Hors service</option>
-                    </select>
-                    {errors.etat && <p className="text-red-500 text-xs mt-1">{errors.etat}</p>}
-                  </div>
-                  
                   <div className="mb-4">
-                    <input
-                      type="date"
-                      placeholder="Date d'expiration"
-                      value={formData.date_expiration || ''}
-                      onChange={(e) => setFormData({ ...formData, date_expiration: e.target.value })}
+                    <select
+                      value={formData.id_fournisseur || ''}
+                      onChange={(e) => setFormData({ ...formData, id_fournisseur: e.target.value ? parseInt(e.target.value) : null })}
                       className="w-full p-2 border border-gray-300 rounded text-black"
-                    />
-                    {errors.date_expiration && <p className="text-red-500 text-xs mt-1">{errors.date_expiration}</p>}
+                    >
+                      <option value="">Sélectionnez un fournisseur</option>
+                      {fournisseurs.map((fournisseur) => (
+                        <option key={fournisseur.fournisseur_id} value={fournisseur.fournisseur_id}>
+                          {fournisseur.nom}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.id_fournisseur && <p className="text-red-500 text-xs mt-1">{errors.id_fournisseur}</p>}
                   </div>
                   
                   <div className="flex justify-between mt-2">
@@ -388,4 +387,4 @@ const MaterielsPage = () => {
   );
 };
 
-export default MaterielsPage;
+export default MedicamentsPage;

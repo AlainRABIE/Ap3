@@ -37,8 +37,8 @@ const MedicamentsPage = () => {
     id_fournisseur: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [, setUser] = useState<User | null>(null);
+  const [, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSession = async () => {

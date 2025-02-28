@@ -151,7 +151,7 @@ const Sidebar = () => {
                     aria-label="Fournisseurs de Matériel"
                   >
                     <FiShoppingCart size={20} />
-                    {isSidebarVisible && <span>Vos commande de medicaments</span>}
+                    {isSidebarVisible && <span>Vos commande de materiaux</span>}
                   </Link>
                 </MenubarItem>
                 <MenubarItem>
@@ -161,7 +161,7 @@ const Sidebar = () => {
                     aria-label="Fournisseurs de Médicaments"
                   >
                     <FiShoppingCart size={20} />
-                    {isSidebarVisible && <span>Vos commande de materiaux</span>}
+                    {isSidebarVisible && <span>Vos commande de Médicaments</span>}
                   </Link>
                 </MenubarItem>
               </MenubarContent>

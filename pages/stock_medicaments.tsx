@@ -37,8 +37,8 @@ const MedicamentsPage = () => {
     id_fournisseur: null,
   });
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [, setUser] = useState<User | null>(null);
-  const [, setUserRole] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const checkSession = async () => {
@@ -70,6 +70,7 @@ const MedicamentsPage = () => {
       const { data, error } = await supabase.from('medicaments').select('*');
       if (error) throw new Error(error.message);
       setMedicaments(data || []);
+      console.log('Médicaments chargés:', data);
     } catch (error) {
       console.error('Erreur lors de la récupération des médicaments:', error);
     } finally {
@@ -82,6 +83,7 @@ const MedicamentsPage = () => {
       const { data, error } = await supabase.from('fournisseur_medicament').select('*');
       if (error) throw new Error(error.message);
       setFournisseurs(data || []);
+      console.log('Fournisseurs chargés:', data);
     } catch (error) {
       console.error('Erreur lors de la récupération des fournisseurs:', error);
     }
@@ -90,22 +92,24 @@ const MedicamentsPage = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchMedicaments();
-      await fetchFournisseurs();
-      
-      // Logs de débogage
-      console.log("Médicaments:", medicaments);
-      console.log("Fournisseurs:", fournisseurs);
+      await fetchFournisseurs(); // Charger d'abord les fournisseurs
+      await fetchMedicaments(); // Puis les médicaments
     };
     initialize();
   }, []);
 
+  // Fonction pour trouver le nom du fournisseur par ID
+  const getFournisseurNom = (id: number | null) => {
+    if (!id) return 'À attribuer';
+    const fournisseur = fournisseurs.find(f => f.fournisseur_id === id);
+    return fournisseur ? fournisseur.nom : 'Erreur de référence';
+  };
+
   const handleEdit = (medicament: Medicament) => {
     setSelectedMedicament(medicament);
-    // Assurez-vous que id_fournisseur a une valeur
     setFormData({ 
       ...medicament, 
-      id_fournisseur: medicament.id_fournisseur || fournisseurs[0]?.fournisseur_id
+      id_fournisseur: medicament.id_fournisseur || (fournisseurs.length > 0 ? fournisseurs[0].fournisseur_id : null)
     });
     setIsEditing(true);
     setShowModal(true);
@@ -130,7 +134,7 @@ const MedicamentsPage = () => {
         posologie: formData.posologie || '',
         description: formData.description || '',
         quantite: formData.quantite || 0,
-        id_fournisseur: formData.id_fournisseur || fournisseurs[0]?.fournisseur_id,
+        id_fournisseur: formData.id_fournisseur || (fournisseurs.length > 0 ? fournisseurs[0].fournisseur_id : null),
       };
 
       if (isEditing && selectedMedicament) {
@@ -174,7 +178,7 @@ const MedicamentsPage = () => {
                     posologie: '',
                     description: '',
                     quantite: 0,
-                    id_fournisseur: fournisseurs[0]?.fournisseur_id || null,
+                    id_fournisseur: fournisseurs.length > 0 ? fournisseurs[0].fournisseur_id : null,
                   });
                   setIsEditing(false);
                   setShowModal(true);
@@ -192,10 +196,7 @@ const MedicamentsPage = () => {
                   <p className="mb-2"><strong>Quantité:</strong> {medicament.quantite}</p>
                   <p className="mb-2">
                     <strong>Fournisseur:</strong>{' '}
-                    {medicament.id_fournisseur 
-                      ? (fournisseurs.find((f) => f.fournisseur_id === medicament.id_fournisseur)?.nom || 'Erreur de référence') 
-                      : 'À attribuer'
-                    }
+                    {getFournisseurNom(medicament.id_fournisseur)}
                   </p>
                   {isAdmin && (
                     <div className="flex justify-around mt-4">

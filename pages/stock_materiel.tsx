@@ -324,7 +324,7 @@ const MaterielsPage = () => {
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {materiels.map((materiel) => (
-                <div key={materiel.id_materiel} className="p-4 bg-white bg-opacity-40 backdrop-blur-md rounded-lg shadow-md"> {/* Correction ici */}
+                <div key={materiel.id_materiel} className="p-4 bg-white bg-opacity-40 backdrop-blur-md rounded-lg shadow-md"> 
                   <h2 className="text-lg font-bold mb-2">{materiel.nom}</h2>
                   <p className="mb-2"><strong>Description:</strong> {materiel.description}</p>
                   <p className="mb-2"><strong>Quantité:</strong> {materiel.quantite}</p>
@@ -334,10 +334,10 @@ const MaterielsPage = () => {
                     <p className="mb-2"><strong>Numéro de série:</strong> {materiel.numero_serie}</p>
                   )}
                   {materiel.date_expiration && (
-                    <p className="mb-2"><strong>Date d'expiration:</strong> {new Date(materiel.date_expiration).toLocaleDateString()}</p>
+                    <p className="mb-2"><strong>Date d&apos;expiration:</strong> {new Date(materiel.date_expiration).toLocaleDateString()}</p>
                   )}
                   {materiel.date_ajout && (
-                    <p className="mb-2"><strong>Date d'ajout:</strong> {new Date(materiel.date_ajout).toLocaleDateString()}</p>
+                    <p className="mb-2"><strong>Date d&apos;ajout:</strong> {new Date(materiel.date_ajout).toLocaleDateString()}</p>
                   )}
                   {isAdmin && (
                     <div className="flex justify-around mt-4">

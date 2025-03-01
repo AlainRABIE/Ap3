@@ -92,13 +92,12 @@ const MedicamentsPage = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkSession();
-      await fetchFournisseurs(); // Charger d'abord les fournisseurs
-      await fetchMedicaments(); // Puis les médicaments
+      await fetchFournisseurs(); 
+      await fetchMedicaments(); 
     };
     initialize();
   }, []);
 
-  // Fonction pour trouver le nom du fournisseur par ID
   const getFournisseurNom = (id: number | null) => {
     if (!id) return 'À attribuer';
     const fournisseur = fournisseurs.find(f => f.fournisseur_id === id);

@@ -7,33 +7,31 @@ import MenubarRe from "../components/ui/MenuBarRe";
 
 const Guide = () => {
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
-  const pdfUrl = '/guide.pdf'; 
-
+  const pdfUrl = '/guide.pdf';
+  
   return (
-    <div className="flex flex-col min-h-screen">
-      <MenubarRe /> 
-
+    <div className="relative flex h-screen bg-opacity-40 backdrop-blur-md">
+      <MenubarRe />
+      
       <div className="flex-grow p-8 overflow-auto">
         <h1 className="text-4xl font-bold mb-6">Guide d&apos;utilisation</h1>
-
+        
         <div className="flex gap-4 mb-4">
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => window.open(pdfUrl, '_blank')}
             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
           >
             Ouvrir le guide
-          </a>
+          </button>
           <a
             href={pdfUrl}
-            download="gide.pdf"
+            download="guide.pdf"
             className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700"
           >
             Télécharger
           </a>
         </div>
-
+        
         <div className="pdf-container border shadow-lg rounded-lg" style={{ height: 'calc(100vh - 250px)' }}>
           <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
             <Viewer fileUrl={pdfUrl} plugins={[defaultLayoutPluginInstance]} />

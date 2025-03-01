@@ -11,8 +11,8 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface FournisseurMateriel {
-  id: number;
+interface FournisseurMedicament {
+  fournisseur_id: number;
   nom: string;
   adresse: string;
   email: string;
@@ -20,15 +20,15 @@ interface FournisseurMateriel {
   site_web: string;
 }
 
-const GestionFournisseurs = () => {
+const GestionFournisseursMedicament = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [fournisseurs, setFournisseurs] = useState<FournisseurMateriel[]>([]);
+  const [fournisseurs, setFournisseurs] = useState<FournisseurMedicament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedFournisseur, setSelectedFournisseur] = useState<FournisseurMateriel | null>(null);
-  const [formData, setFormData] = useState<Omit<FournisseurMateriel, 'id'>>({
+  const [selectedFournisseur, setSelectedFournisseur] = useState<FournisseurMedicament | null>(null);
+  const [formData, setFormData] = useState<Omit<FournisseurMedicament, 'fournisseur_id'>>({
     nom: '',
     adresse: '',
     email: '',
@@ -63,9 +63,9 @@ const GestionFournisseurs = () => {
   const fetchData = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("fournisseur_materiel")
+      .from("fournisseur_medicament")
       .select("*")
-      .order("id", { ascending: false });
+      .order("fournisseur_id", { ascending: false });
 
     if (error) {
       console.error("❌ Erreur lors de la récupération des fournisseurs:", error);
@@ -82,7 +82,7 @@ const GestionFournisseurs = () => {
     event.preventDefault();
 
     const { error } = await supabase
-      .from("fournisseur_materiel")
+      .from("fournisseur_medicament")
       .insert([formData]);
 
     if (error) {
@@ -107,9 +107,9 @@ const GestionFournisseurs = () => {
     if (!selectedFournisseur) return;
 
     const { error } = await supabase
-      .from("fournisseur_materiel")
+      .from("fournisseur_medicament")
       .update(formData)
-      .eq("id", selectedFournisseur.id);
+      .eq("fournisseur_id", selectedFournisseur.fournisseur_id);
 
     if (error) {
       alert("Erreur lors de la modification !");
@@ -128,7 +128,7 @@ const GestionFournisseurs = () => {
     }
   };
 
-  const openEditModal = (fournisseur: FournisseurMateriel) => {
+  const openEditModal = (fournisseur: FournisseurMedicament) => {
     setSelectedFournisseur(fournisseur);
     setFormData({
       nom: fournisseur.nom,
@@ -144,15 +144,15 @@ const GestionFournisseurs = () => {
     if (!confirm("Supprimer ce fournisseur ?")) return;
 
     const { error } = await supabase
-      .from("fournisseur_materiel")
+      .from("fournisseur_medicament")
       .delete()
-      .eq("id", id);
+      .eq("fournisseur_id", id);
 
     if (error) {
       alert("Erreur lors de la suppression !");
       console.error(error);
     } else {
-      setFournisseurs(fournisseurs.filter(f => f.id !== id));
+      setFournisseurs(fournisseurs.filter(f => f.fournisseur_id !== id));
     }
   };
 
@@ -162,7 +162,7 @@ const GestionFournisseurs = () => {
       <div className="waves"></div>
       <MenubarRe />
       <div className="content p-8 overflow-auto">
-        <h1 className="text-white text-2xl mb-6">Liste des Fournisseurs</h1>
+        <h1 className="text-white text-2xl mb-6">Liste des Fournisseurs de Médicaments</h1>
   
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
   
@@ -195,7 +195,7 @@ const GestionFournisseurs = () => {
           ) : (
             fournisseurs.map((fournisseur) => (
               <div 
-                key={fournisseur.id}
+                key={fournisseur.fournisseur_id}
                 className="bg-transparent border border-white rounded-lg shadow-lg p-6"
               >
                 <h2 className="text-xl font-bold mb-2 text-white">{fournisseur.nom}</h2>
@@ -232,7 +232,7 @@ const GestionFournisseurs = () => {
                     </button>
                     <button
                       className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                      onClick={() => deleteFournisseur(fournisseur.id)}
+                      onClick={() => deleteFournisseur(fournisseur.fournisseur_id)}
                     >
                       Supprimer
                     </button>
@@ -328,7 +328,7 @@ const GestionFournisseurs = () => {
                 placeholder="Site web"
                 value={formData.site_web}
                 onChange={(e) => setFormData({ ...formData, site_web: e.target.value })}
-                className="mb-2 p-2 border border-gray-300 rounded text-black dark:bg-gray-700"
+                className="mb-2 p-2 border border-gray-300 rounded text-black dark:text-white bg-gray-700"
               />
               <div className="flex justify-end mt-2">
                 <button type="submit" className="px-4 py-2 bg-yellow-500 text-white rounded">
@@ -343,4 +343,4 @@ const GestionFournisseurs = () => {
   );
 };
 
-export default GestionFournisseurs;
+export default GestionFournisseursMedicament;

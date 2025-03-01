@@ -48,7 +48,7 @@ const CataloguePage: React.FC = () => {
         .select('id')
         .eq('email', session.user.email)
         .single();
-      
+
       if (userData) {
         await getUserRole(userData.id);
       }
@@ -99,22 +99,22 @@ const CataloguePage: React.FC = () => {
         .select('quantite')
         .eq('id', item.medicamentId)
         .single();
-  
+
       if (fetchError || !medicament) {
         throw new Error(`Erreur lors de la récupération du médicament ${item.name}`);
       }
-  
+
       const newQuantite = medicament.quantite - item.quantity;
-  
+
       if (newQuantite < 0) {
         throw new Error(`Stock insuffisant pour ${item.name}`);
       }
-  
+
       const { error: updateError } = await supabase
         .from('medicaments')
         .update({ quantite: newQuantite })
         .eq('id', item.medicamentId);
-  
+
       if (updateError) {
         throw new Error(`Erreur lors de la mise à jour du stock pour ${item.name}`);
       }
@@ -128,7 +128,7 @@ const CataloguePage: React.FC = () => {
         .select('fournisseur_id')
         .limit(1)
         .single();
-    
+
       if (error) throw error;
       return data?.fournisseur_id || null;
     } catch (error) {
@@ -142,29 +142,29 @@ const CataloguePage: React.FC = () => {
       alert('Votre panier est vide.');
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
       await verifyStock(cart);
-  
+
       const { data: userData, error: userError } = await supabase
         .from('User')
         .select('id')
         .eq('email', user?.email)
         .single();
-  
+
       if (userError || !userData) {
         throw new Error('Utilisateur non trouvé.');
       }
-  
+
       const fournisseurId = await fetchValidFournisseurId();
       if (!fournisseurId) {
         throw new Error('Aucun fournisseur valide trouvé.');
       }
-  
+
       await updateStock(cart);
-  
+
       const commandes = cart.map((item) => ({
         id_user: userData.id,
         id_medicament: item.medicamentId,
@@ -173,20 +173,20 @@ const CataloguePage: React.FC = () => {
         etat: 'en attente',
         id_fournisseur: fournisseurId,
       }));
-  
+
       const { error: commandeError } = await supabase
         .from('commande_médicaments')
         .insert(commandes);
-  
+
       if (commandeError) {
         throw new Error(`Erreur lors de la création de la commande: ${commandeError.message}`);
       }
-  
+
       await fetchMedicaments();
       setCart([]);
       setIsCartOpen(false);
       alert('Commande passée avec succès !');
-  
+
     } catch (error) {
       console.error('Erreur lors de la commande:', error);
       alert(error instanceof Error ? error.message : 'Une erreur est survenue');
@@ -225,18 +225,17 @@ const CataloguePage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {medicaments.map((medicament) => (
             <div key={medicament.id} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-2 text-white">{medicament.name}</h2>
-              <p className="text-sm text-gray-300 mb-4">{medicament.description}</p>
-              <p className="text-sm text-gray-300 mb-4">
-                Quantité disponible: {medicament.quantite}
-              </p>
+              <h2 className="text-xl font-bold mb-2 card-text">{medicament.name}</h2>
+              <p className="text-sm mb-4 card-text">{medicament.description}</p>
+              <p className="text-sm mb-4 card-text">Quantité disponible: {medicament.quantite}</p>
               <input
                 type="number"
                 min="1"
                 max={medicament.quantite}
                 value={quantities[medicament.id] || 1}
                 onChange={(e) => handleQuantityChange(medicament.id, Math.max(1, Math.min(medicament.quantite, Number(e.target.value))))}
-                className="w-full mb-4 p-2 border rounded"
+                className="w-full mb-4 p-2 border rounded card-text"
+                style={{ color: 'black' }}
               />
               <button
                 onClick={() => addToCart(medicament)}
@@ -246,12 +245,13 @@ const CataloguePage: React.FC = () => {
                 {medicament.quantite === 0 ? 'Rupture de stock' : 'Ajouter au panier'}
               </button>
             </div>
+
           ))}
         </div>
       </main>
 
       <div className="fixed top-4 right-4 z-10">
-        <button 
+        <button
           className="relative p-3 bg-blue-500 rounded-full"
           onClick={() => setIsCartOpen(!isCartOpen)}
           disabled={isLoading}

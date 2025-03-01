@@ -51,7 +51,7 @@ const CataloguePage = () => {
         .select('id')
         .eq('email', session.user.email)
         .single();
-      
+
       if (userData) {
         await getUserRole(userData.id);
       }
@@ -185,9 +185,9 @@ const CataloguePage = () => {
 
   const addToCart = (materiel: Materiel) => {
     const quantity = quantities[materiel.id_materiel] || 1;
-    
+
     const existingItemIndex = cart.findIndex(item => item.materielId === materiel.id_materiel);
-    
+
     if (existingItemIndex >= 0) {
       const updatedCart = [...cart];
       updatedCart[existingItemIndex].quantity = quantity;
@@ -215,12 +215,12 @@ const CataloguePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {materiels.map((materiel) => (
             <div key={materiel.id_materiel} className="bg-transparent border border-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-2 text-white">{materiel.nom}</h2>
-              <p className="text-sm text-gray-300 mb-4">{materiel.description}</p>
-              <p className="text-sm text-gray-300 mb-4">
+              <h2 className="text-xl font-bold mb-2 card-text">{materiel.nom}</h2>
+              <p className="text-sm mb-4 card-text">{materiel.description}</p>
+              <p className="text-sm mb-4 card-text">
                 Quantité disponible: {materiel.quantite}
               </p>
-              
+
               <input
                 type="number"
                 min="1"
@@ -230,9 +230,11 @@ const CataloguePage = () => {
                   materiel.id_materiel,
                   Math.max(1, Math.min(materiel.quantite, Number(e.target.value)))
                 )}
-                className="w-full mb-4 p-2 border rounded"
+                className="w-full mb-4 p-2 border rounded card-text"
+                style={{ color: 'black' }}
               />
-              
+
+
               <button
                 onClick={() => addToCart(materiel)}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -241,12 +243,13 @@ const CataloguePage = () => {
                 {materiel.quantite === 0 ? 'Rupture de stock' : 'Ajouter au panier'}
               </button>
             </div>
+
           ))}
         </div>
       </main>
 
       <div className="fixed top-4 right-4 z-10">
-        <button 
+        <button
           className="relative p-3 bg-blue-500 rounded-full"
           onClick={() => setIsCartOpen(!isCartOpen)}
           disabled={isLoading}

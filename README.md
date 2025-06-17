@@ -7,14 +7,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 Puis executer la commmande cd pour entrée dans le projet puis faire npm install
 
-<h1 Dans le contexte de l'épreuve j'affiche en clair les identifiants, Se qui n'est pas à faire hors contexte 
->
+<h1 Dans le contexte de l'épreuve j'affiche en clair les identifiants, Se qui n'est pas à faire hors contexte </h1>
 
 
 
-
+<h2>
 IDENTIFIANT TEST : test.user@gmail.com
 MOTS DE PASSE : test123
 
 Identifiant ADMIN : admin@gmail.com
 Mots de passe admin : admin123@
+</h2>

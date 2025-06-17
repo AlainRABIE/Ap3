@@ -9,3 +9,6 @@ Puis executer la commmande cd pour entrée dans le projet puis faire npm install
 
 IDENTIFIANT TEST : test.user@gmail.com
 MOTS DE PASSE : test123
+
+Identifiant ADMIN : admin@gmail.com
+Mots de passe admin : admin123@
